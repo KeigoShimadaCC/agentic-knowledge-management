@@ -145,6 +145,14 @@ export async function listObjects(
   return request<PaginatedResponse<ObjectOut>>(`/api/v1/objects${query ? `?${query}` : ""}`);
 }
 
+export async function listTrashObjects(): Promise<ObjectOut[]> {
+  return request<ObjectOut[]>("/api/v1/objects/trash");
+}
+
+export async function restoreObject(id: string): Promise<ObjectOut> {
+  return request<ObjectOut>(`/api/v1/objects/${id}/restore`, { method: "POST" });
+}
+
 export async function createPage(title: string): Promise<PageCreateResponse> {
   return request<PageCreateResponse>("/api/v1/pages", {
     method: "POST",

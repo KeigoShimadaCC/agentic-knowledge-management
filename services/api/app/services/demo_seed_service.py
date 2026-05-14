@@ -69,7 +69,7 @@ def _bullet_list(items: list[str]) -> dict[str, Any]:
 
 
 def _link_paragraph(label: str, page_id: uuid.UUID) -> dict[str, Any]:
-    href = f"/pages/{page_id}"
+    href = f"/app/pages/{page_id}"
     return _paragraph(
         _text(label, marks=[{"type": "link", "attrs": {"href": href, "target": "_self"}}]),
     )
