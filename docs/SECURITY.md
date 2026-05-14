@@ -35,6 +35,7 @@
 - AI-backed features (vector embeddings, summarization, Q&A) return graceful errors when `OPENAI_API_KEY` is absent — not 500s
 - Hybrid search falls back to keyword-only; response includes `"embeddings_disabled": true`
 - No user data is sent to external AI providers unless the user explicitly invokes an AI feature
+- Structured chat summaries send parsed chat turns to the configured AI provider only after an explicit Generate action. Applying a summary is a separate explicit action.
 - See `docs/ARCHITECTURE.md` for the full degradation table
 
 ## Agent Safety
@@ -51,7 +52,7 @@
 
 Before MCP write tools (`update_page`, `archive_object`) are enabled, a revision history system must be in place so any agent-authored change is fully auditable and reversible.
 
-Planned `object_revisions` table (not yet implemented):
+Implemented `object_revisions` table:
 
 ```sql
 object_revisions (

@@ -151,6 +151,26 @@ Chat Import Lite treats transcripts as first-class knowledge objects:
 
 Deletes are soft deletes on `objects.deleted_at`; raw chat files are retained.
 
+## Phase 6B: Structured Chat Import
+
+Structured Chat Import turns a stored transcript into reusable knowledge through an explicit
+preview/apply flow:
+
+1. The chat detail UI calls `POST /api/v1/chats/{id}/structured-summary`.
+2. The API builds a grounded prompt from normalized turns and calls the configured AI provider.
+3. Strict JSON is validated before storage. Invalid JSON is repaired once, then returned as a
+   clear failure.
+4. Preview storage updates the chat summary fields and writes an `object_revisions` row tied to
+   the `agent_runs` audit row.
+5. Applying the summary creates/reuses generic `claim` and `task` objects, preserving `turn_refs`
+   in metadata.
+6. Extracted claims use `claim -> chat` / `derives_from`; tasks use `task -> chat` /
+   `created_from`.
+7. The chat and extracted objects enqueue normal reindex jobs.
+
+Concepts and project-like entities remain in `structured_summary` unless those object systems
+exist. No MCP tools or autonomous background processing are part of Phase 6B.
+
 ## Phase 4: Graph Lite
 
 Graph Lite uses Postgres `edges` as the canonical graph source. It does not require Kuzu, Qdrant, embeddings, or Phase 3 search endpoints.

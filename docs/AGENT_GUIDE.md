@@ -18,6 +18,18 @@ Agents must follow these rules:
 
 For chat histories, agents must use `/api/v1/chats/import` and related chat endpoints. Do not write transcript files directly into `~/KnowledgeOS/library/chats`; the API owns object creation, path layout, metadata, and reindex enqueueing.
 
+For structured chat summaries, agents must use:
+
+```text
+POST /api/v1/chats/{id}/structured-summary
+POST /api/v1/chats/{id}/structured-summary/apply
+GET  /api/v1/chats/{id}/structured-summary
+```
+
+Do not directly mutate `chats.structured_summary` or create extracted claim/task objects by
+hand. The API validates AI JSON, writes `agent_runs` and `object_revisions`, preserves turn
+references, creates graph edges, and queues reindexing.
+
 Recommended agent header:
 
 ```text

@@ -250,7 +250,7 @@ async def apply_structured_summary(
                 db,
                 extracted.id,
                 chat.id,
-                "derived_from",
+                "derives_from",
                 user_id=user_id,
                 metadata_={"turn_refs": claim.turn_refs, "agent_run_id": str(apply_run.id)},
             )

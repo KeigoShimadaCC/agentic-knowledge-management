@@ -375,7 +375,7 @@ async def test_apply_structured_summary_creates_claim_task_edges_and_revision(
         ).scalars().all()
 
     assert {obj.metadata_["turn_refs"][0] for obj in objects} == {0, 1}
-    assert {edge.kind for edge in edges} >= {"derived_from", "created_from"}
+    assert {edge.kind for edge in edges} >= {"derives_from", "created_from"}
     assert revisions
 
 

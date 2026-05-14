@@ -116,7 +116,7 @@ Reindex triggers:
 | Page `PUT`/`PATCH` save | Enqueue `reindex_object(page_id)` |
 | Source `PATCH` metadata update | Enqueue `reindex_object(source_id)` |
 | Source ingestion completion | Enqueue `reindex_object(source_id)` |
-| Manual rebuild | `reindex_all_objects()` enqueues all non-deleted pages, sources, and chats |
+| Manual rebuild | `reindex_all_objects()` enqueues all non-deleted pages, sources, chats, claims, and tasks |
 
 Reindex jobs use deterministic RQ job IDs (`reindex:{object_id}`) to avoid flooding the queue during repeated saves.
 
@@ -127,3 +127,19 @@ Chat imports are synchronous API operations. `POST /api/v1/chats/import` accepts
 Raw chat bytes are written under `library/chats`, using object UUIDs for identity instead of user filenames. Single chat imports write `chats/{provider}/{chat_id}/raw.{json|md|txt}` plus `metadata.json`. ChatGPT batch uploads also preserve the exact uploaded export at `chats/chatgpt/imports/{batch_uuid}/raw.json`.
 
 The parser normalizes turns into `role`, `author`, `content`, `created_at`, and `metadata`. `chats.content_text` stores the searchable transcript projection. Keyword search reads this Postgres field immediately; vector/hybrid search can include chats after the normal `reindex_object(chat_id)` chunk and embedding job runs. No LLM calls happen during Phase 6A import.
+
+## Phase 6B: Structured Chat Import
+
+Structured import is an explicit, user-triggered AI flow on top of an existing imported chat:
+
+1. The user opens a chat and clicks Generate structured summary.
+2. The API sends parsed turns to the configured AI provider and requires strict JSON output.
+3. The response is validated, stored on `chats.structured_summary`, marked `previewed`, and logged through `agent_runs` plus `object_revisions`.
+4. The user clicks Apply.
+5. The API marks the summary `applied`, creates or reuses generic `claim` and `task` objects, stores `turn_refs` and confidence in metadata, and creates graph edges back to the chat.
+6. The chat and extracted objects are queued for reindexing.
+
+Keyword search can find applied structured summaries immediately from Postgres fields. Vector
+search includes the summary and extracted objects after the normal reindex/embedding pipeline
+runs. If embeddings or AI are disabled, keyword search still works and structured generation
+returns a clear provider-disabled error.

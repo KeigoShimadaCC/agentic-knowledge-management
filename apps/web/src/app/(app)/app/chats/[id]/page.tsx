@@ -235,11 +235,23 @@ function StructuredSummaryView({
           </div>
         )}
       </div>
-      <SummarySection title="Key Decisions" items={summary.key_decisions} textKey="decision" />
-      <SummarySection title="Open Questions" items={summary.open_questions} textKey="question" />
-      <SummarySection title="Action Items" items={summary.action_items} textKey="task" />
-      <SummarySection title="Claims" items={summary.claims} textKey="claim" />
-      <SummarySection title="Concepts" items={summary.concepts} textKey="name" />
+      <SummarySection
+        title="Key Decisions"
+        items={summary.key_decisions}
+        getText={(item) => item.decision}
+      />
+      <SummarySection
+        title="Open Questions"
+        items={summary.open_questions}
+        getText={(item) => item.question}
+      />
+      <SummarySection
+        title="Action Items"
+        items={summary.action_items}
+        getText={(item) => item.task}
+      />
+      <SummarySection title="Claims" items={summary.claims} getText={(item) => item.claim} />
+      <SummarySection title="Concepts" items={summary.concepts} getText={(item) => item.name} />
       {summary.warnings.length > 0 && (
         <div>
           <h3 className="text-sm font-semibold uppercase text-gray-400">Warnings</h3>
@@ -254,14 +266,14 @@ function StructuredSummaryView({
   );
 }
 
-function SummarySection<T extends StructuredTurnItem & Record<string, unknown>>({
+function SummarySection<T extends StructuredTurnItem>({
   title,
   items,
-  textKey,
+  getText,
 }: {
   title: string;
   items: T[];
-  textKey: keyof T;
+  getText: (item: T) => string;
 }) {
   if (items.length === 0) return null;
   return (
@@ -270,7 +282,7 @@ function SummarySection<T extends StructuredTurnItem & Record<string, unknown>>(
       <div className="mt-2 grid gap-2">
         {items.map((item, index) => (
           <div key={`${title}-${index}`} className="rounded-md border border-gray-800 p-3">
-            <div className="text-sm text-gray-200">{String(item[textKey])}</div>
+            <div className="text-sm text-gray-200">{getText(item)}</div>
             <div className="mt-2 text-xs text-gray-500">
               Turns {item.turn_refs.join(", ") || "none"} · {item.confidence}
             </div>

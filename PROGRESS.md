@@ -151,7 +151,7 @@ See [`project-phases/PHASE-6A-CHAT-IMPORT-LITE.md`](project-phases/PHASE-6A-CHAT
 
 ---
 
-## Phase 6B — Structured Chat Import ⬜ In Progress
+## Phase 6B — Structured Chat Import ✅ Complete
 
 **Goal:** Turn imported chats into structured, linked, reusable knowledge through explicit AI-backed summary generation and apply flow.
 
@@ -167,7 +167,7 @@ See [`project-phases/PHASE-6B-STRUCTURED-CHAT-IMPORT.md`](project-phases/PHASE-6
 - [x] **Subtask 5** — Apply structured summary and extracted objects
 - [x] **Subtask 6** — Search/index integration
 - [x] **Subtask 7** — Chat detail UI
-- [ ] **Subtask 8** — Tests and docs
+- [x] **Subtask 8** — Tests and docs
 
 ---
 
@@ -225,12 +225,12 @@ See [`project-phases/PHASE-6B-STRUCTURED-CHAT-IMPORT.md`](project-phases/PHASE-6
 | 8A | Workspace Lite | ✅ Complete | 7 / 7 subtasks |
 | 5 | AI Assistant + Inbox/Triage | ⬜ Planned | 0 / 12 subtasks |
 | 6A | Chat Import Lite | ✅ Complete | 8 / 8 subtasks |
-| 6B | Structured Chat Import | ⬜ In Progress | 8 / 9 subtasks |
+| 6B | Structured Chat Import | ✅ Complete | 9 / 9 subtasks |
 | 7 | MCP Server (staged) | ⬜ Planned | 0 / 6 subtasks |
 | 8 | Multi-Pane Workspaces | ⬜ Planned | 0 / 8 subtasks |
 | 9 | Career & Project Memory | ⬜ Planned | 0 / 8 subtasks |
 
-**Total:** 56 / 91 subtasks complete
+**Total:** 57 / 91 subtasks complete
 
 **Key cross-cutting concepts to track:**
 - Inbox/Triage (Phase 5): AI-classified staging area for unprocessed items
@@ -249,3 +249,5 @@ See [`project-phases/PHASE-6B-STRUCTURED-CHAT-IMPORT.md`](project-phases/PHASE-6
 - Phase 6B Subtask 5 added apply behavior that stores summaries, creates/reuses extracted `claim` and `task` objects, links them back to the source chat, and queues reindexing.
 - Phase 6B Subtask 6 added structured-summary text to chat chunk/search indexing and keyword search for generic `claim`/`task` objects.
 - Phase 6B Subtask 7 added chat detail controls for generating/applying structured summaries, rendering extracted knowledge, and showing AI provenance.
+- Phase 6B Subtask 8 added mocked AI/parser/API coverage and docs for the structured chat import data model, API, ingestion, architecture, security, agent behavior, and revision history.
+- Local validation caveat: the shared local Postgres currently has an unknown Alembic revision from another workspace and another pytest process has been running against the shared test DB, so full DB-backed validation should be rerun once the local database is clean.

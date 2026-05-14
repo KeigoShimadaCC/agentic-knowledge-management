@@ -17,6 +17,8 @@ Supported object kinds:
 | `collection` | Reserved | No specialization table yet |
 | `source` | Phase 2 | `sources` table |
 | `chat` | Phase 6A | `chats` table |
+| `claim` | Phase 6B | Generic `objects` row |
+| `task` | Phase 6B | Generic `objects` row |
 
 The specialization table uses the same primary key as the base object row. For example, a page has `objects.id = pages.id`.
 
@@ -50,13 +52,14 @@ The specialization table uses the same primary key as the base object row. For e
 | --- | --- | --- |
 | `id` | UUID | Primary key |
 | `user_id` | UUID | Required FK to `users.id`; all queries must scope by user |
-| `kind` | text / enum | Required; one of `page`, `asset`, `note`, `bookmark`, `collection`, `source`, `chat` |
+| `kind` | text / enum | Required; one of `page`, `asset`, `note`, `bookmark`, `collection`, `source`, `chat`, `claim`, `task` |
 | `title` | text | Required display title |
 | `description` | text | Optional summary or user-authored description |
 | `tags` | text[] | Required array, default empty |
 | `metadata` | JSONB | Required object, default `{}` |
 | `is_pinned` | boolean | Required, default `false` |
 | `is_archived` | boolean | Required, default `false` |
+| `ai_generated` | boolean | Required, default `false`; marks AI-created claims/tasks |
 | `created_at` | timestamptz | Required |
 | `updated_at` | timestamptz | Required |
 | `deleted_at` | timestamptz | Optional soft-delete marker |
@@ -173,7 +176,17 @@ Phase 6A adds a `chats` specialization table for imported conversations with `ob
 | `parsed_turns` | JSONB | Normalized turn list for UI rendering |
 | `content_text` | text | Searchable transcript projection |
 | `metadata` | JSONB | Import metadata, including batch raw path when applicable |
+| `structured_summary` | JSONB | Phase 6B AI-generated structured summary preview or applied summary |
+| `structured_summary_status` | text | `none`, `previewed`, `applied`, or `failed` |
+| `structured_summary_agent_run_id` | UUID | Optional FK to the AI run that generated or applied the summary |
+| `structured_summary_updated_at` | timestamptz | Last structured summary update time |
+| `structured_summary_hash` | varchar(64) | Stable hash used for idempotency/audit |
 | `created_at` / `updated_at` | timestamptz | Required timestamps |
+
+Phase 6B stores extracted concepts in `structured_summary.concepts`. It creates generic
+`claim` and `task` objects only after the user explicitly applies a preview. Created objects
+store `source_chat_id`, `turn_refs`, `confidence`, `agent_run_id`, and an `extraction_key` in
+`objects.metadata`.
 
 ### `ingestion_jobs`
 

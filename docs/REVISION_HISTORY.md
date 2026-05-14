@@ -8,11 +8,13 @@ KnowledgeOS will eventually let AI agents (via MCP write tools or the AI assista
 
 The `agent_runs` table already records that an agent performed an action. `object_revisions` records what the state of each affected object was before and after. Together they form a complete audit trail.
 
-This system is planned for implementation in Phase 5 (AI Assistant) or Phase 7 (MCP Server) — whichever arrives first. Phase 3 (Search) and Phase 4 (Graph Lite) do not require it.
+Phase 6B implements the first minimal version for structured chat summaries. It records
+before/after JSON snapshots for chat summary preview/apply changes and links them to
+`agent_runs`. Full page rollback UI and broad user-edit revision coverage remain future work.
 
 ---
 
-## Planned Table: `object_revisions`
+## Implemented Table: `object_revisions`
 
 ```sql
 CREATE TABLE object_revisions (
@@ -20,18 +22,16 @@ CREATE TABLE object_revisions (
   user_id         uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   object_id       uuid NOT NULL REFERENCES objects(id) ON DELETE CASCADE,
   agent_run_id    uuid NULL REFERENCES agent_runs(id) ON DELETE SET NULL,
-  change_type     text NOT NULL,      -- 'create' | 'update' | 'soft_delete' | 'restore'
-  before_json     jsonb NULL,         -- snapshot of affected row(s) before change
-  after_json      jsonb NULL,         -- snapshot of affected row(s) after change
-  changed_by      text NOT NULL,      -- 'user:<user_id>' or 'agent:<agent_name>'
-  change_summary  text NULL,          -- human-readable description of what changed
+  rev_num         integer NOT NULL,
+  changed_by      varchar(64) NOT NULL,
+  before_snapshot jsonb NOT NULL,
+  after_snapshot  jsonb NOT NULL,
   created_at      timestamptz NOT NULL DEFAULT now()
 );
 
 CREATE INDEX idx_object_revisions_object_id ON object_revisions (object_id);
 CREATE INDEX idx_object_revisions_user_id   ON object_revisions (user_id);
-CREATE INDEX idx_object_revisions_agent_run ON object_revisions (agent_run_id)
-  WHERE agent_run_id IS NOT NULL;
+CREATE INDEX idx_object_revisions_agent_run ON object_revisions (agent_run_id);
 ```
 
 ---
@@ -68,6 +68,10 @@ Every MCP write tool call creates one `agent_runs` row. That row records:
 - Whether it succeeded or errored
 
 For each object modified by the tool call, a corresponding `object_revisions` row is created and linked via `agent_run_id`. This means a single `agent_runs` row may have many `object_revisions` rows (e.g., if a tool archives 10 objects at once).
+
+Phase 6B currently creates revisions for chat structured-summary preview and apply writes.
+The snapshot is intentionally limited to chat summary fields rather than duplicating the full
+transcript.
 
 User-initiated edits (from the browser editor) also create `object_revisions` rows, but with `agent_run_id = null` and `changed_by = "user:<user_id>"`. This keeps the revision log complete regardless of whether a human or agent made the change.
 

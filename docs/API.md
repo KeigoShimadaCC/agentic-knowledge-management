@@ -783,16 +783,73 @@ ChatGPT batch exports return one item per conversation. Malformed JSON returns `
 | `POST` | `/api/v1/chats/{id}/restore` | Restore and enqueue reindex |
 | `POST` | `/api/v1/chats/{id}/reindex` | Enqueue chat reindex |
 
+### Structured Chat Summaries
+
+Structured summaries are Phase 6B AI-backed endpoints. They require `OPENAI_API_KEY` and
+return `503 {"detail":"ai_disabled"}` when AI is not configured. No transcript content leaves
+the machine until the user clicks Generate in the chat detail UI or calls the preview endpoint.
+
+| Method | Path | Notes |
+| --- | --- | --- |
+| `POST` | `/api/v1/chats/{id}/structured-summary` | Generate and store a validated preview; creates `agent_runs` and `object_revisions` rows |
+| `GET` | `/api/v1/chats/{id}/structured-summary` | Read the current preview/applied summary |
+| `POST` | `/api/v1/chats/{id}/structured-summary/apply` | Apply a preview or supplied summary, create/reuse claims/tasks, link edges, enqueue reindex |
+
+Preview response:
+
+```json
+{
+  "structured_summary": {
+    "title": "Structured planning chat",
+    "summary": "Concise grounded summary.",
+    "date_range": {"start": null, "end": null},
+    "topics": ["structured import"],
+    "key_decisions": [
+      {
+        "decision": "Use explicit apply before creating objects.",
+        "rationale": "AI writes must be auditable.",
+        "turn_refs": [1],
+        "confidence": "high"
+      }
+    ],
+    "open_questions": [],
+    "action_items": [],
+    "claims": [],
+    "concepts": [],
+    "suggested_links": [],
+    "warnings": []
+  },
+  "agent_run_id": "uuid",
+  "status": "previewed"
+}
+```
+
+Apply request:
+
+```json
+{
+  "structured_summary": null,
+  "create_claims": true,
+  "create_tasks": true,
+  "create_concepts": false,
+  "link_existing_objects": true
+}
+```
+
+When `structured_summary` is `null`, the server applies the stored preview. Claims are linked
+to the chat with `derives_from`; tasks are linked with `created_from`. Concept object creation
+is deferred; concepts stay in the stored summary.
+
 ### `GET /api/v1/search/keyword`
 
-Runs Postgres full-text search across pages, sources, and chats.
+Runs Postgres full-text search across pages, sources, chats, and generic claim/task objects.
 
 Query parameters:
 
 | Name | Type | Notes |
 | --- | --- | --- |
 | `q` | string | Required; minimum length `1` |
-| `kind` | string | Optional object kind filter, for example `page`, `source`, or `chat` |
+| `kind` | string | Optional object kind filter, for example `page`, `source`, `chat`, `claim`, or `task` |
 | `source_type` | string | Optional source type filter when searching sources |
 | `limit` | integer | Default `20`; min `1`; max `100` |
 | `offset` | integer | Default `0`; min `0` |

@@ -20,28 +20,28 @@ Turn imported chats into reusable structured knowledge. Users explicitly generat
 
 ## Definition of Done
 
-- [ ] Minimal AI client, revision service, and Claim/Task generic object support exist.
-- [ ] Chat structured summary fields exist and are migrated.
-- [ ] Strict structured summary schema validates AI output and turn references.
-- [ ] Preview endpoint generates and stores a reviewable structured summary.
-- [ ] Apply endpoint persists summary, creates revisions, logs agent runs, creates/reuses Claim/Task objects, creates graph edges, and enqueues reindex.
-- [ ] Chat detail UI supports generate, preview, apply, applied summary, extracted knowledge, linked objects, provenance, and disabled/error states.
-- [ ] Keyword search finds applied structured summaries and extracted Claim/Task objects without API keys.
-- [ ] Tests mock AI provider and cover auth, disabled AI, malformed AI JSON, preview, apply, idempotency, edges, turn refs, reindex, search, and cross-user isolation.
-- [ ] Docs and `PROGRESS.md` are updated.
-- [ ] Small commits are pushed after verified slices.
+- [x] Minimal AI client, revision service, and Claim/Task generic object support exist.
+- [x] Chat structured summary fields exist and are migrated.
+- [x] Strict structured summary schema validates AI output and turn references.
+- [x] Preview endpoint generates and stores a reviewable structured summary.
+- [x] Apply endpoint persists summary, creates revisions, logs agent runs, creates/reuses Claim/Task objects, creates graph edges, and enqueues reindex.
+- [x] Chat detail UI supports generate, preview, apply, applied summary, extracted knowledge, linked objects, provenance, and disabled/error states.
+- [x] Keyword search finds applied structured summaries and extracted Claim/Task objects without API keys.
+- [x] Tests mock AI provider and cover auth, disabled AI, malformed AI JSON, preview, apply, idempotency, edges, turn refs, reindex, search, and cross-user isolation.
+- [x] Docs and `PROGRESS.md` are updated.
+- [x] Small commits are pushed after verified slices.
 
 ## Subtask Checklist
 
-- [ ] Subtask 0 — Audit and Phase 6B plan
-- [ ] Subtask 1 — Minimal AI/revision/claim-task prerequisites
-- [ ] Subtask 2 — Structured summary data model
-- [ ] Subtask 3 — Structured summary schema and prompt
-- [ ] Subtask 4 — Structured summary preview API
-- [ ] Subtask 5 — Apply structured summary and extracted objects
-- [ ] Subtask 6 — Search/index integration
-- [ ] Subtask 7 — Chat detail UI
-- [ ] Subtask 8 — Tests and docs
+- [x] Subtask 0 — Audit and Phase 6B plan
+- [x] Subtask 1 — Minimal AI/revision/claim-task prerequisites
+- [x] Subtask 2 — Structured summary data model
+- [x] Subtask 3 — Structured summary schema and prompt
+- [x] Subtask 4 — Structured summary preview API
+- [x] Subtask 5 — Apply structured summary and extracted objects
+- [x] Subtask 6 — Search/index integration
+- [x] Subtask 7 — Chat detail UI
+- [x] Subtask 8 — Tests and docs
 
 ## Data Model Plan
 

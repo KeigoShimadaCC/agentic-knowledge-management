@@ -25,7 +25,7 @@ The full product vision is in [`project-phases/IDEA-DRAFT.md`](project-phases/ID
 
 ## Current Status
 
-**Phase 1 — Foundation** ✅ and **Phase 2 — Sources & Rich Media** ✅ are complete. **Phase 3 — Search** and backend-first **Phase 4 — Graph Lite** are in progress.
+Phases 1-4, Phase 6A Chat Import Lite, and Phase 6B Structured Chat Import are complete. Phase 5 AI Assistant/Inbox and Phase 7 MCP remain planned.
 
 See [`PROGRESS.md`](PROGRESS.md) for the canonical progress tracker.
 
@@ -33,8 +33,12 @@ See [`PROGRESS.md`](PROGRESS.md) for the canonical progress tracker.
 |---|---|
 | Phase 1 — Foundation | ✅ Complete (25 tests) |
 | Phase 2 — Sources & Rich Media | ✅ Complete (45 tests) |
-| Phase 3 — Search | ⬜ In progress |
-| Phase 4 — Graph Lite | ⬜ Backend in progress |
+| Phase 3 — Search | ✅ Complete |
+| Phase 4 — Graph Lite | ✅ Complete |
+| Phase 5 — AI Assistant + Inbox/Triage | ⬜ Planned |
+| Phase 6A — Chat Import Lite | ✅ Complete |
+| Phase 6B — Structured Chat Import | ✅ Complete |
+| Phase 7 — MCP Server | ⬜ Planned |
 
 **Phase 2 added:**
 - Typed `source` objects (PDF, image, video, YouTube, web article, CSV)
@@ -272,7 +276,8 @@ The complete product is built across 9 phases. Phase 1 is done; phases 2–9 are
 | 3 — Search | Chunking, Postgres FTS, Qdrant vectors, hybrid search, Cmd+K UI | Done |
 | 4 — Graph Lite | Typed edge API, backlinks, related objects from Postgres; Kùzu later | Done |
 | 5 — AI Assistant + Inbox/Triage | AI sidebar, summarize/extract/suggest, KB Q&A, triage inbox | Planned |
-| 6A — Chat Import Lite | Raw upload/paste of ChatGPT/Claude/Markdown/text exports; searchable chats | In progress |
+| 6A — Chat Import Lite | Raw upload/paste of ChatGPT/Claude/Markdown/text exports; searchable chats | Done |
+| 6B — Structured Chat Import | AI summaries, extracted claims/tasks, turn-grounded graph links | Done |
 | 7 — MCP Server | Staged: read/search tools → create tools → update/archive tools | Planned |
 | 8 — Workspaces | Multi-pane layout engine, saved workspaces, AI scoped to workspace | Planned |
 | 9 — Career Memory | Project schema UI, resume bullet generator, interview story generator | Planned |
@@ -283,7 +288,7 @@ Each phase has a detailed spec in [`project-phases/`](project-phases/).
 
 ## MCP & Agent Access
 
-From Phase 6, KnowledgeOS exposes a local MCP server at `:8765`.
+Phase 7 will expose KnowledgeOS through a local MCP server.
 
 **Read/search tools:** `search_objects`, `hybrid_search`, `get_object`, `get_page`, `get_related_objects`, `answer_from_kb`  
 **Write tools:** `create_page`, `update_page`, `create_claim`, `create_edge`, `archive_object`  
