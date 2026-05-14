@@ -92,14 +92,21 @@ Turn KnowledgeOS from a storage/ingestion system into a **retrieval system**. Al
 **Goal**: Add embedding-tracking fields to `chunks`, add `openai_api_key` to config, save this plan to repo.
 
 **Files modified**:
-- `services/api/app/models/chunk.py` — added `content_hash`, `embedding_status`, `qdrant_point_id`, `source_locator`, `updated_at`
+- `services/api/app/models/chunk.py` — added `user_id`, `source_locator`, `content_hash`, `embedding_status`, `embedding_model`, `embedded_at`, `qdrant_point_id`, `updated_at`
 - `services/api/app/config.py` — added `openai_api_key`, `embedding_model`, `embedding_dimension`, `qdrant_collection`
-- `services/api/alembic/versions/0003_chunks_search_fields.py` — additive migration
+- `services/api/alembic/versions/0003_chunks_search_fields.py` — additive migration (user_id + all search fields)
+- `docs/DATA_MODEL.md` — corrected chunks table documentation
 - `project-phases/PHASE-3-SEARCH.md` — this plan
+- `README.md` — Phase 2 complete, Phase 3 next, 45 tests
+- `PROGRESS.md` — revised roadmap
+- `docs/ARCHITECTURE.md` — offline/degradation behavior
+- `docs/SECURITY.md` — offline/degradation + revision history ref
+- `docs/AGENT_GUIDE.md` — Phase 2 is live, Phase 3 search guidance
+- `docs/REVISION_HISTORY.md` — new: design doc for future agent write auditing
+- `docs/SEARCH_EVAL.md` — new: search eval fixture guide
+- `tests/fixtures/search_eval_cases.json` — new: eval query cases
 
-**Validation**: 45 tests still passing, migration applied cleanly.
-
-**Commit**: `chore: add search fields to chunks table (migration 0003) and embedding config`
+**Commit**: `feat(db): prepare chunks table for idempotent search indexing`
 
 ---
 
