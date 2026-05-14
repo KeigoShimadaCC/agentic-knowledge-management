@@ -77,11 +77,11 @@ Turn KnowledgeOS from a storage/ingestion system into a **retrieval system**. Al
 - [x] Subtask 1 — Embedding provider abstraction + Qdrant collection setup
 - [x] Subtask 2 — Chunking pipeline (page + source content → chunks table)
 - [x] Subtask 3 — Reindex worker jobs (reindex_object, reindex_all)
-- [ ] Subtask 4 — Keyword search API (`GET /search/keyword`)
-- [ ] Subtask 5 — Vector search API (`POST /search/vector`)
-- [ ] Subtask 6 — Hybrid search API (`POST /search/hybrid`)
-- [ ] Subtask 7 — Search UI (Cmd+K, results page, mode selector)
-- [ ] Subtask 8 — Tests + documentation
+- [x] Subtask 4 — Keyword search API (`GET /search/keyword`)
+- [x] Subtask 5 — Vector search API (`POST /search/vector`)
+- [x] Subtask 6 — Hybrid search API (`POST /search/hybrid`)
+- [x] Subtask 7 — Search UI (Cmd+K, results page, mode selector)
+- [x] Subtask 8 — Tests + documentation
 
 ---
 
