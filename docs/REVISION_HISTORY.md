@@ -36,7 +36,7 @@ CREATE INDEX idx_object_revisions_agent_run ON object_revisions (agent_run_id);
 
 ---
 
-## Scope of `before_json` / `after_json`
+## Scope of `before_snapshot` / `after_snapshot`
 
 A revision captures the complete state of the affected specialization row plus the base `objects` row at the time of change. For a page update:
 
@@ -56,7 +56,7 @@ For a source soft-delete:
 }
 ```
 
-`before_json` is `null` for `create` events. `after_json` is `null` for hard-delete events (which we don't currently support — soft-delete only).
+Snapshots are stored as JSON objects. Create-like changes use an empty `before_snapshot`; hard-delete events are not supported because KnowledgeOS uses soft deletes.
 
 ---
 
@@ -82,9 +82,9 @@ User-initiated edits (from the browser editor) also create `object_revisions` ro
 Rolling back a page to a previous revision:
 
 1. Read the target `object_revisions` row for the desired state.
-2. Extract `before_json.page` and `before_json.object`.
+2. Extract `before_snapshot.page` and `before_snapshot.object`.
 3. Write those values back to the `pages` and `objects` rows via the API.
-4. Create a new `object_revisions` row with `change_type = "restore"`, `before_json` = current state, `after_json` = restored state, `change_summary = "Restored to revision <id>"`.
+4. Create a new `object_revisions` row with the next `rev_num`, `before_snapshot` = current state, and `after_snapshot` = restored state.
 
 Rollback is itself an audited write — it does not delete the revision that is being undone.
 
@@ -103,8 +103,8 @@ Restored objects (clearing `deleted_at`) produce a `"restore"` revision row that
 When implementing, consider:
 
 1. **Write the revision inside the same DB transaction as the object change.** If the transaction rolls back, the revision row rolls back too. No orphaned revisions.
-2. **Do not snapshot binary content.** `before_json.page.content_json` is fine for structured Tiptap JSON. Never put file paths or asset binaries into revision JSON.
-3. **Keep `before_json` compact.** Exclude `created_at` from the diff payload (it never changes). Include `updated_at`, `version`, and all user-visible fields.
+2. **Do not snapshot binary content.** `before_snapshot.page.content_json` is fine for structured Tiptap JSON. Never put asset binaries into revision JSON.
+3. **Keep snapshots compact.** Exclude `created_at` from the diff payload (it never changes). Include `updated_at`, version-like fields, and all user-visible fields.
 4. **Index for fast history lookup.** The `object_id` index is the most important — users will view history for a specific object.
 5. **Rate-limit revision writes.** The 800ms Tiptap auto-save creates a new `object_revisions` row on every save if not throttled. Consider: write revision only if `updated_at` gap > 30s, or only when the agent (not user auto-save) triggers the change.
 

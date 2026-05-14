@@ -246,9 +246,9 @@ Behavior:
 
 Agents must not simulate ingestion by writing rows or files directly.
 
-## Search (Phase 3 — In Progress)
+## Search (Phase 3 — Live)
 
-Once Phase 3 is complete, agents should use the search endpoints rather than listing all objects:
+Agents should use the search endpoints rather than listing all objects:
 
 ```text
 GET /api/v1/search/keyword?q=embeddings&kind=page

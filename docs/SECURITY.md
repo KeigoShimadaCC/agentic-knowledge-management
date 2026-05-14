@@ -48,9 +48,9 @@
 - Rate limits on ingestion and AI calls (Phase 5+)
 - MCP tools return redacted content: never `api_keys`, session secrets, or password hashes
 
-## Revision History (Planned — Phase 5/7)
+## Revision History (Phase 5+)
 
-Before MCP write tools (`update_page`, `archive_object`) are enabled, a revision history system must be in place so any agent-authored change is fully auditable and reversible.
+Revision history is implemented and is required before MCP write tools (`update_page`, `archive_object`) are enabled. Any agent-authored change must be fully auditable and reversible.
 
 Implemented `object_revisions` table:
 
@@ -60,20 +60,19 @@ object_revisions (
   user_id uuid not null references users(id),
   object_id uuid not null references objects(id),
   agent_run_id uuid null references agent_runs(id),
-  change_type text not null,       -- 'create', 'update', 'soft_delete', 'restore'
-  before_json jsonb null,
-  after_json jsonb null,
-  changed_by text not null,        -- 'user:<user_id>' or 'agent:<agent_name>'
-  change_summary text null,
+  rev_num integer not null,
+  changed_by varchar(64) not null, -- 'user:<user_id>' or 'agent:<agent_name>'
+  before_snapshot jsonb not null,
+  after_snapshot jsonb not null,
   created_at timestamptz not null
 )
 ```
 
 Design decisions:
-- `before_json` and `after_json` store a diff-friendly snapshot of the affected row
+- `before_snapshot` and `after_snapshot` store a diff-friendly snapshot of the affected row
 - Every MCP write that modifies a page or object must create an `object_revisions` row
 - `agent_run_id` links the revision to the audit log for the triggering agent action
-- Rollback means copying `before_json` back to the live row and creating a new revision row
+- Rollback means copying the previous snapshot back to the live row and creating a new revision row
 - Soft-deleted objects can be inspected via revision history even after deletion
 
 See `docs/REVISION_HISTORY.md` for the full design.
@@ -106,7 +105,7 @@ FastAPI accepts an `X-KOS-Internal-Token` header as an alternative to the sessio
 - **No write tools** registered in Phase 7A regardless of config flags.
 - **No shell execution** — no tools that run commands or access the filesystem arbitrarily.
 - **Secret redaction** — `redact_dict()` applied to every tool response. Keys: `api_key`, `openai_api_key`, `session_secret`, `mcp_internal_token`, `token`, `token_hash`, `password`, `password_hash`, `secret`.
-- **`answer_from_kb`** — registered as a disabled stub. It calls the Phase 5 AI endpoint when that becomes available; until then it returns a clear error.
+- **`answer_from_kb`** — registered as a disabled stub. The Phase 5 AI endpoint now exists, but MCP wiring is still pending; until then it returns a clear error.
 
 ## Backups
 

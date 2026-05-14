@@ -1,6 +1,6 @@
 # KnowledgeOS Architecture
 
-KnowledgeOS is a local-first personal AI knowledge base designed to run on a Mac with Docker Compose. Phase 1 establishes the durable core: a browser UI, an authenticated API, relational metadata in Postgres, Redis-backed background jobs, and content-addressed files on the local filesystem.
+KnowledgeOS is a local-first personal AI knowledge base designed to run on a Mac with Docker Compose. The current shipped stack includes the browser UI, authenticated FastAPI API, Postgres source of truth, Redis-backed background jobs, content-addressed local files, search, graph traversal, AI assistant routes, chat import, read-only MCP, and Workspace Lite.
 
 ## System Diagram
 
@@ -22,6 +22,12 @@ FastAPI api (host :8001 -> container :8000)
   |---- Redis (:6379)     RQ queue and job coordination
   |
   \---- Filesystem        ~/KnowledgeOS/library/assets/{prefix}/{sha}/original{ext}
+
+MCP client
+  |
+  | stdio -> kos-mcp -> X-KOS-Internal-Token
+  v
+FastAPI api
 
 RQ worker
   |\
@@ -52,7 +58,7 @@ The API is the system boundary for all application state changes. It validates r
 
 The worker (`services/worker/kos_worker/`) runs as a separate process via `rq worker kos-ingest`. It is responsible for slow ingestion tasks: extracting text from PDFs, generating thumbnails, reading CSV previews, fetching YouTube transcripts, scraping web articles, and updating source status after asynchronous work completes.
 
-Postgres is the source of truth for identity, object metadata, page documents, asset records, graph edges, ingestion status, and agent run records. The filesystem is the source of truth for large original files and later extracted derivatives. Redis is transient coordination state and should not be treated as durable storage.
+Postgres is the source of truth for identity, object metadata, page documents, asset records, graph edges, chat imports, revisions, ingestion status, and agent run records. The filesystem is the source of truth for large original files and later extracted derivatives. Redis is transient coordination state and should not be treated as durable storage.
 
 ## Backup and Restore Boundary
 

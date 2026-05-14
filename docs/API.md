@@ -319,13 +319,7 @@ Soft-deletes an object by setting `deleted_at`.
 
 Request body: none.
 
-Response:
-
-```json
-{
-  "ok": true
-}
-```
+Response: object shape with `deleted_at` set.
 
 Status codes: `200`, `401`, `403`, `404`.
 
@@ -510,13 +504,7 @@ Soft-deletes the asset object. The stored original is retained so the asset can 
 
 Request body: none.
 
-Response:
-
-```json
-{
-  "ok": true
-}
-```
+Response: object shape with `deleted_at` set.
 
 Status codes: `200`, `401`, `403`, `404`.
 
