@@ -131,16 +131,33 @@ See [`project-phases/PHASE-3-SEARCH.md`](project-phases/PHASE-3-SEARCH.md) for t
 
 ---
 
-## Phase 7 — MCP Server ⬜ Planned
+## Phase 7A — MCP Read/Search + Safety Foundation ⬜ In Progress
 
-**Goal:** Expose KnowledgeOS as a local MCP server. Staged rollout: read/search first, then create, then update/archive (requires revision history from Phase 5).
+**Goal:** Safe local-only stdio MCP server with read/search tools. No write tools. No shell. No arbitrary filesystem access. `answer_from_kb` deferred until Phase 5 AI endpoint is built.
 
-- [ ] **v1 — Read/Search Tools:** `search_objects`, `hybrid_search`, `get_object`, `get_page`, `get_source`, `get_related_objects`, `answer_from_kb`
-- [ ] **v2 — Create Tools:** `create_page`, `create_edge`, `ingest_url`, `ingest_file`; each call validates agent identity + writes `agent_runs`
-- [ ] **v3 — Update/Archive Tools (requires Phase 5 object_revisions):** `update_page`, `archive_object`; before/after diff logged; rollback supported
-- [ ] **MCP resources:** `knowledgeos://objects/{id}`, `knowledgeos://pages/{id}`, `knowledgeos://sources/{id}`, `knowledgeos://search?q=…`
-- [ ] **Safety:** no shell execution; no paths outside `LIBRARY_ROOT`; API keys redacted; per-tool enable/disable
-- [ ] **Tests + docs:** `docs/MCP_TOOLS.md` full reference; `docs/SECURITY.md` updated
+See [`project-phases/PHASE-7A-MCP.md`](project-phases/PHASE-7A-MCP.md) for the full subtask spec.
+
+- [x] **Subtask 0** — Audit + plan files: create phase doc, update PROGRESS.md
+- [ ] **Subtask 1** — MCP config + safety foundation: `McpSettings`, `redact_dict`, `pyproject.toml`, `.env.example`
+- [ ] **Subtask 2** — FastAPI internal token auth: `config.py` + `deps.py` + `test_mcp_auth.py`
+- [ ] **Subtask 3** — MCP API client: `client.py` (httpx, 6 methods)
+- [ ] **Subtask 4** — MCP server scaffold: `server.py` + `tools.py` skeleton + tool registry
+- [ ] **Subtask 5** — Search tools: `search_objects`, `hybrid_search` (with 503 fallback)
+- [ ] **Subtask 6** — Object/page/source tools: `get_object`, `get_page`, `get_source`
+- [ ] **Subtask 7** — Graph tool + `answer_from_kb` stub: `get_related_objects`, disabled stub
+- [ ] **Subtask 8** — Tests: `test_config.py`, `test_tools.py`, `test_mcp_auth.py`
+- [ ] **Subtask 9** — Docs: `MCP_TOOLS.md`, `SECURITY.md`, `AGENT_GUIDE.md`, `README.md`
+
+---
+
+## Phase 7B — MCP Write Tools ⬜ Planned
+
+**Goal:** Add create/update/archive write tools to MCP. Requires Phase 5 `object_revisions` table.
+
+- [ ] **v2 — Create Tools:** `create_page`, `create_edge`, `ingest_url`, `ingest_file`; validates agent identity + writes `agent_runs`
+- [ ] **v3 — Update/Archive Tools:** `update_page`, `archive_object`; before/after diff logged; rollback supported
+- [ ] **MCP resources:** `knowledgeos://objects/{id}`, `knowledgeos://pages/{id}`, `knowledgeos://sources/{id}`
+- [ ] **Tests + docs**
 
 ---
 
@@ -184,11 +201,12 @@ See [`project-phases/PHASE-3-SEARCH.md`](project-phases/PHASE-3-SEARCH.md) for t
 | 4 | Graph Lite | ✅ Complete | 6 / 6 subtasks |
 | 5 | AI Assistant + Inbox/Triage | ⬜ Planned | 0 / 12 subtasks |
 | 6 | Chat Import | ⬜ Planned | 0 / 8 subtasks |
-| 7 | MCP Server (staged) | ⬜ Planned | 0 / 6 subtasks |
+| 7A | MCP Read/Search | ⬜ In Progress | 1 / 10 subtasks |
+| 7B | MCP Write Tools | ⬜ Planned | 0 / 4 subtasks |
 | 8 | Multi-Pane Workspaces | ⬜ Planned | 0 / 8 subtasks |
 | 9 | Career & Project Memory | ⬜ Planned | 0 / 8 subtasks |
 
-**Total:** 33 / 75 subtasks complete
+**Total:** 34 / 80 subtasks complete
 
 **Key cross-cutting concepts to track:**
 - Inbox/Triage (Phase 5): AI-classified staging area for unprocessed items
