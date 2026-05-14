@@ -113,13 +113,17 @@ async def summarize_object(
 async def extract_claims(
     db: AsyncSession, user_id: uuid.UUID, object_id: uuid.UUID
 ) -> ExtractResponse:
-    return await _extract(db, user_id, object_id, "claim", "extract_claims", prompts.EXTRACT_CLAIMS)
+    return await _extract(
+        db, user_id, object_id, "claim", "extract_claims", prompts.EXTRACT_CLAIMS
+    )
 
 
 async def extract_tasks(
     db: AsyncSession, user_id: uuid.UUID, object_id: uuid.UUID
 ) -> ExtractResponse:
-    return await _extract(db, user_id, object_id, "task", "extract_tasks", prompts.EXTRACT_TASKS)
+    return await _extract(
+        db, user_id, object_id, "task", "extract_tasks", prompts.EXTRACT_TASKS
+    )
 
 
 async def _extract(

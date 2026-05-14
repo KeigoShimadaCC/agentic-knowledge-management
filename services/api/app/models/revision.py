@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import uuid
 from datetime import datetime
 
@@ -11,9 +13,7 @@ from app.db.base import Base
 class ObjectRevision(Base):
     __tablename__ = "object_revisions"
 
-    id: Mapped[uuid.UUID] = mapped_column(
-        primary_key=True, server_default=text("gen_random_uuid()")
-    )
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
     object_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("objects.id", ondelete="CASCADE"))
     user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"))
     rev_num: Mapped[int] = mapped_column(Integer, nullable=False)
@@ -28,8 +28,8 @@ class ObjectRevision(Base):
     )
 
     __table_args__ = (
+        UniqueConstraint("object_id", "rev_num", name="uq_object_revisions_object_rev"),
         Index("ix_object_revisions_object_id", "object_id"),
         Index("ix_object_revisions_user_id", "user_id"),
         Index("ix_object_revisions_agent_run_id", "agent_run_id"),
-        UniqueConstraint("object_id", "rev_num"),
     )

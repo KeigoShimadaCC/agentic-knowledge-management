@@ -8,7 +8,6 @@ from fastapi import HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
-from app.core.redaction import redact_mapping
 from app.models.agent_run import AgentRun
 from app.services.agent_run_service import create_agent_run, finish_agent_run
 
@@ -32,13 +31,7 @@ async def call_ai(
         db,
         user_id=user_id,
         agent_type=agent_type,
-        input_payload=redact_mapping(
-            {
-                "messages": messages,
-                "context": input_context or {},
-                "temperature": temperature,
-            }
-        ),
+        input_payload={"context": input_context or {}, "temperature": temperature},
         model=selected_model,
     )
 
