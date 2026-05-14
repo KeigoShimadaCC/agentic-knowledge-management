@@ -13,6 +13,7 @@ from app.models.object import KosObject
 from app.models.page import Page
 from app.models.source import Source
 from app.search.chunker import chunk_text
+from app.services.chat_structured_service import structured_summary_search_text
 
 
 async def chunk_object(db: AsyncSession, object_id: uuid.UUID) -> list[Chunk]:
@@ -70,7 +71,13 @@ async def _extract_text(db: AsyncSession, obj: KosObject) -> str:
     if obj.kind == "chat":
         result = await db.execute(select(Chat).where(Chat.id == obj.id))
         chat = result.scalar_one_or_none()
-        return _join_text(obj.title, chat.content_text if chat else None)
+        if chat is None:
+            return _join_text(obj.title, obj.description)
+        return _join_text(
+            obj.title,
+            chat.content_text,
+            structured_summary_search_text(chat.structured_summary),
+        )
 
     return _join_text(obj.title, obj.description)
 

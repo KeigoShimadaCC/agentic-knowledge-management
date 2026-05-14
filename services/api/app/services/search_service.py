@@ -27,6 +27,12 @@ async def keyword_search(
         else []
     )
     rows += await _fts_chats(db, user_id, q, limit, offset) if not kind or "chat" in kinds else []
+    generic_kinds = sorted(kinds.intersection({"claim", "task"}))
+    rows += (
+        await _fts_generic_objects(db, user_id, q, generic_kinds, limit, offset)
+        if not kind or generic_kinds
+        else []
+    )
     rows.sort(key=lambda r: r.score, reverse=True)
     return rows[:limit]
 
@@ -302,12 +308,17 @@ async def _fts_chats(
             o.tags,
             o.updated_at,
             ts_rank_cd(
-                to_tsvector('english', coalesce(o.title,'') || ' ' || coalesce(c.content_text,'')),
+                to_tsvector(
+                    'english',
+                    coalesce(o.title,'') || ' ' ||
+                    coalesce(c.content_text,'') || ' ' ||
+                    coalesce(c.structured_summary::text,'')
+                ),
                 plainto_tsquery('english', :q)
             ) AS score,
             ts_headline(
                 'english',
-                coalesce(c.content_text,''),
+                coalesce(c.content_text,'') || ' ' || coalesce(c.structured_summary::text,''),
                 plainto_tsquery('english', :q),
                 'MaxWords=30, MinWords=10, StartSel=<mark>, StopSel=</mark>'
             ) AS snippet
@@ -315,13 +326,87 @@ async def _fts_chats(
         JOIN chats c ON c.id = o.id
         WHERE o.deleted_at IS NULL
           AND o.user_id = :user_id
-          AND to_tsvector('english', coalesce(o.title,'') || ' ' || coalesce(c.content_text,''))
+          AND to_tsvector(
+                'english',
+                coalesce(o.title,'') || ' ' ||
+                coalesce(c.content_text,'') || ' ' ||
+                coalesce(c.structured_summary::text,'')
+              )
               @@ plainto_tsquery('english', :q)
         ORDER BY score DESC
         LIMIT :limit OFFSET :offset
         """
     )
     params = {"q": q, "user_id": str(user_id), "limit": limit, "offset": offset}
+    result = await db.execute(sql, params)
+    rows = result.fetchall()
+    return [
+        SearchResult(
+            id=row.id,
+            kind=row.kind,
+            title=row.title,
+            tags=list(row.tags) if row.tags else [],
+            score=float(row.score),
+            updated_at=row.updated_at,
+            snippet=row.snippet or None,
+        )
+        for row in rows
+    ]
+
+
+async def _fts_generic_objects(
+    db: AsyncSession,
+    user_id: uuid.UUID,
+    q: str,
+    kinds: list[str],
+    limit: int,
+    offset: int,
+) -> list[SearchResult]:
+    sql = text(
+        """
+        SELECT
+            o.id,
+            o.kind,
+            o.title,
+            o.tags,
+            o.updated_at,
+            ts_rank_cd(
+                to_tsvector(
+                    'english',
+                    coalesce(o.title,'') || ' ' ||
+                    coalesce(o.description,'') || ' ' ||
+                    coalesce(o.metadata::text,'')
+                ),
+                plainto_tsquery('english', :q)
+            ) AS score,
+            ts_headline(
+                'english',
+                coalesce(o.description,'') || ' ' || coalesce(o.metadata::text,''),
+                plainto_tsquery('english', :q),
+                'MaxWords=30, MinWords=10, StartSel=<mark>, StopSel=</mark>'
+            ) AS snippet
+        FROM objects o
+        WHERE o.deleted_at IS NULL
+          AND o.user_id = :user_id
+          AND o.kind = ANY(:kinds)
+          AND to_tsvector(
+                'english',
+                coalesce(o.title,'') || ' ' ||
+                coalesce(o.description,'') || ' ' ||
+                coalesce(o.metadata::text,'')
+              )
+              @@ plainto_tsquery('english', :q)
+        ORDER BY score DESC
+        LIMIT :limit OFFSET :offset
+        """
+    )
+    params = {
+        "q": q,
+        "user_id": str(user_id),
+        "kinds": kinds,
+        "limit": limit,
+        "offset": offset,
+    }
     result = await db.execute(sql, params)
     rows = result.fetchall()
     return [
@@ -370,5 +455,5 @@ async def _load_sources_by_ids(db: AsyncSession, ids: list[str]) -> dict:
 
 def _resolve_kinds(kind: str | None) -> set[str]:
     if kind is None:
-        return {"page", "source", "asset", "chat"}
+        return {"page", "source", "asset", "chat", "claim", "task"}
     return {kind}
