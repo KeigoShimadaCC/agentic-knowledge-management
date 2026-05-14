@@ -287,7 +287,7 @@ See [`project-phases/PHASE-7A-MCP.md`](project-phases/PHASE-7A-MCP.md) for the f
 *Phase deviations / known gaps surfaced during this audit:*
 - **Phase 5 inbox endpoint path**: ✅ resolved — `PHASE-5-AI-ASSISTANT.md` updated to `GET /api/v1/ai/inbox` (was `/api/v1/objects/inbox`). Frontend and code were already correct.
 - **Phase 7A `answer_from_kb` stub is obsolete**: `services/mcp/kos_mcp/tools.py` still raises `"Phase 5 AI assistant endpoint has not been implemented yet."` even though Phase 5 is now complete. Wiring this to `POST /api/v1/ai/answer` is a clean Phase 7A follow-up (not Phase 7B since it is read-only).
-- **Phase 2 docker-compose gap**: `infra/docker-compose.yml` defines `postgres`, `redis`, `qdrant`, `api`, `web` but no `worker` service. RQ jobs (PDF extraction, embedding, reindex) only run if the user manually starts `rq worker kos-ingest` on the host. `docker compose up -d` alone leaves all source ingestion stuck in `pending`.
+- **Phase 2 docker-compose gap**: ✅ resolved — added `kos-worker` service to `infra/docker-compose.yml` using new `infra/Dockerfile.worker`. `docker compose up -d` now starts the RQ worker automatically.
 - **Phase 2 worker tests missing**: `tests/worker/` was specified in `PHASE-2-SOURCES.md` (extractor tests with `sample.pdf`, `sample.jpg`, `sample.csv`) but does not exist. Extractor logic in `services/worker/kos_worker/extractors/` has no automated coverage.
 - **Hardening track**: only Subtasks 0 + 1 are complete (see section above). Snippet sanitization, JP fixtures, debug UI, and index-status endpoint are still open.
 

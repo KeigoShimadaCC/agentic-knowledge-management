@@ -1,0 +1,16 @@
+FROM python:3.12-slim AS base
+WORKDIR /app
+RUN pip install --no-cache-dir uv && \
+    apt-get update && apt-get install -y --no-install-recommends curl && \
+    rm -rf /var/lib/apt/lists/*
+
+FROM base AS development
+# Copy workspace root + both package manifests for dependency resolution
+COPY pyproject.toml uv.lock* ./
+COPY services/api/pyproject.toml ./services/api/
+COPY services/worker/pyproject.toml ./services/worker/
+# Sync all workspace deps (worker needs api models via PYTHONPATH)
+RUN uv sync --frozen --no-install-project
+# Source is provided by volume mounts at runtime
+ENV PYTHONPATH=/app/services/api:/app/services/worker
+CMD [".venv/bin/rq", "worker", "kos-ingest"]
