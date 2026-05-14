@@ -51,7 +51,7 @@ interface SourceCardProps {
 export function SourceCard({ source }: SourceCardProps) {
   return (
     <Link
-      href={`/sources/${source.id}`}
+      href={`/app/sources/${source.id}`}
       className="flex items-start gap-3 rounded-lg border border-gray-800 bg-gray-900 p-3 transition-colors hover:border-gray-600 hover:bg-gray-800"
     >
       <SourceTypeBadge sourceType={source.source_type} />

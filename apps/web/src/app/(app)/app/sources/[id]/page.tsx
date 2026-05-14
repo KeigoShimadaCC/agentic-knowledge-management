@@ -64,7 +64,7 @@ export default function SourceDetailPage({ params }: { params: { id: string } })
   if (!source) {
     return (
       <div className="p-8">
-        <Link href="/sources" className="text-sm text-gray-400 hover:text-white">
+        <Link href="/app/sources" className="text-sm text-gray-400 hover:text-white">
           Back to Sources
         </Link>
         <div className="mt-8 text-gray-500">Source not found</div>
@@ -74,7 +74,7 @@ export default function SourceDetailPage({ params }: { params: { id: string } })
 
   return (
     <div className="p-8">
-      <Link href="/sources" className="text-sm text-gray-400 hover:text-white">
+      <Link href="/app/sources" className="text-sm text-gray-400 hover:text-white">
         Back to Sources
       </Link>
 

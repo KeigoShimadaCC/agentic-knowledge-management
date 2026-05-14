@@ -22,9 +22,9 @@ const navItems = [
   { href: "/app", label: "All Objects", icon: Files },
   { href: "/app/pages", label: "Pages", icon: FileText },
   { href: "/app/assets", label: "Assets", icon: Image },
-  { href: "/sources", label: "Sources", icon: BookOpen },
+  { href: "/app/sources", label: "Sources", icon: BookOpen },
   { href: "/app/chats", label: "Chats", icon: MessageSquareText },
-  { href: "/inbox", label: "Inbox", icon: Inbox },
+  { href: "/app/inbox", label: "Inbox", icon: Inbox },
   { href: "/app/trash", label: "Trash", icon: Trash2 },
 ];
 
