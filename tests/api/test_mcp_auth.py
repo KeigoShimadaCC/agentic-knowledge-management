@@ -17,7 +17,7 @@ async def test_valid_token_grants_access(client: AsyncClient, monkeypatch: pytes
     monkeypatch.setattr(settings, "mcp_internal_token", "test-mcp-token-abc123")
 
     resp = await client.get(
-        "/api/v1/objects/",
+        "/api/v1/objects",
         headers={"X-KOS-Internal-Token": "test-mcp-token-abc123"},
     )
     assert resp.status_code == 200
@@ -34,7 +34,7 @@ async def test_invalid_token_falls_through_to_cookie_auth(
 
     # Wrong token value — falls through to cookie path, no cookie → 401
     resp = await client.get(
-        "/api/v1/objects/",
+        "/api/v1/objects",
         headers={"X-KOS-Internal-Token": "wrong-token"},
     )
     assert resp.status_code == 401
@@ -51,7 +51,7 @@ async def test_empty_token_config_ignores_header(
     monkeypatch.setattr(settings, "mcp_internal_token", "")
 
     resp = await client.get(
-        "/api/v1/objects/",
+        "/api/v1/objects",
         headers={"X-KOS-Internal-Token": "anything"},
     )
     assert resp.status_code == 401
@@ -80,7 +80,7 @@ async def test_token_auth_requires_existing_user(
     monkeypatch.setattr(settings, "mcp_internal_token", "test-token")
 
     resp = await client.get(
-        "/api/v1/objects/",
+        "/api/v1/objects",
         headers={"X-KOS-Internal-Token": "test-token"},
     )
     assert resp.status_code == 401

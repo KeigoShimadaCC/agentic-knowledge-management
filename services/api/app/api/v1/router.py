@@ -1,5 +1,6 @@
 from fastapi import APIRouter
 
+from app.api.v1.ai import router as ai_router
 from app.api.v1.assets import router as assets_router
 from app.api.v1.auth import router as auth_router
 from app.api.v1.chats import router as chats_router
@@ -18,5 +19,6 @@ api_router.include_router(pages_router)
 api_router.include_router(assets_router)
 api_router.include_router(sources_router, prefix="/sources", tags=["sources"])
 api_router.include_router(chats_router)
+api_router.include_router(ai_router)
 api_router.include_router(edges_router, prefix="/edges", tags=["edges"])
 api_router.include_router(search_router)
