@@ -1,6 +1,8 @@
 import type {
   AssetUploadResponse,
   AuthResponse,
+  EdgeCreate,
+  EdgeOut,
   ObjectOut,
   PageCreateResponse,
   PageOut,
@@ -126,3 +128,12 @@ export const getSource = (id: string) => apiFetch<SourceOut>(`/api/v1/sources/${
 
 export const deleteSource = (id: string) =>
   apiFetch<SourceOut>(`/api/v1/sources/${id}`, { method: "DELETE" });
+
+export const createEdge = (data: EdgeCreate) =>
+  apiFetch<EdgeOut>("/api/v1/edges", { method: "POST", body: JSON.stringify(data) });
+
+export const listEdges = (params?: { source_id?: string; target_id?: string; kind?: string }) =>
+  apiFetch<EdgeOut[]>(
+    "/api/v1/edges" +
+      (params ? "?" + new URLSearchParams(params as Record<string, string>).toString() : "")
+  );

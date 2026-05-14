@@ -11,6 +11,7 @@ import {
   Heading3,
   List,
   ListOrdered,
+  Link as LinkIcon,
   Quote,
   Terminal,
 } from "lucide-react";
@@ -39,7 +40,13 @@ function ToolbarButton({ onClick, isActive, children, title }: ToolbarButtonProp
   );
 }
 
-export function EditorToolbar({ editor }: { editor: Editor | null }) {
+export function EditorToolbar({
+  editor,
+  onCite,
+}: {
+  editor: Editor | null;
+  onCite?: () => void;
+}) {
   if (!editor) return null;
 
   return (
@@ -123,6 +130,14 @@ export function EditorToolbar({ editor }: { editor: Editor | null }) {
       >
         <Terminal size={14} />
       </ToolbarButton>
+      {onCite ? (
+        <>
+          <div className="w-px h-4 bg-gray-700 mx-1" />
+          <ToolbarButton onClick={onCite} title="Cite Source">
+            <LinkIcon size={14} />
+          </ToolbarButton>
+        </>
+      ) : null}
     </div>
   );
 }

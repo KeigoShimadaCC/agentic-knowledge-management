@@ -9,8 +9,32 @@ import Link from "@tiptap/extension-link";
 import Image from "@tiptap/extension-image";
 import { EditorContent } from "@tiptap/react";
 import { EditorToolbar } from "@/components/editor/EditorToolbar";
+import { CitationExtension } from "@/components/editor/extensions/CitationExtension";
+import { SourcePicker } from "@/components/editor/SourcePicker";
+import { createEdge } from "@/lib/api";
 import { PageTitle } from "./PageTitle";
 import { useAutoSave } from "@/lib/hooks/useAutoSave";
+
+type JsonValue = string | number | boolean | null | JsonObject | JsonValue[];
+type JsonObject = { [key: string]: JsonValue };
+
+function extractCitationSourceIds(node: JsonValue): string[] {
+  if (!node || typeof node !== "object") return [];
+  if (Array.isArray(node)) return node.flatMap((child) => extractCitationSourceIds(child));
+
+  const attrs = node.attrs;
+  const sourceId =
+    node.type === "citation" &&
+    attrs &&
+    typeof attrs === "object" &&
+    !Array.isArray(attrs) &&
+    typeof attrs.sourceId === "string"
+      ? attrs.sourceId
+      : null;
+
+  const childIds = Array.isArray(node.content) ? extractCitationSourceIds(node.content) : [];
+  return sourceId ? [sourceId, ...childIds] : childIds;
+}
 
 interface PageViewProps {
   pageId: string;
@@ -21,6 +45,7 @@ interface PageViewProps {
 export function PageView({ pageId, initialTitle, initialContent }: PageViewProps) {
   const [title, setTitle] = useState(initialTitle);
   const [wordCount, setWordCount] = useState(0);
+  const [isSourcePickerOpen, setIsSourcePickerOpen] = useState(false);
   const contentRef = useRef<Record<string, unknown>>(initialContent);
   const textRef = useRef<string>("");
 
@@ -30,7 +55,24 @@ export function PageView({ pageId, initialTitle, initialContent }: PageViewProps
     content_text: textRef.current,
   };
 
-  const { status } = useAutoSave(pageId, saveData);
+  const createCitationEdges = useCallback(async () => {
+    if (!pageId) return;
+
+    const sourceIds = Array.from(
+      new Set(extractCitationSourceIds(contentRef.current as JsonObject))
+    );
+    await Promise.all(
+      sourceIds.map(async (sourceId) => {
+        try {
+          await createEdge({ source_id: pageId, target_id: sourceId, kind: "cites" });
+        } catch {
+          // Citation edge writes should not block page auto-save.
+        }
+      })
+    );
+  }, [pageId]);
+
+  const { status } = useAutoSave(pageId, saveData, 800, createCitationEdges);
 
   const editor = useEditor({
     extensions: [
@@ -39,6 +81,7 @@ export function PageView({ pageId, initialTitle, initialContent }: PageViewProps
       Typography,
       Link.configure({ openOnClick: false }),
       Image,
+      CitationExtension,
     ],
     content: Object.keys(initialContent).length > 0 ? initialContent : undefined,
     autofocus: true,
@@ -67,7 +110,7 @@ export function PageView({ pageId, initialTitle, initialContent }: PageViewProps
 
   return (
     <div className="flex flex-col h-full">
-      <EditorToolbar editor={editor} />
+      <EditorToolbar editor={editor} onCite={() => setIsSourcePickerOpen(true)} />
       <div className="flex-1 overflow-y-auto p-8 max-w-3xl mx-auto w-full">
         <PageTitle initialTitle={initialTitle} onTitleChange={handleTitleChange} />
         <EditorContent editor={editor} />
@@ -76,6 +119,13 @@ export function PageView({ pageId, initialTitle, initialContent }: PageViewProps
         <span>{wordCount} words</span>
         <span className={status === "error" ? "text-red-400" : ""}>{saveStatusLabel}</span>
       </div>
+      <SourcePicker
+        isOpen={isSourcePickerOpen}
+        onClose={() => setIsSourcePickerOpen(false)}
+        onSelect={(id, sourceTitle) => {
+          editor?.chain().focus().insertCitation(id, sourceTitle).run();
+        }}
+      />
     </div>
   );
 }

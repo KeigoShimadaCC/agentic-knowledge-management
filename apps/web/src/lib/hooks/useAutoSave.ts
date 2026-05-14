@@ -8,7 +8,8 @@ type SaveStatus = "idle" | "saving" | "saved" | "error";
 export function useAutoSave(
   id: string,
   data: { title?: string; content_json?: Record<string, unknown>; content_text?: string },
-  delayMs = 800
+  delayMs = 800,
+  afterSave?: () => void | Promise<void>
 ) {
   const [status, setStatus] = useState<SaveStatus>("idle");
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -22,6 +23,7 @@ export function useAutoSave(
       setStatus("saving");
       try {
         await updatePage(id, dataRef.current);
+        await afterSave?.();
         setStatus("saved");
       } catch {
         setStatus("error");
@@ -32,7 +34,7 @@ export function useAutoSave(
       if (timerRef.current) clearTimeout(timerRef.current);
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [id, delayMs, JSON.stringify(data)]);
+  }, [id, delayMs, afterSave, JSON.stringify(data)]);
 
   return { status };
 }

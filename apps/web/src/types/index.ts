@@ -102,6 +102,24 @@ export interface SourceCreate {
   tags?: string[];
 }
 
+export interface EdgeCreate {
+  source_id: string;
+  target_id: string;
+  kind: string;
+}
+
+export interface EdgeOut {
+  id: string;
+  user_id: string;
+  source_id: string;
+  target_id: string;
+  kind: string;
+  weight: number;
+  metadata_: Record<string, unknown>;
+  created_at: string;
+  deleted_at: string | null;
+}
+
 export class ApiError extends Error {
   constructor(
     public readonly status: number,
