@@ -20,19 +20,23 @@ async def keyword_search(
     offset: int = 0,
 ) -> list[SearchResult]:
     kinds = _resolve_kinds(kind)
-    rows = await _fts_pages(db, user_id, q, limit, offset) if not kind or "page" in kinds else []
-    rows += (
-        await _fts_sources(db, user_id, q, source_type, limit, offset)
-        if not kind or "source" in kinds
-        else []
-    )
-    rows += await _fts_chats(db, user_id, q, limit, offset) if not kind or "chat" in kinds else []
+    tasks = []
+
+    if not kind or "page" in kinds:
+        tasks.append(_fts_pages(db, user_id, q, limit, offset))
+    if not kind or "source" in kinds:
+        tasks.append(_fts_sources(db, user_id, q, source_type, limit, offset))
+    if not kind or "chat" in kinds:
+        tasks.append(_fts_chats(db, user_id, q, limit, offset))
+    if not kind or "asset" in kinds:
+        tasks.append(_fts_assets(db, user_id, q, limit, offset))
+
     generic_kinds = sorted(kinds.intersection({"claim", "task"}))
-    rows += (
-        await _fts_generic_objects(db, user_id, q, generic_kinds, limit, offset)
-        if not kind or generic_kinds
-        else []
-    )
+    if generic_kinds:
+        tasks.append(_fts_generic_objects(db, user_id, q, generic_kinds, limit, offset))
+
+    results = await asyncio.gather(*tasks)
+    rows = [row for sublist in results for row in sublist]
     rows.sort(key=lambda r: r.score, reverse=True)
     return rows[:limit]
 
@@ -186,33 +190,50 @@ async def _fts_pages(
 ) -> list[SearchResult]:
     sql = text(
         """
+        WITH matches AS (
+            SELECT
+                o.id,
+                o.kind,
+                o.title,
+                o.tags,
+                o.updated_at,
+                p.content_text,
+                to_tsvector('english', coalesce(o.title,'') || ' ' || coalesce(p.content_text,'')) as vector,
+                plainto_tsquery('english', :q) as query
+            FROM objects o
+            JOIN pages p ON p.id = o.id
+            WHERE o.deleted_at IS NULL
+              AND o.user_id = :user_id
+        )
         SELECT
-            o.id,
-            o.kind,
-            o.title,
-            o.tags,
-            o.updated_at,
-            ts_rank_cd(
-                to_tsvector('english', coalesce(o.title,'') || ' ' || coalesce(p.content_text,'')),
-                plainto_tsquery('english', :q)
+            id, kind, title, tags, updated_at,
+            (
+                coalesce(ts_rank_cd(vector, query), 0) +
+                (CASE WHEN title ILIKE :q_like THEN 1.0 ELSE 0 END) +
+                (CASE WHEN content_text ILIKE :q_like THEN 0.5 ELSE 0 END)
             ) AS score,
             ts_headline(
                 'english',
-                coalesce(p.content_text,''),
-                plainto_tsquery('english', :q),
+                coalesce(content_text,''),
+                query,
                 'MaxWords=30, MinWords=10, StartSel=<mark>, StopSel=</mark>'
-            ) AS snippet
-        FROM objects o
-        JOIN pages p ON p.id = o.id
-        WHERE o.deleted_at IS NULL
-          AND o.user_id = :user_id
-          AND to_tsvector('english', coalesce(o.title,'') || ' ' || coalesce(p.content_text,''))
-              @@ plainto_tsquery('english', :q)
+            ) AS snippet,
+            content_text
+        FROM matches
+        WHERE vector @@ query 
+           OR title ILIKE :q_like 
+           OR content_text ILIKE :q_like
         ORDER BY score DESC
         LIMIT :limit OFFSET :offset
         """
     )
-    params = {"q": q, "user_id": str(user_id), "limit": limit, "offset": offset}
+    params = {
+        "q": q,
+        "q_like": f"%{q}%",
+        "user_id": str(user_id),
+        "limit": limit,
+        "offset": offset,
+    }
     result = await db.execute(sql, params)
     rows = result.fetchall()
     return [
@@ -223,7 +244,7 @@ async def _fts_pages(
             tags=list(row.tags) if row.tags else [],
             score=float(row.score),
             updated_at=row.updated_at,
-            snippet=row.snippet or None,
+            snippet=row.snippet if row.snippet else (row.content_text[:200] if row.content_text else None),
         )
         for row in rows
     ]
@@ -240,38 +261,53 @@ async def _fts_sources(
     source_filter = "AND s.source_type = :source_type" if source_type else ""
     sql = text(
         f"""
+        WITH matches AS (
+            SELECT
+                o.id,
+                o.kind,
+                o.title,
+                o.tags,
+                o.updated_at,
+                s.source_type,
+                s.ingestion_status,
+                s.extracted_text,
+                to_tsvector('english', coalesce(o.title,'') || ' ' || coalesce(s.extracted_text,'')) as vector,
+                plainto_tsquery('english', :q) as query
+            FROM objects o
+            JOIN sources s ON s.id = o.id
+            WHERE o.deleted_at IS NULL
+              AND o.user_id = :user_id
+              {source_filter}
+        )
         SELECT
-            o.id,
-            o.kind,
-            o.title,
-            o.tags,
-            o.updated_at,
-            s.source_type,
-            s.ingestion_status,
-            ts_rank_cd(
-                to_tsvector('english',
-                    coalesce(o.title,'') || ' ' || coalesce(s.extracted_text,'')),
-                plainto_tsquery('english', :q)
+            id, kind, title, tags, updated_at, source_type, ingestion_status,
+            (
+                coalesce(ts_rank_cd(vector, query), 0) +
+                (CASE WHEN title ILIKE :q_like THEN 1.0 ELSE 0 END) +
+                (CASE WHEN extracted_text ILIKE :q_like THEN 0.5 ELSE 0 END)
             ) AS score,
             ts_headline(
                 'english',
-                coalesce(s.extracted_text,''),
-                plainto_tsquery('english', :q),
+                coalesce(extracted_text,''),
+                query,
                 'MaxWords=30, MinWords=10, StartSel=<mark>, StopSel=</mark>'
-            ) AS snippet
-        FROM objects o
-        JOIN sources s ON s.id = o.id
-        WHERE o.deleted_at IS NULL
-          AND o.user_id = :user_id
-          {source_filter}
-          AND to_tsvector('english',
-                  coalesce(o.title,'') || ' ' || coalesce(s.extracted_text,''))
-              @@ plainto_tsquery('english', :q)
+            ) AS snippet,
+            extracted_text
+        FROM matches
+        WHERE vector @@ query 
+           OR title ILIKE :q_like 
+           OR extracted_text ILIKE :q_like
         ORDER BY score DESC
         LIMIT :limit OFFSET :offset
         """
     )
-    params: dict = {"q": q, "user_id": str(user_id), "limit": limit, "offset": offset}
+    params: dict = {
+        "q": q,
+        "q_like": f"%{q}%",
+        "user_id": str(user_id),
+        "limit": limit,
+        "offset": offset,
+    }
     if source_type:
         params["source_type"] = source_type
     result = await db.execute(sql, params)
@@ -284,7 +320,7 @@ async def _fts_sources(
             tags=list(row.tags) if row.tags else [],
             score=float(row.score),
             updated_at=row.updated_at,
-            snippet=row.snippet or None,
+            snippet=row.snippet if row.snippet else (row.extracted_text[:200] if row.extracted_text else None),
             source_type=row.source_type,
             ingestion_status=row.ingestion_status,
         )
@@ -301,43 +337,61 @@ async def _fts_chats(
 ) -> list[SearchResult]:
     sql = text(
         """
-        SELECT
-            o.id,
-            o.kind,
-            o.title,
-            o.tags,
-            o.updated_at,
-            ts_rank_cd(
+        WITH matches AS (
+            SELECT
+                o.id,
+                o.kind,
+                o.title,
+                o.tags,
+                o.updated_at,
+                c.content_text,
+                c.structured_summary,
                 to_tsvector(
                     'english',
                     coalesce(o.title,'') || ' ' ||
                     coalesce(c.content_text,'') || ' ' ||
                     coalesce(c.structured_summary::text,'')
-                ),
-                plainto_tsquery('english', :q)
+                ) as vector,
+                plainto_tsquery('english', :q) as query
+            FROM objects o
+            JOIN chats c ON c.id = o.id
+            WHERE o.deleted_at IS NULL
+              AND o.user_id = :user_id
+        )
+        SELECT
+            id, kind, title, tags, updated_at,
+            (
+                coalesce(ts_rank_cd(vector, query), 0) +
+                (CASE WHEN title ILIKE :q_like THEN 1.0 ELSE 0 END) +
+                (CASE WHEN content_text ILIKE :q_like THEN 0.5 ELSE 0 END) +
+                (
+                    CASE WHEN coalesce(structured_summary::text,'') ILIKE :q_like
+                    THEN 0.5 ELSE 0 END
+                )
             ) AS score,
             ts_headline(
                 'english',
-                coalesce(c.content_text,'') || ' ' || coalesce(c.structured_summary::text,''),
-                plainto_tsquery('english', :q),
+                coalesce(content_text,'') || ' ' || coalesce(structured_summary::text,''),
+                query,
                 'MaxWords=30, MinWords=10, StartSel=<mark>, StopSel=</mark>'
-            ) AS snippet
-        FROM objects o
-        JOIN chats c ON c.id = o.id
-        WHERE o.deleted_at IS NULL
-          AND o.user_id = :user_id
-          AND to_tsvector(
-                'english',
-                coalesce(o.title,'') || ' ' ||
-                coalesce(c.content_text,'') || ' ' ||
-                coalesce(c.structured_summary::text,'')
-              )
-              @@ plainto_tsquery('english', :q)
+            ) AS snippet,
+            content_text
+        FROM matches
+        WHERE vector @@ query
+           OR title ILIKE :q_like
+           OR content_text ILIKE :q_like
+           OR coalesce(structured_summary::text,'') ILIKE :q_like
         ORDER BY score DESC
         LIMIT :limit OFFSET :offset
         """
     )
-    params = {"q": q, "user_id": str(user_id), "limit": limit, "offset": offset}
+    params = {
+        "q": q,
+        "q_like": f"%{q}%",
+        "user_id": str(user_id),
+        "limit": limit,
+        "offset": offset,
+    }
     result = await db.execute(sql, params)
     rows = result.fetchall()
     return [
@@ -348,7 +402,153 @@ async def _fts_chats(
             tags=list(row.tags) if row.tags else [],
             score=float(row.score),
             updated_at=row.updated_at,
-            snippet=row.snippet or None,
+            snippet=row.snippet if row.snippet else (row.content_text[:200] if row.content_text else None),
+        )
+        for row in rows
+    ]
+
+
+async def _fts_assets(
+    db: AsyncSession,
+    user_id: uuid.UUID,
+    q: str,
+    limit: int,
+    offset: int,
+) -> list[SearchResult]:
+    sql = text(
+        """
+        WITH matches AS (
+            SELECT
+                o.id,
+                o.kind,
+                o.title,
+                o.description,
+                o.tags,
+                o.updated_at,
+                to_tsvector('english', coalesce(o.title,'') || ' ' || coalesce(o.description,'')) as vector,
+                plainto_tsquery('english', :q) as query
+            FROM objects o
+            WHERE o.deleted_at IS NULL
+              AND o.user_id = :user_id
+              AND o.kind = 'asset'
+        )
+        SELECT
+            id, kind, title, tags, updated_at,
+            (
+                coalesce(ts_rank_cd(vector, query), 0) +
+                (CASE WHEN title ILIKE :q_like THEN 1.0 ELSE 0 END) +
+                (CASE WHEN description ILIKE :q_like THEN 0.5 ELSE 0 END)
+            ) AS score,
+            ts_headline(
+                'english',
+                coalesce(description,''),
+                query,
+                'MaxWords=30, MinWords=10, StartSel=<mark>, StopSel=</mark>'
+            ) AS snippet,
+            description
+        FROM matches
+        WHERE vector @@ query 
+           OR title ILIKE :q_like 
+           OR description ILIKE :q_like
+        ORDER BY score DESC
+        LIMIT :limit OFFSET :offset
+        """
+    )
+    params = {
+        "q": q,
+        "q_like": f"%{q}%",
+        "user_id": str(user_id),
+        "limit": limit,
+        "offset": offset,
+    }
+    result = await db.execute(sql, params)
+    rows = result.fetchall()
+    return [
+        SearchResult(
+            id=row.id,
+            kind=row.kind,
+            title=row.title,
+            tags=list(row.tags) if row.tags else [],
+            score=float(row.score),
+            updated_at=row.updated_at,
+            snippet=row.snippet if row.snippet else (row.description[:200] if row.description else None),
+        )
+        for row in rows
+    ]
+
+
+async def _fts_generic_objects(
+    db: AsyncSession,
+    user_id: uuid.UUID,
+    q: str,
+    kinds: list[str],
+    limit: int,
+    offset: int,
+) -> list[SearchResult]:
+    sql = text(
+        """
+        WITH matches AS (
+            SELECT
+                o.id,
+                o.kind,
+                o.title,
+                o.description,
+                o.tags,
+                o.updated_at,
+                o.metadata,
+                to_tsvector('english', 
+                    coalesce(o.title,'') || ' ' || 
+                    coalesce(o.description,'') || ' ' || 
+                    coalesce(o.metadata::text,'')
+                ) as vector,
+                plainto_tsquery('english', :q) as query
+            FROM objects o
+            WHERE o.deleted_at IS NULL
+              AND o.user_id = :user_id
+              AND o.kind = ANY(:kinds)
+        )
+        SELECT
+            id, kind, title, tags, updated_at,
+            (
+                coalesce(ts_rank_cd(vector, query), 0) +
+                (CASE WHEN title ILIKE :q_like THEN 1.0 ELSE 0 END) +
+                (CASE WHEN description ILIKE :q_like THEN 0.5 ELSE 0 END)
+            ) AS score,
+            ts_headline(
+                'english',
+                coalesce(description,'') || ' ' || coalesce(metadata::text,''),
+                query,
+                'MaxWords=30, MinWords=10, StartSel=<mark>, StopSel=</mark>'
+            ) AS snippet,
+            description,
+            metadata
+        FROM matches
+        WHERE vector @@ query 
+           OR title ILIKE :q_like 
+           OR description ILIKE :q_like
+        ORDER BY score DESC
+        LIMIT :limit OFFSET :offset
+        """
+    )
+    params = {
+        "q": q,
+        "q_like": f"%{q}%",
+        "user_id": str(user_id),
+        "kinds": kinds,
+        "limit": limit,
+        "offset": offset,
+    }
+    result = await db.execute(sql, params)
+    rows = result.fetchall()
+    return [
+        SearchResult(
+            id=row.id,
+            kind=row.kind,
+            title=row.title,
+            tags=list(row.tags) if row.tags else [],
+            score=float(row.score),
+            updated_at=row.updated_at,
+            snippet=row.snippet if row.snippet else (row.description[:200] if row.description else None),
         )
         for row in rows
     ]

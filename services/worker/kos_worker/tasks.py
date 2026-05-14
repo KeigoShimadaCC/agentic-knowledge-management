@@ -135,5 +135,5 @@ def enqueue_reindex_object(object_id: str) -> None:
     q.enqueue(
         reindex_object,
         object_id,
-        job_id=f"reindex:{object_id}",
+        job_id=f"reindex-{object_id}",
     )

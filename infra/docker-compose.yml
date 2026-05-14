@@ -60,16 +60,28 @@ services:
     build:
       context: ..
       dockerfile: infra/Dockerfile.api
+      target: development
     container_name: kos-api
     restart: unless-stopped
+    working_dir: /app
     env_file: .env
     environment:
       DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-kos}:${POSTGRES_PASSWORD:-kospass}@postgres:5432/${POSTGRES_DB:-knowledgeos}
       REDIS_URL: redis://redis:6379/0
       QDRANT_URL: http://qdrant:6333
       LIBRARY_ROOT: /library
+      DEBUG: "true"
+      # Seed [Demo] pages/source/chat on startup (login: DEMO_SEED_EMAIL / DEMO_SEED_PASSWORD).
+      SEED_DEMO_EXAMPLES: "true"
     volumes:
+      - ../services/api:/app
       - library-data:/library
+    command:
+      - sh
+      - -c
+      - >-
+          uv run alembic upgrade head &&
+          exec uv run uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
     ports:
       - "127.0.0.1:8001:8000"
     depends_on:
@@ -83,18 +95,25 @@ services:
       test: ["CMD-SHELL", "curl -sf http://localhost:8000/api/v1/health || exit 1"]
       interval: 10s
       timeout: 5s
-      retries: 5
+      retries: 8
+      start_period: 90s
     logging: *default-logging
 
   web:
     build:
       context: ..
       dockerfile: infra/Dockerfile.web
+      target: development
     container_name: kos-web
     restart: unless-stopped
+    working_dir: /app/apps/web
     environment:
-      NEXT_PUBLIC_API_URL: http://localhost:8000
+      # Host browsers call the published API port (8001 maps to api:8000).
+      NEXT_PUBLIC_API_URL: http://localhost:8001
       API_URL: http://api:8000
+    volumes:
+      - ../apps/web:/app/apps/web
+    command: ["pnpm", "dev"]
     ports:
       - "127.0.0.1:3000:3000"
     depends_on:

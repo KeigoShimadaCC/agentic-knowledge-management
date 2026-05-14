@@ -25,6 +25,45 @@ import { ApiError } from "@/types";
 
 const BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
+/** FastAPI uses string | object[] | object for `detail`; normalize for ApiError.message. */
+function formatErrorDetail(payload: unknown, fallback: string): string {
+  if (payload === null || payload === undefined) {
+    return fallback;
+  }
+  if (typeof payload === "string") {
+    return payload;
+  }
+  if (typeof payload === "number" || typeof payload === "boolean") {
+    return String(payload);
+  }
+  if (Array.isArray(payload)) {
+    const parts = payload.map((item) => {
+      if (item && typeof item === "object" && "msg" in item) {
+        const row = item as { loc?: unknown[]; msg?: unknown };
+        const loc =
+          Array.isArray(row.loc) && row.loc.length > 0
+            ? `${row.loc.map(String).join(".")}: `
+            : "";
+        return `${loc}${String(row.msg ?? "")}`;
+      }
+      try {
+        return JSON.stringify(item);
+      } catch {
+        return String(item);
+      }
+    });
+    return parts.filter(Boolean).join("; ") || fallback;
+  }
+  if (typeof payload === "object") {
+    try {
+      return JSON.stringify(payload);
+    } catch {
+      return fallback;
+    }
+  }
+  return String(payload);
+}
+
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(`${BASE}${path}`, {
     ...init,
@@ -35,8 +74,19 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     },
   });
   if (!res.ok) {
-    const err = await res.json().catch(() => ({ detail: res.statusText }));
-    throw new ApiError(res.status, (err as { detail: string }).detail);
+    const fallback = res.statusText?.trim() || `Request failed (${res.status})`;
+    let detailPayload: unknown = fallback;
+    try {
+      const body: unknown = await res.json();
+      if (body && typeof body === "object" && "detail" in body) {
+        detailPayload = (body as { detail: unknown }).detail;
+      } else if (body !== null && body !== undefined) {
+        detailPayload = body;
+      }
+    } catch {
+      /* non-JSON error body */
+    }
+    throw new ApiError(res.status, formatErrorDetail(detailPayload, fallback));
   }
   return res.json() as Promise<T>;
 }

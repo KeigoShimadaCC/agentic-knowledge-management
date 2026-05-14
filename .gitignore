@@ -23,6 +23,11 @@ __pycache__/
 *.log
 logs/
 
+# Local QA artifacts (never commit machine-specific paths)
+test_output.txt
+test_output*.txt
+.playwright-mcp/
+
 # Docker data
 postgres-data/
 qdrant-data/

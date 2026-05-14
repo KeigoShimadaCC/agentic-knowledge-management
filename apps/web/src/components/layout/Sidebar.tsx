@@ -1,9 +1,21 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { BookOpen, FileText, Files, Image, MessageSquareText, Trash2 } from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
+import {
+  BookOpen,
+  FileText,
+  Files,
+  Image,
+  LogOut,
+  MessageSquareText,
+  Trash2,
+} from "lucide-react";
 import { clsx } from "clsx";
+import { useState } from "react";
+
+import { logout } from "@/lib/api";
+import { useAuth } from "@/lib/hooks/useAuth";
 
 const navItems = [
   { href: "/app", label: "All Objects", icon: Files },
@@ -16,23 +28,38 @@ const navItems = [
 
 export function Sidebar() {
   const pathname = usePathname();
+  const router = useRouter();
+  const { user, isLoading, mutate } = useAuth();
+  const [signingOut, setSigningOut] = useState(false);
+
+  async function handleSignOut() {
+    setSigningOut(true);
+    try {
+      await logout();
+      await mutate(undefined, { revalidate: false });
+      router.push("/login");
+      router.refresh();
+    } catch {
+      setSigningOut(false);
+    }
+  }
 
   return (
-    <aside className="w-60 shrink-0 flex flex-col bg-gray-900 border-r border-gray-800 h-full">
-      <div className="p-4 border-b border-gray-800">
-        <span className="text-lg font-bold text-white tracking-tight">KnowledgeOS</span>
+    <aside className="flex h-full w-60 shrink-0 flex-col border-r border-gray-800 bg-gray-900">
+      <div className="border-b border-gray-800 p-4">
+        <span className="text-lg font-bold tracking-tight text-white">KnowledgeOS</span>
       </div>
 
-      <nav className="flex-1 p-2 space-y-1 overflow-y-auto">
+      <nav className="flex-1 space-y-1 overflow-y-auto p-2">
         {navItems.map(({ href, label, icon: Icon }) => (
           <Link
             key={href}
             href={href}
             className={clsx(
-              "flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-colors",
+              "flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm transition-colors",
               pathname === href
                 ? "bg-gray-700 text-white"
-                : "text-gray-400 hover:text-white hover:bg-gray-800"
+                : "text-gray-400 hover:bg-gray-800 hover:text-white"
             )}
           >
             <Icon size={16} />
@@ -40,6 +67,25 @@ export function Sidebar() {
           </Link>
         ))}
       </nav>
+
+      <div className="shrink-0 space-y-2 border-t border-gray-800 p-3">
+        {!isLoading && user ? (
+          <>
+            <p className="truncate px-2 text-xs text-gray-500" title={user.email}>
+              {user.display_name?.trim() || user.email}
+            </p>
+            <button
+              type="button"
+              disabled={signingOut}
+              onClick={() => void handleSignOut()}
+              className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-gray-400 transition-colors hover:bg-gray-800 hover:text-white disabled:opacity-50"
+            >
+              <LogOut size={16} aria-hidden />
+              {signingOut ? "Signing out…" : "Sign out"}
+            </button>
+          </>
+        ) : null}
+      </div>
     </aside>
   );
 }
