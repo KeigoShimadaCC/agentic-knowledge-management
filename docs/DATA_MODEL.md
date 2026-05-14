@@ -16,6 +16,7 @@ Supported object kinds:
 | `bookmark` | Reserved | No specialization table yet |
 | `collection` | Reserved | No specialization table yet |
 | `source` | Phase 2 | `sources` table |
+| `chat` | Phase 6A | `chats` table |
 
 The specialization table uses the same primary key as the base object row. For example, a page has `objects.id = pages.id`.
 
@@ -49,7 +50,7 @@ The specialization table uses the same primary key as the base object row. For e
 | --- | --- | --- |
 | `id` | UUID | Primary key |
 | `user_id` | UUID | Required FK to `users.id`; all queries must scope by user |
-| `kind` | text / enum | Required; one of `page`, `asset`, `note`, `bookmark`, `collection`, `source` |
+| `kind` | text / enum | Required; one of `page`, `asset`, `note`, `bookmark`, `collection`, `source`, `chat` |
 | `title` | text | Required display title |
 | `description` | text | Optional summary or user-authored description |
 | `tags` | text[] | Required array, default empty |
@@ -153,6 +154,26 @@ Added in migration `0001`; extended for Phase 3 search in migration `0003`.
 Constraints and indexes:
 - `UNIQUE(object_id, chunk_idx)` — ensures deterministic re-indexing
 - Index on `object_id`, `user_id`, `embedding_status`, `content_hash`
+
+### `chats`
+
+Phase 6A adds a `chats` specialization table for imported conversations with `objects.kind="chat"`. The raw transcript remains on disk; `content_text` is the canonical searchable text projection.
+
+| Field | Type | Constraints / Notes |
+| --- | --- | --- |
+| `id` | UUID | Primary key and FK to `objects.id` (CASCADE delete) |
+| `provider` | varchar(32) | `chatgpt`, `claude`, `markdown`, `plain_text`, or `unknown` |
+| `external_chat_id` | text | Optional provider/export identifier |
+| `source_filename` | text | Optional original upload filename |
+| `raw_storage_path` | text | Required relative path under `library/chats` |
+| `raw_format` | varchar(16) | `json`, `md`, or `txt` |
+| `turn_count` | integer | Number of parsed turns |
+| `started_at` / `ended_at` | timestamptz | Optional conversation time range |
+| `imported_at` | timestamptz | Import timestamp |
+| `parsed_turns` | JSONB | Normalized turn list for UI rendering |
+| `content_text` | text | Searchable transcript projection |
+| `metadata` | JSONB | Import metadata, including batch raw path when applicable |
+| `created_at` / `updated_at` | timestamptz | Required timestamps |
 
 ### `ingestion_jobs`
 

@@ -129,21 +129,25 @@ See [`project-phases/PHASE-8A-WORKSPACE-LITE.md`](project-phases/PHASE-8A-WORKSP
 
 ---
 
-## Phase 6 — Chat Import ⬜ Planned
+## Phase 6A — Chat Import Lite ✅ Complete
 
-**Goal:** Turn exported ChatGPT and Claude conversations into durable, searchable, linked knowledge objects.
+**Goal:** Turn pasted/uploaded ChatGPT, Claude, Markdown, and plain-text conversations into durable, searchable chat objects without AI extraction.
 
-**Chat Import Lite (minimal, useful early):**
-- [ ] **Subtask 1** — Chat upload UI: drag-and-drop JSON/Markdown, paste transcript; Chats section in sidebar
-- [ ] **Subtask 2** — Parser: ChatGPT `conversations.json` + Claude export → normalized `ChatTurn[]`
-- [ ] **Subtask 3** — Raw storage under `library/chats/{provider}/{chat_id}/raw.json`
-- [ ] **Subtask 4** — Basic search: chunk and index chat content into `chunks` + Qdrant
-- [ ] **Subtask 5** — Chat list/detail UI: show turns, search within chats
+See [`project-phases/PHASE-6A-CHAT-IMPORT-LITE.md`](project-phases/PHASE-6A-CHAT-IMPORT-LITE.md) for the full subtask spec.
+
+- [x] **Subtask 0** — Audit + Phase 6A plan artifact
+- [x] **Subtask 1** — Chat object model, `chats` specialization table, object-kind validation, and library `chats/` setup
+- [x] **Subtask 2** — Parser/storage/services for ChatGPT batch JSON, Claude-like Markdown, Markdown labels, and plain-text fallback
+- [x] **Subtask 3** — Authenticated `/api/v1/chats` import/list/detail/raw/delete/restore/reindex endpoints
+- [x] **Subtask 4** — Chunk/search/reindex integration for `chat.content_text`
+- [x] **Subtask 5** — `/app/chats` list/import UI and `/app/chats/[id]` turn/detail/raw UI
+- [x] **Subtask 6** — Shared frontend object routing for `kind=chat` in search/graph/all-object navigation
+- [x] **Subtask 7** — Parser/API/search tests, fixtures, docs, and progress updates
 
 **Structured Import (requires Phase 5 AI):**
-- [ ] **Subtask 6** — LLM summarizer: decisions, open questions, action items, claims, concepts, projects
-- [ ] **Subtask 7** — Object extraction: Claim, Task, concept → edges from chat
-- [ ] **Subtask 8** — Tests + docs: fixture exports; update `docs/INGESTION.md`
+- [ ] **Subtask 1** — LLM summarizer: decisions, open questions, action items, claims, concepts, projects
+- [ ] **Subtask 2** — Object extraction: Claim, Task, concept → edges from chat
+- [ ] **Subtask 3** — Tests + docs: fixture exports; update `docs/INGESTION.md`
 
 ---
 
@@ -200,12 +204,12 @@ See [`project-phases/PHASE-8A-WORKSPACE-LITE.md`](project-phases/PHASE-8A-WORKSP
 | 4 | Graph Lite | ✅ Complete | 6 / 6 subtasks |
 | 8A | Workspace Lite | ✅ Complete | 7 / 7 subtasks |
 | 5 | AI Assistant + Inbox/Triage | ⬜ Planned | 0 / 12 subtasks |
-| 6 | Chat Import | ⬜ Planned | 0 / 8 subtasks |
+| 6A | Chat Import Lite | ✅ Complete | 8 / 8 subtasks |
 | 7 | MCP Server (staged) | ⬜ Planned | 0 / 6 subtasks |
 | 8 | Multi-Pane Workspaces | ⬜ Planned | 0 / 8 subtasks |
 | 9 | Career & Project Memory | ⬜ Planned | 0 / 8 subtasks |
 
-**Total:** 40 / 82 subtasks complete
+**Total:** 48 / 82 subtasks complete
 
 **Key cross-cutting concepts to track:**
 - Inbox/Triage (Phase 5): AI-classified staging area for unprocessed items
@@ -215,3 +219,4 @@ See [`project-phases/PHASE-8A-WORKSPACE-LITE.md`](project-phases/PHASE-8A-WORKSP
 
 **Current repo state notes (2026-05-14):**
 - Phase 3 search is complete, including keyword, vector, and hybrid API behavior, search UI, integration tests, and API/architecture documentation.
+- Phase 6A Chat Import Lite is complete: chat object model/API/parser/storage/search/UI and test coverage are in place. Chat migration is `0005_add_chats.py` because an existing local `0004_object_revisions.py` migration is present in the workspace.

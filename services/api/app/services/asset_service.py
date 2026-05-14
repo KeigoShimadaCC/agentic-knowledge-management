@@ -35,7 +35,9 @@ async def create_asset(
     return obj, asset
 
 
-async def find_by_sha256(db: AsyncSession, sha256: str, user_id: uuid.UUID) -> tuple[KosObject, Asset] | None:
+async def find_by_sha256(
+    db: AsyncSession, sha256: str, user_id: uuid.UUID
+) -> tuple[KosObject, Asset] | None:
     result = await db.execute(
         select(Asset)
         .join(KosObject, KosObject.id == Asset.id)
@@ -49,7 +51,9 @@ async def find_by_sha256(db: AsyncSession, sha256: str, user_id: uuid.UUID) -> t
     return obj, asset
 
 
-async def get_asset_or_404(db: AsyncSession, asset_id: uuid.UUID, user_id: uuid.UUID) -> tuple[KosObject, Asset]:
+async def get_asset_or_404(
+    db: AsyncSession, asset_id: uuid.UUID, user_id: uuid.UUID
+) -> tuple[KosObject, Asset]:
     result = await db.execute(
         select(Asset)
         .join(KosObject, KosObject.id == Asset.id)

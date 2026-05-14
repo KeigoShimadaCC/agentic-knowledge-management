@@ -2,7 +2,6 @@ import socket
 from unittest.mock import patch
 
 import pytest
-
 from app.core.redaction import redact_mapping
 from app.core.url_safety import UnsafeUrlError, validate_safe_http_url
 

@@ -5,10 +5,12 @@ export interface User {
   created_at: string;
 }
 
+export type ObjectKind = "page" | "asset" | "note" | "bookmark" | "collection" | "source" | "chat";
+
 export interface ObjectOut {
   id: string;
   user_id: string;
-  kind: "page" | "asset" | "note" | "bookmark" | "collection";
+  kind: ObjectKind;
   title: string;
   description: string | null;
   tags: string[];
@@ -102,6 +104,49 @@ export interface SourceCreate {
   tags?: string[];
 }
 
+export type ChatProvider = "auto" | "chatgpt" | "claude" | "markdown" | "plain_text" | "unknown";
+export type ChatRawFormat = "json" | "md" | "txt";
+
+export interface ChatTurnOut {
+  turn_index: number;
+  role: "user" | "assistant" | "system" | "tool" | "unknown" | string;
+  author: string | null;
+  content: string;
+  created_at: string | null;
+  metadata: Record<string, unknown>;
+}
+
+export interface ChatOut {
+  id: string;
+  user_id: string;
+  kind: "chat";
+  title: string;
+  description: string | null;
+  tags: string[];
+  is_pinned: boolean;
+  is_archived: boolean;
+  created_at: string;
+  updated_at: string;
+  deleted_at: string | null;
+  provider: string;
+  external_chat_id: string | null;
+  source_filename: string | null;
+  raw_storage_path: string;
+  raw_format: string;
+  turn_count: number;
+  started_at: string | null;
+  ended_at: string | null;
+  imported_at: string;
+  parsed_turns: ChatTurnOut[];
+  content_text: string;
+  metadata: Record<string, unknown>;
+}
+
+export interface ChatImportResponse {
+  imported: ChatOut[];
+  total: number;
+}
+
 export interface EdgeCreate {
   source_id: string;
   target_id: string;
@@ -154,7 +199,7 @@ export type SearchMode = "keyword" | "semantic" | "hybrid";
 
 export interface SearchResult {
   id: string;
-  kind: string;
+  kind: ObjectKind | string;
   title: string;
   snippet: string | null;
   tags: string[];

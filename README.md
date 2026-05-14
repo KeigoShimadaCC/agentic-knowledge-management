@@ -269,10 +269,10 @@ The complete product is built across 9 phases. Phase 1 is done; phases 2–9 are
 |---|---|---|
 | 1 — Foundation | Docker, Postgres, auth, page CRUD, Tiptap editor, asset upload, 25 tests | **Done** |
 | 2 — Sources & Rich Media | PDF/YouTube/web/CSV ingestion, RQ worker, citation edges, 45 tests | **Done** |
-| 3 — Search | Chunking, Postgres FTS, Qdrant vectors, hybrid search, Cmd+K UI | In progress |
-| 4 — Graph Lite | Typed edge API, backlinks, related objects from Postgres; Kùzu later | Backend in progress |
+| 3 — Search | Chunking, Postgres FTS, Qdrant vectors, hybrid search, Cmd+K UI | Done |
+| 4 — Graph Lite | Typed edge API, backlinks, related objects from Postgres; Kùzu later | Done |
 | 5 — AI Assistant + Inbox/Triage | AI sidebar, summarize/extract/suggest, KB Q&A, triage inbox | Planned |
-| 6 — Chat Import | Raw upload/paste of ChatGPT/Claude exports; LLM structured import | Planned |
+| 6A — Chat Import Lite | Raw upload/paste of ChatGPT/Claude/Markdown/text exports; searchable chats | In progress |
 | 7 — MCP Server | Staged: read/search tools → create tools → update/archive tools | Planned |
 | 8 — Workspaces | Multi-pane layout engine, saved workspaces, AI scoped to workspace | Planned |
 | 9 — Career Memory | Project schema UI, resume bullet generator, interview story generator | Planned |

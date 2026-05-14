@@ -25,7 +25,9 @@ async def create_object(db: AsyncSession, user_id: uuid.UUID, data: ObjectCreate
     return obj
 
 
-async def get_object_or_404(db: AsyncSession, object_id: uuid.UUID, user_id: uuid.UUID) -> KosObject:
+async def get_object_or_404(
+    db: AsyncSession, object_id: uuid.UUID, user_id: uuid.UUID
+) -> KosObject:
     result = await db.execute(
         select(KosObject).where(KosObject.id == object_id, KosObject.user_id == user_id)
     )
@@ -58,9 +60,11 @@ async def list_objects(
         from sqlalchemy import any_
         stmt = stmt.where(tag == any_(KosObject.tags))
     if q:
-        from sqlalchemy import text
         stmt = stmt.where(
-            func.to_tsvector("english", KosObject.title + " " + func.coalesce(KosObject.description, ""))
+            func.to_tsvector(
+                "english",
+                KosObject.title + " " + func.coalesce(KosObject.description, ""),
+            )
             .op("@@")(func.plainto_tsquery("english", q))
         )
 

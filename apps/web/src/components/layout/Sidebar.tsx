@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BookOpen, FileText, Files, Image, Trash2 } from "lucide-react";
+import { BookOpen, FileText, Files, Image, MessageSquareText, Trash2 } from "lucide-react";
 import { clsx } from "clsx";
 
 const navItems = [
@@ -10,6 +10,7 @@ const navItems = [
   { href: "/app/pages", label: "Pages", icon: FileText },
   { href: "/app/assets", label: "Assets", icon: Image },
   { href: "/sources", label: "Sources", icon: BookOpen },
+  { href: "/app/chats", label: "Chats", icon: MessageSquareText },
   { href: "/app/trash", label: "Trash", icon: Trash2 },
 ];
 

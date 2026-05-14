@@ -11,7 +11,9 @@ from app.db.base import Base
 class Page(Base):
     __tablename__ = "pages"
 
-    id: Mapped[uuid.UUID] = mapped_column(ForeignKey("objects.id", ondelete="CASCADE"), primary_key=True)
+    id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("objects.id", ondelete="CASCADE"), primary_key=True
+    )
     content_json: Mapped[dict] = mapped_column(JSONB, nullable=False, server_default="{}")
     content_text: Mapped[str] = mapped_column(Text, nullable=False, server_default="")
     word_count: Mapped[int] = mapped_column(Integer, nullable=False, server_default="0")

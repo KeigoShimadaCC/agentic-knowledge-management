@@ -18,7 +18,9 @@ function KindBadge({ kind }: { kind: string }) {
       ? "bg-blue-950 text-blue-300 border-blue-800"
       : kind === "source"
         ? "bg-green-950 text-green-300 border-green-800"
-        : "bg-gray-900 text-gray-300 border-gray-700";
+        : kind === "chat"
+          ? "bg-violet-950 text-violet-300 border-violet-800"
+          : "bg-gray-900 text-gray-300 border-gray-700";
 
   return (
     <span className={`rounded border px-1.5 py-0.5 text-[10px] uppercase ${className}`}>

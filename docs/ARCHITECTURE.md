@@ -138,6 +138,19 @@ Source types: PDFs, images, videos, YouTube URLs, web articles, and CSV files. C
 | Chat Import | ChatGPT/Claude export → searchable chat history + linked knowledge objects |
 | MCP | Staged rollout: read/search tools first, then create, then update/archive |
 
+## Phase 6A: Chat Import Lite
+
+Chat Import Lite treats transcripts as first-class knowledge objects:
+
+1. Browser uploads or pastes a transcript to `/api/v1/chats/import`.
+2. The API parses ChatGPT JSON, Claude-like Markdown, Markdown labels, or plain text without calling an LLM.
+3. The API creates `objects.kind="chat"` plus a `chats` row containing normalized turns and `content_text`.
+4. Raw files and `metadata.json` are stored under `library/chats`.
+5. Import and restore enqueue `reindex_object(chat_id)`.
+6. Keyword search reads `chats.content_text`; vector search uses normal chunk/Qdrant indexing after reindex.
+
+Deletes are soft deletes on `objects.deleted_at`; raw chat files are retained.
+
 ## Phase 4: Graph Lite
 
 Graph Lite uses Postgres `edges` as the canonical graph source. It does not require Kuzu, Qdrant, embeddings, or Phase 3 search endpoints.

@@ -7,6 +7,7 @@ from typing import Any
 from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.models.chat import Chat
 from app.models.chunk import Chunk
 from app.models.object import KosObject
 from app.models.page import Page
@@ -65,6 +66,11 @@ async def _extract_text(db: AsyncSession, obj: KosObject) -> str:
 
         body = source.extracted_text or _serialize_preview_data(source.preview_data)
         return _join_text(obj.title, body)
+
+    if obj.kind == "chat":
+        result = await db.execute(select(Chat).where(Chat.id == obj.id))
+        chat = result.scalar_one_or_none()
+        return _join_text(obj.title, chat.content_text if chat else None)
 
     return _join_text(obj.title, obj.description)
 

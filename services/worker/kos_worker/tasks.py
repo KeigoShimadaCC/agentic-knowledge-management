@@ -107,14 +107,14 @@ def reindex_object(object_id: str) -> dict:
 
 
 def reindex_all_objects() -> dict:
-    """Enqueue reindex_object for every non-deleted page and source."""
+    """Enqueue reindex_object for every non-deleted page, source, and chat."""
     db = get_session()
     try:
         objects = (
             db.execute(
                 select(KosObject).where(
                     KosObject.deleted_at.is_(None),
-                    KosObject.kind.in_(["page", "source"]),
+                    KosObject.kind.in_(["page", "source", "chat"]),
                 )
             )
             .scalars()

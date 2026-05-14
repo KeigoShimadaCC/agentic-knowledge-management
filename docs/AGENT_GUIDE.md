@@ -16,6 +16,8 @@ Agents must follow these rules:
 | Identify yourself | Send a `User-Agent` header identifying the agent and version. |
 | Preserve user intent | Do not overwrite page content, tags, metadata, or source links unless the user explicitly asked for that change. |
 
+For chat histories, agents must use `/api/v1/chats/import` and related chat endpoints. Do not write transcript files directly into `~/KnowledgeOS/library/chats`; the API owns object creation, path layout, metadata, and reindex enqueueing.
+
 Recommended agent header:
 
 ```text

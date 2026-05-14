@@ -18,12 +18,18 @@ class Settings(BaseSettings):
     )
     debug: bool = False
     openai_api_key: str = ""
+    openai_chat_model: str = "gpt-4o-mini"
+    openai_max_tokens: int = 2000
     embedding_model: str = "text-embedding-3-small"
     embedding_dimension: int = 1536
     qdrant_collection: str = "knowledgeos_chunks"
     allow_open_registration: bool = Field(
         default=True,
         description="When false, POST /auth/register returns 403 (closed appliance mode).",
+    )
+    chat_import_max_bytes: int = Field(
+        default=25 * 1024 * 1024,
+        description="Maximum accepted chat import payload size in bytes.",
     )
     cookie_secure: bool = Field(
         default=False,

@@ -1,7 +1,6 @@
 import asyncio
 import os
 
-import pytest
 import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
 
@@ -12,9 +11,9 @@ os.environ.setdefault("REDIS_URL", "redis://localhost:6379/0")
 os.environ.setdefault("SESSION_SECRET", "test-secret-key-for-tests-only")
 os.environ.setdefault("LIBRARY_ROOT", "/tmp/kos-test-library")
 
-from app.main import app  # noqa: E402
 from app.db.base import Base  # noqa: E402
 from app.db.session import engine  # noqa: E402
+from app.main import app  # noqa: E402
 
 
 def _ensure_test_db() -> None:

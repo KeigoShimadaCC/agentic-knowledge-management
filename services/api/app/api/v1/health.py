@@ -20,6 +20,7 @@ async def health_check() -> dict:
 
     try:
         import redis.asyncio as aioredis
+
         from app.config import settings
         r = aioredis.from_url(settings.redis_url)
         await r.ping()

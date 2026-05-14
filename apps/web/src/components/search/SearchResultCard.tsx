@@ -7,6 +7,7 @@ import type { SidePaneObject } from "@/components/workspace/WorkspaceLiteProvide
 const KIND_COLORS: Record<string, string> = {
   page: "bg-blue-900 text-blue-200",
   source: "bg-green-900 text-green-200",
+  chat: "bg-violet-950 text-violet-200",
   asset: "bg-gray-700 text-gray-300",
 };
 

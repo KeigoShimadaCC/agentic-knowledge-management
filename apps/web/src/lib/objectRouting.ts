@@ -1,7 +1,9 @@
 export function objectRoute(kind: string, id: string): string {
   if (kind === "page") return `/pages/${id}`;
   if (kind === "source") return `/sources/${id}`;
-  return `/assets/${id}`;
+  if (kind === "chat") return `/app/chats/${id}`;
+  if (kind === "asset") return "/app/assets";
+  return "/app";
 }
 
 export function objectKindLabel(kind: string): string {

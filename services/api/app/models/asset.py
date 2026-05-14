@@ -12,7 +12,9 @@ VALID_STATUSES = ("uploading", "ready", "error")
 class Asset(Base):
     __tablename__ = "assets"
 
-    id: Mapped[uuid.UUID] = mapped_column(ForeignKey("objects.id", ondelete="CASCADE"), primary_key=True)
+    id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("objects.id", ondelete="CASCADE"), primary_key=True
+    )
     filename: Mapped[str] = mapped_column(Text, nullable=False)
     content_type: Mapped[str] = mapped_column(String(128), nullable=False)
     size_bytes: Mapped[int] = mapped_column(BigInteger, nullable=False)

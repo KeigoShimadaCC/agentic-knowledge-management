@@ -26,6 +26,7 @@ async def keyword_search(
         if not kind or "source" in kinds
         else []
     )
+    rows += await _fts_chats(db, user_id, q, limit, offset) if not kind or "chat" in kinds else []
     rows.sort(key=lambda r: r.score, reverse=True)
     return rows[:limit]
 
@@ -285,6 +286,58 @@ async def _fts_sources(
     ]
 
 
+async def _fts_chats(
+    db: AsyncSession,
+    user_id: uuid.UUID,
+    q: str,
+    limit: int,
+    offset: int,
+) -> list[SearchResult]:
+    sql = text(
+        """
+        SELECT
+            o.id,
+            o.kind,
+            o.title,
+            o.tags,
+            o.updated_at,
+            ts_rank_cd(
+                to_tsvector('english', coalesce(o.title,'') || ' ' || coalesce(c.content_text,'')),
+                plainto_tsquery('english', :q)
+            ) AS score,
+            ts_headline(
+                'english',
+                coalesce(c.content_text,''),
+                plainto_tsquery('english', :q),
+                'MaxWords=30, MinWords=10, StartSel=<mark>, StopSel=</mark>'
+            ) AS snippet
+        FROM objects o
+        JOIN chats c ON c.id = o.id
+        WHERE o.deleted_at IS NULL
+          AND o.user_id = :user_id
+          AND to_tsvector('english', coalesce(o.title,'') || ' ' || coalesce(c.content_text,''))
+              @@ plainto_tsquery('english', :q)
+        ORDER BY score DESC
+        LIMIT :limit OFFSET :offset
+        """
+    )
+    params = {"q": q, "user_id": str(user_id), "limit": limit, "offset": offset}
+    result = await db.execute(sql, params)
+    rows = result.fetchall()
+    return [
+        SearchResult(
+            id=row.id,
+            kind=row.kind,
+            title=row.title,
+            tags=list(row.tags) if row.tags else [],
+            score=float(row.score),
+            updated_at=row.updated_at,
+            snippet=row.snippet or None,
+        )
+        for row in rows
+    ]
+
+
 async def _load_objects_by_ids(db: AsyncSession, user_id: uuid.UUID, ids: list[str]) -> dict:
     if not ids:
         return {}
@@ -317,5 +370,5 @@ async def _load_sources_by_ids(db: AsyncSession, ids: list[str]) -> dict:
 
 def _resolve_kinds(kind: str | None) -> set[str]:
     if kind is None:
-        return {"page", "source", "asset"}
+        return {"page", "source", "asset", "chat"}
     return {kind}

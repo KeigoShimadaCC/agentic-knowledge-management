@@ -1,0 +1,41 @@
+[
+  {
+    "id": "conv-alpha",
+    "title": "Alpha research",
+    "mapping": {
+      "a": {
+        "id": "a",
+        "message": {
+          "id": "msg-a",
+          "author": { "role": "user", "name": "Keigo" },
+          "create_time": 1778700000,
+          "content": { "content_type": "text", "parts": ["Find notes about phase six alpha import."] }
+        }
+      },
+      "b": {
+        "id": "b",
+        "message": {
+          "id": "msg-b",
+          "author": { "role": "assistant" },
+          "create_time": 1778700060,
+          "content": { "content_type": "text", "parts": ["Phase six alpha should keep searchable transcript content."] }
+        }
+      }
+    }
+  },
+  {
+    "id": "conv-beta",
+    "title": "Beta planning",
+    "mapping": {
+      "a": {
+        "id": "a",
+        "message": {
+          "id": "msg-c",
+          "author": { "role": "user" },
+          "create_time": 1778701000,
+          "content": { "content_type": "text", "parts": ["Track batch chat import behavior."] }
+        }
+      }
+    }
+  }
+]

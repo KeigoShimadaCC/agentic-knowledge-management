@@ -6,7 +6,9 @@ from sqlalchemy.pool import NullPool
 
 from app.config import settings
 
-_pool_kwargs: dict = {"poolclass": NullPool} if os.environ.get("TEST_MODE") else {"pool_pre_ping": True}
+_pool_kwargs: dict = (
+    {"poolclass": NullPool} if os.environ.get("TEST_MODE") else {"pool_pre_ping": True}
+)
 
 engine = create_async_engine(
     settings.database_url,

@@ -1,6 +1,7 @@
 "use client";
 
 import { useObjects } from "@/lib/hooks/useObjects";
+import { objectRoute } from "@/lib/objectRouting";
 import { formatDistanceToNow } from "date-fns";
 import Link from "next/link";
 
@@ -29,7 +30,7 @@ export default function AppPage() {
           {objects.map((obj) => (
             <Link
               key={obj.id}
-              href={obj.kind === "page" ? `/app/pages/${obj.id}` : `/app/assets`}
+              href={objectRoute(obj.kind, obj.id)}
               className="flex items-center gap-3 p-3 rounded-lg bg-gray-900 hover:bg-gray-800 border border-gray-800 transition-colors"
             >
               <span className="text-xs text-gray-500 uppercase font-mono w-12">{obj.kind}</span>

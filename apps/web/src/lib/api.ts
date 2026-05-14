@@ -1,6 +1,10 @@
 import type {
   AssetUploadResponse,
   AuthResponse,
+  ChatImportResponse,
+  ChatOut,
+  ChatProvider,
+  ChatRawFormat,
   EdgeCreate,
   EdgeWithObjectsOut,
   EdgeOut,
@@ -132,6 +136,49 @@ export const getSource = (id: string) => apiFetch<SourceOut>(`/api/v1/sources/${
 
 export const deleteSource = (id: string) =>
   apiFetch<SourceOut>(`/api/v1/sources/${id}`, { method: "DELETE" });
+
+export const listChats = (params?: { provider?: string; q?: string }) =>
+  apiFetch<ChatOut[]>(
+    "/api/v1/chats" +
+      (params ? "?" + new URLSearchParams(params as Record<string, string>).toString() : "")
+  );
+
+export const getChat = (id: string) => apiFetch<ChatOut>(`/api/v1/chats/${id}`);
+
+export async function importChatContent(data: {
+  content: string;
+  provider: ChatProvider;
+  title?: string;
+  raw_format?: ChatRawFormat;
+}): Promise<ChatImportResponse> {
+  return apiFetch<ChatImportResponse>("/api/v1/chats/import", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
+export async function importChatFile(data: {
+  file: File;
+  provider: ChatProvider;
+  title?: string;
+}): Promise<ChatImportResponse> {
+  const formData = new FormData();
+  formData.append("file", data.file);
+  formData.append("provider", data.provider);
+  if (data.title) formData.append("title", data.title);
+  const res = await fetch(`${BASE}/api/v1/chats/import`, {
+    method: "POST",
+    credentials: "include",
+    body: formData,
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ detail: res.statusText }));
+    throw new ApiError(res.status, (err as { detail: string }).detail);
+  }
+  return res.json() as Promise<ChatImportResponse>;
+}
+
+export const getRawChatUrl = (id: string) => `${BASE}/api/v1/chats/${id}/raw`;
 
 export const createEdge = (data: EdgeCreate) =>
   apiFetch<EdgeOut>("/api/v1/edges", { method: "POST", body: JSON.stringify(data) });

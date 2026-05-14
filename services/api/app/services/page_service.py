@@ -7,14 +7,16 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.object import KosObject
 from app.models.page import Page
-from app.schemas.page import PageCreate, PageOut, PageUpdate
+from app.schemas.page import PageCreate, PageUpdate
 
 
 def _count_words(text: str) -> int:
     return len(text.split()) if text.strip() else 0
 
 
-async def create_page(db: AsyncSession, user_id: uuid.UUID, data: PageCreate) -> tuple[KosObject, Page]:
+async def create_page(
+    db: AsyncSession, user_id: uuid.UUID, data: PageCreate
+) -> tuple[KosObject, Page]:
     obj = KosObject(user_id=user_id, kind="page", title=data.title)
     db.add(obj)
     await db.flush()
@@ -42,7 +44,9 @@ async def get_page_or_404(db: AsyncSession, page_id: uuid.UUID, user_id: uuid.UU
     return page
 
 
-async def update_page(db: AsyncSession, page_id: uuid.UUID, user_id: uuid.UUID, data: PageUpdate) -> Page:
+async def update_page(
+    db: AsyncSession, page_id: uuid.UUID, user_id: uuid.UUID, data: PageUpdate
+) -> Page:
     page = await get_page_or_404(db, page_id, user_id)
 
     if data.title is not None:

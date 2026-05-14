@@ -721,16 +721,78 @@ Search results share this shape:
 }
 ```
 
+## Chats
+
+Chats require the same `kos_session` cookie as other endpoints. All reads are scoped to the current user. Delete is a soft delete on the base object and never removes raw files.
+
+### `POST /api/v1/chats/import`
+
+Imports a chat from either multipart upload or pasted JSON.
+
+Multipart fields:
+
+| Name | Type | Notes |
+| --- | --- | --- |
+| `file` | file | Required; `.json`, `.md`, `.markdown`, or `.txt` |
+| `provider` | string | Optional; `auto`, `chatgpt`, `claude`, `markdown`, `plain_text`, `unknown` |
+| `title` | string | Optional title override |
+
+JSON body:
+
+```json
+{
+  "content": "User: hello\nAssistant: hi",
+  "provider": "plain_text",
+  "title": "Imported transcript",
+  "raw_format": "txt"
+}
+```
+
+Response:
+
+```json
+{
+  "imported": [
+    {
+      "id": "uuid",
+      "kind": "chat",
+      "title": "Imported transcript",
+      "provider": "plain_text",
+      "raw_storage_path": "chats/plain_text/uuid/raw.txt",
+      "raw_format": "txt",
+      "turn_count": 2,
+      "parsed_turns": [],
+      "content_text": "[User] hello\n\n[Assistant] hi",
+      "metadata": {}
+    }
+  ],
+  "total": 1
+}
+```
+
+ChatGPT batch exports return one item per conversation. Malformed JSON returns `422`; oversized imports return `413`.
+
+### Chat CRUD
+
+| Method | Path | Notes |
+| --- | --- | --- |
+| `GET` | `/api/v1/chats?provider=&q=&skip=&limit=` | List non-deleted chats |
+| `GET` | `/api/v1/chats/{id}` | Read chat detail |
+| `GET` | `/api/v1/chats/{id}/raw` | Stream raw imported transcript |
+| `DELETE` | `/api/v1/chats/{id}` | Soft-delete the chat object |
+| `POST` | `/api/v1/chats/{id}/restore` | Restore and enqueue reindex |
+| `POST` | `/api/v1/chats/{id}/reindex` | Enqueue chat reindex |
+
 ### `GET /api/v1/search/keyword`
 
-Runs Postgres full-text search across pages and sources.
+Runs Postgres full-text search across pages, sources, and chats.
 
 Query parameters:
 
 | Name | Type | Notes |
 | --- | --- | --- |
 | `q` | string | Required; minimum length `1` |
-| `kind` | string | Optional object kind filter, for example `page` or `source` |
+| `kind` | string | Optional object kind filter, for example `page`, `source`, or `chat` |
 | `source_type` | string | Optional source type filter when searching sources |
 | `limit` | integer | Default `20`; min `1`; max `100` |
 | `offset` | integer | Default `0`; min `0` |

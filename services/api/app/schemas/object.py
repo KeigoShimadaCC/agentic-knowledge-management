@@ -1,17 +1,24 @@
 import uuid
 from datetime import datetime
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
+
+from app.core.object_kinds import validate_object_kind
 
 
 class ObjectCreate(BaseModel):
-    kind: str = Field(pattern="^(page|asset|note|bookmark|collection)$")
+    kind: str
     title: str = ""
     description: str | None = None
     tags: list[str] = []
     metadata_: dict = Field(default_factory=dict, alias="metadata")
 
     model_config = {"populate_by_name": True}
+
+    @field_validator("kind")
+    @classmethod
+    def validate_kind(cls, value: str) -> str:
+        return validate_object_kind(value)
 
 
 class ObjectUpdate(BaseModel):

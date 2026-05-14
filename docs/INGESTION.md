@@ -116,6 +116,14 @@ Reindex triggers:
 | Page `PUT`/`PATCH` save | Enqueue `reindex_object(page_id)` |
 | Source `PATCH` metadata update | Enqueue `reindex_object(source_id)` |
 | Source ingestion completion | Enqueue `reindex_object(source_id)` |
-| Manual rebuild | `reindex_all_objects()` enqueues all non-deleted pages and sources |
+| Manual rebuild | `reindex_all_objects()` enqueues all non-deleted pages, sources, and chats |
 
 Reindex jobs use deterministic RQ job IDs (`reindex:{object_id}`) to avoid flooding the queue during repeated saves.
+
+## Phase 6A: Chat Import Lite
+
+Chat imports are synchronous API operations. `POST /api/v1/chats/import` accepts either multipart upload (`.json`, `.md`, `.markdown`, `.txt`) or JSON paste content. ChatGPT multi-conversation exports create one `chat` object per conversation.
+
+Raw chat bytes are written under `library/chats`, using object UUIDs for identity instead of user filenames. Single chat imports write `chats/{provider}/{chat_id}/raw.{json|md|txt}` plus `metadata.json`. ChatGPT batch uploads also preserve the exact uploaded export at `chats/chatgpt/imports/{batch_uuid}/raw.json`.
+
+The parser normalizes turns into `role`, `author`, `content`, `created_at`, and `metadata`. `chats.content_text` stores the searchable transcript projection. Keyword search reads this Postgres field immediately; vector/hybrid search can include chats after the normal `reindex_object(chat_id)` chunk and embedding job runs. No LLM calls happen during Phase 6A import.

@@ -17,5 +17,5 @@ def get_tmp_path() -> Path:
 
 def ensure_library_structure() -> None:
     root = get_library_root()
-    for subdir in ("assets", "tmp", "exports"):
+    for subdir in ("assets", "tmp", "exports", "chats"):
         (root / subdir).mkdir(parents=True, exist_ok=True)

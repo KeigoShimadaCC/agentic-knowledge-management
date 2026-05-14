@@ -5,9 +5,10 @@ from sqlalchemy import ARRAY, Boolean, DateTime, ForeignKey, Index, String, Text
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 
+from app.core.object_kinds import VALID_OBJECT_KINDS
 from app.db.base import Base
 
-VALID_KINDS = ("page", "asset", "note", "bookmark", "collection", "source")
+VALID_KINDS = VALID_OBJECT_KINDS
 
 
 class KosObject(Base):
@@ -22,6 +23,7 @@ class KosObject(Base):
     metadata_: Mapped[dict] = mapped_column("metadata", JSONB, nullable=False, server_default="{}")
     is_pinned: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default="false")
     is_archived: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default="false")
+    ai_generated: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default="false")
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=text("now()")
     )

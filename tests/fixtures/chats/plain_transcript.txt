@@ -1,0 +1,2 @@
+This is a plain transcript without speaker labels.
+It should become one unknown turn for searchable chat import tests.
