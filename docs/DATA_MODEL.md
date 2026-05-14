@@ -115,16 +115,29 @@ Known edge kinds:
 
 ### `chunks`
 
+Added in migration `0001`; extended for Phase 3 search in migration `0003`.
+
 | Field | Type | Constraints / Notes |
 | --- | --- | --- |
 | `id` | UUID | Primary key |
-| `user_id` | UUID | Required FK to `users.id` |
+| `user_id` | UUID | Required FK to `users.id`; added in migration 0003 |
 | `object_id` | UUID | Required FK to `objects.id` |
-| `content` | text | Chunk text |
+| `chunk_idx` | integer | Required; position of this chunk within the object |
+| `content` | text | Required; raw text of this chunk |
+| `token_count` | integer | Optional; approximate token count for context budgeting |
 | `metadata` | JSONB | Required object, default `{}` |
-| `position` | integer | Required order within the object |
+| `source_locator` | JSONB | Optional; e.g. `{"page": 3, "paragraph": 1}` for PDF |
+| `content_hash` | text | Optional SHA-256 of `content`; used to skip unchanged chunks on reindex |
+| `embedding_status` | varchar(16) | `pending`, `running`, `ready`, or `error`; default `pending` |
+| `embedding_model` | text | Optional; model used to generate the Qdrant embedding |
+| `embedded_at` | timestamptz | Optional; set when Qdrant point was last written |
+| `qdrant_point_id` | text | Optional; Qdrant point ID for this chunk |
 | `created_at` | timestamptz | Required |
-| `updated_at` | timestamptz | Required |
+| `updated_at` | timestamptz | Required; updated whenever chunk or embedding changes |
+
+Constraints and indexes:
+- `UNIQUE(object_id, chunk_idx)` — ensures deterministic re-indexing
+- Index on `object_id`, `user_id`, `embedding_status`, `content_hash`
 
 ### `ingestion_jobs`
 
@@ -214,3 +227,31 @@ Each source gets a directory under the library:
   thumbnail.jpg        # PDF cover image, image thumbnail, YouTube thumbnail, og:image
   extracted_text.txt   # written by extractor (backup; canonical copy is in DB)
 ```
+
+## Phase 3: Search Indexing
+
+Phase 3 extends the `chunks` table for idempotent search indexing (migration `0003`). Key design rules:
+
+- `chunks` is the canonical record of indexable text. Postgres is the source of truth.
+- Qdrant is a derived, re-buildable vector index. Never treat it as canonical.
+- `content_hash` enables skip-on-no-change reindexing: if hash matches, skip re-embedding.
+- `embedding_status` drives the reindex worker's work queue.
+- `source_locator` preserves provenance (e.g., which PDF page a chunk came from).
+- Reindexing is always idempotent: `UPSERT` on `(object_id, chunk_idx)`.
+
+## Object Type Registry (Design Note)
+
+Search UI, graph UI, MCP tools, and AI context packing should not hardcode every object type. A future object type registry will map each `kind` to routing, display, and search behavior:
+
+```
+objectTypeRegistry = {
+  page:    { route, icon, searchableFields: ["title", "content_text"] },
+  source:  { route, icon, searchableFields: ["title", "extracted_text"] },
+  asset:   { route, icon, searchableFields: ["title", "filename"] },
+  chat:    { route, icon, searchableFields: ["title", "summary"] },
+  project: { route, icon, searchableFields: ["title", "description"] },
+  claim:   { route, icon, searchableFields: ["title", "content"] },
+}
+```
+
+This registry is not yet implemented. When adding new object types, design search and display behavior with this contract in mind.
