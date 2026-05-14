@@ -1,11 +1,14 @@
+import uuid
+
 import pytest
 from httpx import AsyncClient
 
 
 async def _register_user(client: AsyncClient) -> None:
+    email = f"mcp-{uuid.uuid4().hex[:8]}@test.com"
     await client.post(
         "/api/v1/auth/register",
-        json={"email": "mcp@test.com", "password": "password123", "display_name": "MCP User"},
+        json={"email": email, "password": "password123", "display_name": "MCP User"},
     )
 
 
@@ -66,7 +69,7 @@ async def test_missing_token_header_falls_through_to_cookie(
     monkeypatch.setattr(settings, "mcp_internal_token", "some-token")
 
     # No header, no cookie → 401
-    resp = await client.get("/api/v1/objects/")
+    resp = await client.get("/api/v1/objects")
     assert resp.status_code == 401
 
 
