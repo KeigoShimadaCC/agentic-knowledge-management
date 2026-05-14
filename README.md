@@ -169,10 +169,9 @@ docker compose -f infra/docker-compose.yml up -d      # start (background)
 docker compose -f infra/docker-compose.yml up         # start (foreground logs)
 docker compose -f infra/docker-compose.yml down       # stop
 docker compose -f infra/docker-compose.yml down -v    # stop + wipe volumes (destructive)
-
-# Dev override: hot-reload with source mounts
-docker compose -f infra/docker-compose.yml -f infra/docker-compose.override.yml up
 ```
+
+Compose defaults include bind-mounted sources, Alembic before uvicorn, and optional demo seed. With seeding enabled, sign in as **demo@example.com** / **demo-demo-demo** unless overridden in `infra/.env`.
 
 ---
 

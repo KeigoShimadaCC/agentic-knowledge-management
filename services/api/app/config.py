@@ -35,12 +35,19 @@ class Settings(BaseSettings):
         default=False,
         description="On API startup, seed [Demo] pages/source/chat/edges for the demo user.",
     )
-    demo_seed_email: str = Field(default="demo@knowledgeos.local")
+    demo_seed_email: str = Field(default="demo@example.com")
     demo_seed_password: str = Field(default="demo-demo-demo")
     demo_seed_display_name: str = Field(default="Demo")
     cookie_secure: bool = Field(
         default=False,
         description="Set Secure flag on kos_session; enable when serving the API over HTTPS.",
+    )
+    mcp_internal_token: str = Field(
+        default="",
+        description=(
+            "Shared token for local MCP service auth via X-KOS-Internal-Token header. "
+            "Empty = disabled."
+        ),
     )
 
     model_config = {"env_file": ".env", "env_file_encoding": "utf-8"}

@@ -21,6 +21,14 @@ async def lifespan(app: FastAPI):
     ensure_library_structure()
     await qc.create_collection_if_not_exists()
 
+    async with AsyncSessionLocal() as db:
+        try:
+            await demo_seed_service.migrate_legacy_demo_email(db)
+            await db.commit()
+        except Exception:
+            log.exception("Legacy demo email migration failed")
+            await db.rollback()
+
     if settings.seed_demo_examples:
         async with AsyncSessionLocal() as db:
             try:

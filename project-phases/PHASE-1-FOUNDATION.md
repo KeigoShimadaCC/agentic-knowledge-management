@@ -45,7 +45,7 @@ Files:
   - api depends_on all three (condition: service_healthy)
   - web depends_on api (condition: service_healthy)
   - library-data: bind mount to `${HOME}/KnowledgeOS/library`
-- `infra/docker-compose.override.yml` — dev hot-reload (source mounts, --reload)
+- Dev ergonomics live in `infra/docker-compose.yml`: `development` image targets, bind-mounted sources, API runs `alembic upgrade head` before uvicorn, optional demo seed env vars.
 - `infra/.env.example` — all env vars with placeholder values
 - `infra/Dockerfile.api` — multi-stage: base / development / production (python:3.12-slim + uv)
 - `infra/Dockerfile.web` — multi-stage: base / development / builder / production (node:20-alpine + pnpm)

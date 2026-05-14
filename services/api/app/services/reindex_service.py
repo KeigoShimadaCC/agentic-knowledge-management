@@ -18,7 +18,7 @@ def enqueue_reindex_object(object_id: uuid.UUID | str) -> bool:
         queue.enqueue(
             "kos_worker.tasks.reindex_object",
             object_id_str,
-            job_id=f"reindex:{object_id_str}",
+            job_id=f"reindex-{object_id_str}",
         )
         return True
     except Exception:

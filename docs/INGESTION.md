@@ -118,7 +118,7 @@ Reindex triggers:
 | Source ingestion completion | Enqueue `reindex_object(source_id)` |
 | Manual rebuild | `reindex_all_objects()` enqueues all non-deleted pages, sources, and chats |
 
-Reindex jobs use deterministic RQ job IDs (`reindex:{object_id}`) to avoid flooding the queue during repeated saves.
+Reindex jobs use deterministic RQ job IDs (`reindex-{object_id}`; UUID text uses only letters, digits, and dashes per RQ rules) to avoid flooding the queue during repeated saves.
 
 ## Phase 6A: Chat Import Lite
 
