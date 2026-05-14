@@ -171,3 +171,51 @@ KnowledgeOS provides three search modes:
 5. Reindex is triggered on page save and after source ingestion completes.
 
 If `OPENAI_API_KEY` is not set, vector search returns 503 and hybrid search falls back to keyword-only.
+
+## Phase 8A: Workspace Lite (frontend-only)
+
+Workspace Lite adds a split-pane side panel to the app shell. It is implemented entirely as React client state — no backend schema changes, no new API endpoints.
+
+### Architecture
+
+```
+AppShell (flex h-screen)
+  ├── Sidebar (w-60)
+  ├── <main> (min-w-0 flex-1)          ← min-w-0 prevents flex overflow when pane opens
+  │     └── [route children]
+  │           └── PageView (for /pages/[id])
+  │                 ├── editor (flex-1)
+  │                 └── GraphPanel (w-72)  ← unchanged, lives inside PageView
+  ├── WorkspaceSidePane (w-96, md+ only)  ← NEW: conditionally rendered
+  └── SearchModal (fixed overlay)
+```
+
+### State management
+
+`WorkspaceLiteProvider` (React context, `"use client"`) wraps `(app)/layout.tsx`. It exposes:
+
+```ts
+sidePaneObject: SidePaneObject | null
+openSidePane(obj: SidePaneObject): void
+closeSidePane(): void
+```
+
+No URL params, no persistence. Side pane state resets on page navigation, which is intentional.
+
+### Routing helper
+
+`lib/objectRouting.ts` exports `objectRoute(kind, id)` and `objectKindLabel(kind)`. All components that previously had inline route-building logic now use these functions.
+
+### Entry points
+
+| Component | How user opens side pane |
+|-----------|--------------------------|
+| `SearchModal` → `SearchResultCard` | Columns icon button beside each result |
+| `BacklinksPanel` | Columns icon button beside each backlink item |
+| `RelatedPanel` | Columns icon button beside each related item |
+
+Side pane hides below the `md` breakpoint (< 768px). ESC key closes it.
+
+### Notes for agents
+
+Workspace state is local UI state only. Do not add persistence for workspace layouts in this branch — that belongs to Phase 8 proper. The `WorkspaceLiteProvider` is intentionally isolated in `components/workspace/`; its internals can be replaced without touching consumers.

@@ -99,12 +99,12 @@ See [`project-phases/PHASE-3-SEARCH.md`](project-phases/PHASE-3-SEARCH.md) for t
 See [`project-phases/PHASE-8A-WORKSPACE-LITE.md`](project-phases/PHASE-8A-WORKSPACE-LITE.md) for the full subtask spec.
 
 - [x] **Subtask 0** — Audit + plan files: create phase doc, update PROGRESS.md
-- [ ] **Subtask 1** — Routing helper (`objectRoute`) + `WorkspaceLiteProvider` React context
-- [ ] **Subtask 2** — `ObjectPaneViewer`: `PagePaneView`, `SourcePaneView`, asset/fallback views
-- [ ] **Subtask 3** — Side pane layout: `WorkspaceSidePane` + AppShell integration (`min-w-0`, conditional pane)
-- [ ] **Subtask 4** — Open in side pane from search results (`SearchResultCard` + `SearchModal`)
-- [ ] **Subtask 5** — Open in side pane from graph panels (`BacklinksPanel`, `RelatedPanel`)
-- [ ] **Subtask 6** — Polish (ESC key, responsive behavior, smooth transition) + docs
+- [x] **Subtask 1** — Routing helper (`objectRoute`) + `WorkspaceLiteProvider` React context
+- [x] **Subtask 2** — `ObjectPaneViewer`: `PagePaneView`, `SourcePaneView`, asset/fallback views
+- [x] **Subtask 3** — Side pane layout: `WorkspaceSidePane` + AppShell integration (`min-w-0`, conditional pane)
+- [x] **Subtask 4** — Open in side pane from search results (`SearchResultCard` + `SearchModal`)
+- [x] **Subtask 5** — Open in side pane from graph panels (`BacklinksPanel`, `RelatedPanel`)
+- [x] **Subtask 6** — Polish (ESC key, responsive behavior, smooth transition) + docs
 
 ---
 
@@ -198,14 +198,14 @@ See [`project-phases/PHASE-8A-WORKSPACE-LITE.md`](project-phases/PHASE-8A-WORKSP
 | 2 | Sources & Rich Media | ✅ Complete | 9 / 9 subtasks |
 | 3 | Search | ✅ Complete | 10 / 10 subtasks |
 | 4 | Graph Lite | ✅ Complete | 6 / 6 subtasks |
-| 8A | Workspace Lite | ⬜ In Progress | 1 / 7 subtasks |
+| 8A | Workspace Lite | ✅ Complete | 7 / 7 subtasks |
 | 5 | AI Assistant + Inbox/Triage | ⬜ Planned | 0 / 12 subtasks |
 | 6 | Chat Import | ⬜ Planned | 0 / 8 subtasks |
 | 7 | MCP Server (staged) | ⬜ Planned | 0 / 6 subtasks |
 | 8 | Multi-Pane Workspaces | ⬜ Planned | 0 / 8 subtasks |
 | 9 | Career & Project Memory | ⬜ Planned | 0 / 8 subtasks |
 
-**Total:** 34 / 82 subtasks complete
+**Total:** 40 / 82 subtasks complete
 
 **Key cross-cutting concepts to track:**
 - Inbox/Triage (Phase 5): AI-classified staging area for unprocessed items

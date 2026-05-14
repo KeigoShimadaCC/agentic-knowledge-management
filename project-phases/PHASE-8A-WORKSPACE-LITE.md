@@ -1,6 +1,6 @@
 # Phase 8A — Workspace Lite
 
-> **Status:** In Progress  
+> **Status:** Complete  
 > **Branch:** `phase8a-workspace-lite`  
 > **Parallel with:** Phase 5 (AI Assistant) and Phase 6 (Chat Import) in separate branches
 
@@ -33,20 +33,20 @@ Let the user open a second object beside their current view without losing conte
 
 ## Definition of Done
 
-- [ ] `project-phases/PHASE-8A-WORKSPACE-LITE.md` created
-- [ ] `PROGRESS.md` updated
-- [ ] `WorkspaceLiteProvider` wraps app; side pane state available globally
-- [ ] `objectRoute(kind, id)` helper exists; SearchModal, BacklinksPanel, RelatedPanel use it
-- [ ] Side pane opens/closes; shows page, source, asset, or fallback
-- [ ] Search results have "open in side pane" affordance
-- [ ] BacklinksPanel items have "open in side pane" affordance
-- [ ] RelatedPanel items have "open in side pane" affordance
-- [ ] Side pane has header (title, kind badge, close button, "open full page" link)
-- [ ] Loading and error states in side pane
-- [ ] Existing navigation unchanged
-- [ ] `pnpm -F web typecheck` passes
-- [ ] `pnpm -F web build` passes
-- [ ] Existing 58+ backend tests still pass (no backend changes)
+- [x] `project-phases/PHASE-8A-WORKSPACE-LITE.md` created
+- [x] `PROGRESS.md` updated
+- [x] `WorkspaceLiteProvider` wraps app; side pane state available globally
+- [x] `objectRoute(kind, id)` helper exists; SearchModal, BacklinksPanel, RelatedPanel use it
+- [x] Side pane opens/closes; shows page, source, asset, or fallback
+- [x] Search results have "open in side pane" affordance
+- [x] BacklinksPanel items have "open in side pane" affordance
+- [x] RelatedPanel items have "open in side pane" affordance
+- [x] Side pane has header (title, kind badge, close button, "open full page" link)
+- [x] Loading and error states in side pane
+- [x] Existing navigation unchanged
+- [x] `pnpm -F web typecheck` passes
+- [x] `pnpm -F web build` passes
+- [x] Existing 58+ backend tests still pass (no backend changes)
 
 ---
 
@@ -136,12 +136,12 @@ All viewers show a 3-line loading skeleton and an error state.
 ## Subtask Checklist
 
 - [x] **Subtask 0** — Audit + plan files: create this doc, update PROGRESS.md
-- [ ] **Subtask 1** — Routing helper + workspace state provider
-- [ ] **Subtask 2** — ObjectPaneViewer (page, source, asset, fallback)
-- [ ] **Subtask 3** — Side pane layout (AppShell integration)
-- [ ] **Subtask 4** — Open in side pane from search results
-- [ ] **Subtask 5** — Open in side pane from graph panels
-- [ ] **Subtask 6** — Polish (ESC key, responsive, smooth transition) + docs
+- [x] **Subtask 1** — Routing helper + workspace state provider
+- [x] **Subtask 2** — ObjectPaneViewer (page, source, asset, fallback)
+- [x] **Subtask 3** — Side pane layout (AppShell integration)
+- [x] **Subtask 4** — Open in side pane from search results
+- [x] **Subtask 5** — Open in side pane from graph panels
+- [x] **Subtask 6** — Polish (ESC key, responsive, smooth transition) + docs
 
 ---
 

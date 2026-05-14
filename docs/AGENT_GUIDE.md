@@ -259,6 +259,16 @@ POST /api/v1/objects/{id}/restore
 
 Do not remove rows from Postgres. Do not remove files from `~/KnowledgeOS/library` unless a future API endpoint explicitly supports permanent deletion.
 
+## Workspace Lite State
+
+`WorkspaceLiteProvider` manages which object is shown in the side pane. This state is local React UI state — it is **not** persisted to Postgres, Redis, or any API. Do not:
+
+- Add a `workspaces` table or API endpoint in the `phase8a-workspace-lite` branch.
+- Store side-pane state in the URL or localStorage.
+- Attempt to restore the side pane from a previous session.
+
+Workspace persistence belongs to Phase 8 proper. The provider is isolated in `components/workspace/` so its internals can be swapped without breaking consumers.
+
 ## Scope Boundaries
 
 Agents may work with:
