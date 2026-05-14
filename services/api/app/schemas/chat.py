@@ -48,6 +48,10 @@ class ChatOut(BaseModel):
     parsed_turns: list[ChatTurnOut]
     content_text: str
     metadata: dict = Field(alias="metadata_", serialization_alias="metadata")
+    structured_summary: dict | None = None
+    structured_summary_status: str = "none"
+    structured_summary_agent_run_id: uuid.UUID | None = None
+    structured_summary_updated_at: datetime | None = None
 
     model_config = {"from_attributes": True, "populate_by_name": True}
 

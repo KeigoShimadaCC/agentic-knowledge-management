@@ -28,6 +28,17 @@ class Chat(Base):
     parsed_turns: Mapped[list] = mapped_column(JSONB, nullable=False, server_default="[]")
     content_text: Mapped[str] = mapped_column(Text, nullable=False, server_default="")
     metadata_: Mapped[dict] = mapped_column("metadata", JSONB, nullable=False, server_default="{}")
+    structured_summary: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
+    structured_summary_status: Mapped[str] = mapped_column(
+        String(16), nullable=False, server_default="none"
+    )
+    structured_summary_agent_run_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("agent_runs.id", ondelete="SET NULL"), nullable=True
+    )
+    structured_summary_updated_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    structured_summary_hash: Mapped[str | None] = mapped_column(String(64), nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=text("now()")
     )

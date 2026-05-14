@@ -150,6 +150,10 @@ export interface ChatOut {
   parsed_turns: ChatTurnOut[];
   content_text: string;
   metadata: Record<string, unknown>;
+  structured_summary: Record<string, unknown> | null;
+  structured_summary_status: "none" | "previewed" | "applied" | "failed" | string;
+  structured_summary_agent_run_id: string | null;
+  structured_summary_updated_at: string | null;
 }
 
 export interface ChatImportResponse {
