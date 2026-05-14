@@ -7,8 +7,6 @@ logger = logging.getLogger(__name__)
 def extract(source, db) -> dict:
     """Fetch web article title and body text via httpx + BeautifulSoup."""
     import httpx
-    from bs4 import BeautifulSoup
-
     from app.config import settings
     from app.core.url_safety import (
         DEFAULT_MAX_BODY_BYTES,
@@ -16,6 +14,7 @@ def extract(source, db) -> dict:
         safe_http_get,
         validate_safe_http_url,
     )
+    from bs4 import BeautifulSoup
 
     if not source.url:
         return {"ingestion_status": "error", "error_message": "Web source has no URL"}
