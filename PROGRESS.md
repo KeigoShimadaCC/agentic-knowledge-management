@@ -66,9 +66,11 @@ See [`project-phases/PHASE-3-SEARCH.md`](project-phases/PHASE-3-SEARCH.md) for t
 
 ---
 
-## Phase 4 — Graph Lite ⬜ In Progress
+## Phase 4 — Graph Lite ⬜ Backend Complete; UI Deferred
 
 **Goal:** Give the knowledge base a graph backbone using the existing Postgres `edges` table. Surface typed links and backlinks in the UI without requiring Kùzu yet.
+
+**Current milestone status:** Phase 4A backend Graph Lite is complete and pushed. Phase 4B UI is intentionally deferred until Phase 3 search endpoints and search UI stabilize.
 
 - [x] **Subtask 0** — Phase 3 audit + backend-first Graph Lite plan saved to [`project-phases/PHASE-4-GRAPH-LITE.md`](project-phases/PHASE-4-GRAPH-LITE.md); UI/search-router work deferred to avoid Phase 3 conflicts
 - [x] **Subtask 1** — Edge taxonomy + validation: canonical graph edge kinds, legacy kind preservation, service/schema validation
@@ -76,6 +78,20 @@ See [`project-phases/PHASE-3-SEARCH.md`](project-phases/PHASE-3-SEARCH.md) for t
 - [x] **Subtask 3** — Object graph APIs: `GET /objects/{id}/edges`, `/backlinks`, `/related` over Postgres edges, depth 1–2
 - [x] **Subtask 4** — Tests + docs: graph API coverage; update `docs/DATA_MODEL.md`, `docs/API.md`, `docs/ARCHITECTURE.md`, `docs/AGENT_GUIDE.md`
 - [ ] **Subtask 5** — Phase 4B UI after Phase 3 search UI stabilizes: object picker, typed link creation, backlinks/related panels, citation UX cleanup
+
+**Done in Phase 4A:**
+- Edge taxonomy and validation (`links_to`, `cites`, `derives_from`, `mentions`, `supports`, `contradicts`, `related_to`, `summarizes`, `belongs_to_project`, `evidence_for`, `created_from`) with legacy kinds preserved.
+- Hardened `/api/v1/edges` behavior: validated kinds, ownership checks for both objects, deleted-object exclusion, idempotent create, soft-deleted edge restore, `weight`, and `metadata`.
+- Object graph API foundation: object-centered edge listing, backlinks, and related-object traversal over Postgres only.
+- Graph Lite tests covering invalid kinds, cross-user protection, deleted objects, soft-delete restore, backlinks, and depth 1–2 related traversal.
+- Documentation and plan artifact updates for API, data model, architecture, agent guidance, schema notes, and `project-phases/PHASE-4-GRAPH-LITE.md`.
+
+**Remaining for Phase 4B:**
+- Reusable object picker.
+- Typed link creation UI.
+- Backlinks and related-object panels in page/source views.
+- Citation UX cleanup so citation chips and graph panels use the same user-facing model.
+- Optional `POST /api/v1/search/graph` after the Phase 3 search router exists.
 
 **Kùzu (optional extension):** If graph traversal needs more than 1–2 hops, add Kùzu as an embedded graph layer. Mirror Postgres edges to Kùzu on each edge create/delete. Not required for Phase 4 baseline.
 
@@ -170,7 +186,7 @@ See [`project-phases/PHASE-3-SEARCH.md`](project-phases/PHASE-3-SEARCH.md) for t
 | 1 | Foundation | ✅ Complete | 8 / 8 subtasks |
 | 2 | Sources & Rich Media | ✅ Complete | 9 / 9 subtasks |
 | 3 | Search | ⬜ In Progress | 3 / 10 subtasks complete; subtask 3 in progress |
-| 4 | Graph Lite | ⬜ In Progress | 5 / 6 subtasks; Phase 4B UI deferred |
+| 4 | Graph Lite | ⬜ Backend Complete; UI Deferred | 5 / 6 subtasks; Phase 4B UI deferred |
 | 5 | AI Assistant + Inbox/Triage | ⬜ Planned | 0 / 12 subtasks |
 | 6 | Chat Import | ⬜ Planned | 0 / 8 subtasks |
 | 7 | MCP Server (staged) | ⬜ Planned | 0 / 6 subtasks |
