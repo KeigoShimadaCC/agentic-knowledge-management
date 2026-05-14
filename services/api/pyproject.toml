@@ -17,6 +17,8 @@ dependencies = [
     "itsdangerous>=2.2",
     "aiofiles>=23.2",
     "python-jose>=3.3",
+    "openai>=1.0",
+    "qdrant-client>=1.9",
 ]
 
 [project.optional-dependencies]

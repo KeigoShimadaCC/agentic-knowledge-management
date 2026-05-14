@@ -10,7 +10,10 @@ from app.core.library import ensure_library_structure
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    from app.search import qdrant_client as qc
+
     ensure_library_structure()
+    await qc.create_collection_if_not_exists()
     yield
 
 
