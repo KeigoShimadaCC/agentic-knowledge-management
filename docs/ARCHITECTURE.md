@@ -151,3 +151,23 @@ Current graph flow:
 5. Related-object traversal runs over Postgres edges with depth capped at 2.
 
 Kuzu remains a future derived index. It should be introduced only if Postgres edge traversal is no longer sufficient for the local-first workload.
+
+## Phase 3: Search Pipeline
+
+KnowledgeOS provides three search modes:
+
+| Mode | Endpoint | Backend |
+| --- | --- | --- |
+| Keyword | `GET /api/v1/search/keyword` | Postgres `to_tsvector` + `plainto_tsquery` |
+| Vector | `POST /api/v1/search/vector` | Qdrant cosine similarity |
+| Hybrid | `POST /api/v1/search/hybrid` | Merged: 0.45 keyword + 0.45 vector + 0.10 recency |
+
+### Indexing pipeline
+
+1. Content is chunked into ~1000-character overlapping segments (`chunker.py`).
+2. Each chunk is stored in the `chunks` table with a `content_hash` for idempotency.
+3. Chunks with `embedding_status="pending"` are embedded via OpenAI `text-embedding-3-small` and upserted to Qdrant (`knowledgeos_chunks`).
+4. Qdrant collection `knowledgeos_chunks` uses COSINE distance, dimension 1536.
+5. Reindex is triggered on page save and after source ingestion completes.
+
+If `OPENAI_API_KEY` is not set, vector search returns 503 and hybrid search falls back to keyword-only.

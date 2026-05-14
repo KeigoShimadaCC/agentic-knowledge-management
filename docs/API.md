@@ -700,3 +700,132 @@ Query parameters:
 Response items include object summary, traversal distance, score, and the edge path used.
 
 Status codes: `200`, `401`, `404`, `422`.
+
+## Search Endpoints
+
+Search requires the same `kos_session` cookie as other KnowledgeOS endpoints. Keyword search is always available offline. Vector search requires embeddings to be enabled with `OPENAI_API_KEY`; hybrid search falls back to keyword-only when embeddings are disabled.
+
+Search results share this shape:
+
+```json
+{
+  "id": "uuid",
+  "kind": "page",
+  "title": "Quantum Computing",
+  "snippet": "Optional highlighted text",
+  "tags": [],
+  "score": 0.42,
+  "updated_at": "2026-05-14T00:00:00Z",
+  "source_type": null,
+  "ingestion_status": null
+}
+```
+
+### `GET /api/v1/search/keyword`
+
+Runs Postgres full-text search across pages and sources.
+
+Query parameters:
+
+| Name | Type | Notes |
+| --- | --- | --- |
+| `q` | string | Required; minimum length `1` |
+| `kind` | string | Optional object kind filter, for example `page` or `source` |
+| `source_type` | string | Optional source type filter when searching sources |
+| `limit` | integer | Default `20`; min `1`; max `100` |
+| `offset` | integer | Default `0`; min `0` |
+
+Response:
+
+```json
+{
+  "results": [],
+  "total": 0,
+  "query": "quantum",
+  "mode": "keyword"
+}
+```
+
+Status codes: `200`, `401`, `422`.
+
+### `POST /api/v1/search/vector`
+
+Embeds the query and searches Qdrant by cosine similarity.
+
+Request:
+
+```json
+{
+  "q": "semantic search query",
+  "kind": "page",
+  "source_type": null,
+  "limit": 20,
+  "score_threshold": 0.2
+}
+```
+
+Response:
+
+```json
+{
+  "results": [],
+  "total": 0,
+  "query": "semantic search query",
+  "mode": "vector"
+}
+```
+
+When `OPENAI_API_KEY` is not set, the endpoint returns:
+
+```json
+{
+  "detail": "embeddings_disabled"
+}
+```
+
+Status codes: `200`, `401`, `422`, `503`.
+
+### `POST /api/v1/search/hybrid`
+
+Combines keyword, vector, and recency scores. When embeddings are disabled, this endpoint still returns keyword results and sets `embeddings_used` to `false`.
+
+Request:
+
+```json
+{
+  "q": "combined search query",
+  "kind": null,
+  "source_type": null,
+  "limit": 20,
+  "debug": false
+}
+```
+
+Response:
+
+```json
+{
+  "results": [
+    {
+      "id": "uuid",
+      "kind": "page",
+      "title": "Research Notes",
+      "snippet": "Optional highlighted text",
+      "tags": [],
+      "score": 0.55,
+      "updated_at": "2026-05-14T00:00:00Z",
+      "source_type": null,
+      "ingestion_status": null,
+      "keyword_score": 1.0,
+      "vector_score": 0.0,
+      "recency_boost": 1.0
+    }
+  ],
+  "total": 1,
+  "query": "combined search query",
+  "mode": "hybrid",
+  "embeddings_used": false
+}
+```
+
+Status codes: `200`, `401`, `422`.
