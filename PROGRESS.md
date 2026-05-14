@@ -66,6 +66,22 @@ See [`project-phases/PHASE-3-SEARCH.md`](project-phases/PHASE-3-SEARCH.md) for t
 
 ---
 
+## Hardening Track — Search Quality + Multilingual Retrieval 🚧 In Progress
+
+**Goal:** Strengthen retrieval quality for multilingual content (Japanese focus), harden security of search snippets, and increase observability and debug visibility.
+
+See [`project-phases/HARDENING-SEARCH-QUALITY-MULTILINGUAL.md`](project-phases/HARDENING-SEARCH-QUALITY-MULTILINGUAL.md) for the full subtask spec.
+
+- [x] **Subtask 0** — Audit and finalize plan: add plan to `project-phases/`, update `PROGRESS.md`
+- [ ] **Subtask 1** — Multilingual keyword fallback: support Japanese/mixed-language via `ILIKE` fallback + `pg_trgm`
+- [ ] **Subtask 2** — Search snippet sanitization: prevent XSS in highlighted snippets
+- [ ] **Subtask 3** — Search eval fixture expansion: add Japanese and mixed-language cases to `search_eval_cases.json`
+- [ ] **Subtask 4** — Search debug visibility: display ranking scores in UI (optional/dev-mode)
+- [ ] **Subtask 5** — Index/reindex observability: add index status endpoint and document reindex commands
+- [ ] **Subtask 6** — Documentation and final validation: update API/Architecture/Security docs
+
+---
+
 ## Phase 4 — Graph Lite ✅ Complete
 
 **Goal:** Give the knowledge base a graph backbone using the existing Postgres `edges` table. Surface typed links and backlinks in the UI without requiring Kùzu yet.
@@ -92,9 +108,9 @@ See [`project-phases/PHASE-3-SEARCH.md`](project-phases/PHASE-3-SEARCH.md) for t
 
 ---
 
-## Phase 8A — Workspace Lite ⬜ In Progress
+## Phase 8A — Workspace Lite ✅ Complete
 
-**Goal:** Let the user open a second object beside their current view without navigating away. Frontend-only split pane (no DB schema changes). Runs in parallel with Phase 5 and Phase 6 on branch `phase8a-workspace-lite`.
+**Goal:** Let the user open a second object beside their current view without navigating away. Frontend-only split pane (no DB schema changes). Ran in parallel with Phase 5 and Phase 6 on branch `phase8a-workspace-lite`.
 
 See [`project-phases/PHASE-8A-WORKSPACE-LITE.md`](project-phases/PHASE-8A-WORKSPACE-LITE.md) for the full subtask spec.
 
@@ -171,16 +187,33 @@ See [`project-phases/PHASE-6B-STRUCTURED-CHAT-IMPORT.md`](project-phases/PHASE-6
 
 ---
 
-## Phase 7 — MCP Server ⬜ Planned
+## Phase 7A — MCP Read/Search + Safety Foundation ⬜ In Progress
 
-**Goal:** Expose KnowledgeOS as a local MCP server. Staged rollout: read/search first, then create, then update/archive (requires revision history from Phase 5).
+**Goal:** Safe local-only stdio MCP server with read/search tools. No write tools. No shell. No arbitrary filesystem access. `answer_from_kb` deferred until Phase 5 AI endpoint is built.
 
-- [ ] **v1 — Read/Search Tools:** `search_objects`, `hybrid_search`, `get_object`, `get_page`, `get_source`, `get_related_objects`, `answer_from_kb`
-- [ ] **v2 — Create Tools:** `create_page`, `create_edge`, `ingest_url`, `ingest_file`; each call validates agent identity + writes `agent_runs`
-- [ ] **v3 — Update/Archive Tools (requires Phase 5 object_revisions):** `update_page`, `archive_object`; before/after diff logged; rollback supported
-- [ ] **MCP resources:** `knowledgeos://objects/{id}`, `knowledgeos://pages/{id}`, `knowledgeos://sources/{id}`, `knowledgeos://search?q=…`
-- [ ] **Safety:** no shell execution; no paths outside `LIBRARY_ROOT`; API keys redacted; per-tool enable/disable
-- [ ] **Tests + docs:** `docs/MCP_TOOLS.md` full reference; `docs/SECURITY.md` updated
+See [`project-phases/PHASE-7A-MCP.md`](project-phases/PHASE-7A-MCP.md) for the full subtask spec.
+
+- [x] **Subtask 0** — Audit + plan files: create phase doc, update PROGRESS.md
+- [ ] **Subtask 1** — MCP config + safety foundation: `McpSettings`, `redact_dict`, `pyproject.toml`, `.env.example`
+- [ ] **Subtask 2** — FastAPI internal token auth: `config.py` + `deps.py` + `test_mcp_auth.py`
+- [ ] **Subtask 3** — MCP API client: `client.py` (httpx, 6 methods)
+- [ ] **Subtask 4** — MCP server scaffold: `server.py` + `tools.py` skeleton + tool registry
+- [ ] **Subtask 5** — Search tools: `search_objects`, `hybrid_search` (with 503 fallback)
+- [ ] **Subtask 6** — Object/page/source tools: `get_object`, `get_page`, `get_source`
+- [ ] **Subtask 7** — Graph tool + `answer_from_kb` stub: `get_related_objects`, disabled stub
+- [ ] **Subtask 8** — Tests: `test_config.py`, `test_tools.py`, `test_mcp_auth.py`
+- [ ] **Subtask 9** — Docs: `MCP_TOOLS.md`, `SECURITY.md`, `AGENT_GUIDE.md`, `README.md`
+
+---
+
+## Phase 7B — MCP Write Tools ⬜ Planned
+
+**Goal:** Add create/update/archive write tools to MCP. Requires Phase 5 `object_revisions` table.
+
+- [ ] **v2 — Create Tools:** `create_page`, `create_edge`, `ingest_url`, `ingest_file`; validates agent identity + writes `agent_runs`
+- [ ] **v3 — Update/Archive Tools:** `update_page`, `archive_object`; before/after diff logged; rollback supported
+- [ ] **MCP resources:** `knowledgeos://objects/{id}`, `knowledgeos://pages/{id}`, `knowledgeos://sources/{id}`
+- [ ] **Tests + docs**
 
 ---
 
@@ -226,11 +259,12 @@ See [`project-phases/PHASE-6B-STRUCTURED-CHAT-IMPORT.md`](project-phases/PHASE-6
 | 5 | AI Assistant + Inbox/Triage | ⬜ Planned | 0 / 12 subtasks |
 | 6A | Chat Import Lite | ✅ Complete | 8 / 8 subtasks |
 | 6B | Structured Chat Import | ✅ Complete | 9 / 9 subtasks |
-| 7 | MCP Server (staged) | ⬜ Planned | 0 / 6 subtasks |
+| 7A | MCP Read/Search | ⬜ In Progress | 1 / 10 subtasks |
+| 7B | MCP Write Tools | ⬜ Planned | 0 / 4 subtasks |
 | 8 | Multi-Pane Workspaces | ⬜ Planned | 0 / 8 subtasks |
 | 9 | Career & Project Memory | ⬜ Planned | 0 / 8 subtasks |
 
-**Total:** 57 / 91 subtasks complete
+**Total:** 58 / 99 subtasks complete
 
 **Key cross-cutting concepts to track:**
 - Inbox/Triage (Phase 5): AI-classified staging area for unprocessed items
@@ -241,7 +275,7 @@ See [`project-phases/PHASE-6B-STRUCTURED-CHAT-IMPORT.md`](project-phases/PHASE-6
 **Current repo state notes (2026-05-14):**
 - Phase 3 search is complete, including keyword, vector, and hybrid API behavior, search UI, integration tests, and API/architecture documentation.
 - Phase 6A Chat Import Lite is complete: chat object model/API/parser/storage/search/UI and test coverage are in place. Chat migration is `0005_add_chats.py` because an existing local `0004_object_revisions.py` migration is present in the workspace.
-- Phase 6B Structured Chat Import is active. The repo audit found Phase 5 incomplete, so Phase 6B includes only the minimal AI/revision/Claim/Task prerequisites needed for chat structure extraction.
+- Phase 6B Structured Chat Import is complete. The repo audit found Phase 5 incomplete, so Phase 6B includes only the minimal AI/revision/Claim/Task prerequisites needed for chat structure extraction.
 - Phase 6B Subtask 1 added a minimal audited AI client, `object_revisions` ORM/service support, and generic `claim`/`task` object-kind support for extraction.
 - Phase 6B Subtask 2 added chat structured-summary fields in migration `0006_add_structured_chat_summary.py`.
 - Phase 6B Subtask 3 added strict structured-summary schemas plus prompt/output parsing helpers.
