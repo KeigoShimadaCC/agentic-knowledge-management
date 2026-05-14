@@ -42,6 +42,7 @@ class ObjectOut(BaseModel):
     metadata: dict = Field(alias="metadata_", serialization_alias="metadata")
     is_pinned: bool
     is_archived: bool
+    ai_generated: bool
     created_at: datetime
     updated_at: datetime
     deleted_at: datetime | None

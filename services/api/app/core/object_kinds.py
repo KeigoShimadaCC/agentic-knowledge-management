@@ -1,4 +1,14 @@
-VALID_OBJECT_KINDS = ("page", "asset", "note", "bookmark", "collection", "source", "chat")
+VALID_OBJECT_KINDS = (
+    "page",
+    "asset",
+    "note",
+    "bookmark",
+    "collection",
+    "source",
+    "chat",
+    "claim",
+    "task",
+)
 
 
 def is_valid_object_kind(kind: str) -> bool:

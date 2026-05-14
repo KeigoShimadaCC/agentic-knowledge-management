@@ -12,6 +12,24 @@ async def test_create_object(auth_client: AsyncClient):
     data = resp.json()
     assert data["title"] == "Test Note"
     assert data["kind"] == "note"
+    assert data["ai_generated"] is False
+
+
+@pytest.mark.asyncio
+async def test_create_claim_and_task_objects(auth_client: AsyncClient):
+    claim = await auth_client.post(
+        "/api/v1/objects",
+        json={"kind": "claim", "title": "Extracted claim", "description": "A factual claim."},
+    )
+    task = await auth_client.post(
+        "/api/v1/objects",
+        json={"kind": "task", "title": "Follow up", "description": "An action item."},
+    )
+
+    assert claim.status_code == 201
+    assert claim.json()["kind"] == "claim"
+    assert task.status_code == 201
+    assert task.json()["kind"] == "task"
 
 
 @pytest.mark.asyncio

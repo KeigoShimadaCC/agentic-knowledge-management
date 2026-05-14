@@ -5,7 +5,16 @@ export interface User {
   created_at: string;
 }
 
-export type ObjectKind = "page" | "asset" | "note" | "bookmark" | "collection" | "source" | "chat";
+export type ObjectKind =
+  | "page"
+  | "asset"
+  | "note"
+  | "bookmark"
+  | "collection"
+  | "source"
+  | "chat"
+  | "claim"
+  | "task";
 
 export interface ObjectOut {
   id: string;
@@ -17,6 +26,7 @@ export interface ObjectOut {
   metadata: Record<string, unknown>;
   is_pinned: boolean;
   is_archived: boolean;
+  ai_generated: boolean;
   created_at: string;
   updated_at: string;
   deleted_at: string | null;
