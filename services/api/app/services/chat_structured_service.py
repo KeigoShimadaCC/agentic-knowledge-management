@@ -3,14 +3,19 @@ from __future__ import annotations
 import hashlib
 import json
 import re
+import uuid
+from datetime import UTC, datetime
 from typing import Any
 
 from fastapi import HTTPException
 from pydantic import ValidationError
+from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.ai.client import call_ai
 from app.models.chat import Chat
 from app.models.object import KosObject
 from app.schemas.chat import StructuredChatSummary
+from app.services.revision_service import create_revision
 
 STRUCTURED_CHAT_SUMMARY_SYSTEM_PROMPT = """You extract durable knowledge from imported chats.
 Use only the provided chat turns. Do not invent facts. Preserve uncertainty.
@@ -88,6 +93,88 @@ Turns:
 """
 
 MAX_STRUCTURED_PROMPT_CHARS = 60000
+
+
+async def generate_structured_summary_preview(
+    db: AsyncSession,
+    *,
+    obj: KosObject,
+    chat: Chat,
+    user_id: uuid.UUID,
+) -> StructuredChatSummary:
+    before = _chat_structured_snapshot(chat)
+    messages = build_structured_summary_messages(obj, chat)
+    raw_text, run = await call_ai(
+        db,
+        user_id=user_id,
+        agent_type="chat_structured_summary_preview",
+        messages=messages,
+        input_context={"chat_id": str(chat.id)},
+    )
+
+    try:
+        summary = parse_structured_summary_output(raw_text)
+    except HTTPException:
+        repair_messages = [
+            {"role": "system", "content": "Return only valid JSON matching the requested schema."},
+            {
+                "role": "user",
+                "content": (
+                    "Repair this malformed structured chat summary JSON. "
+                    "Do not add new facts.\n\n"
+                    f"{raw_text}"
+                ),
+            },
+        ]
+        raw_text, run = await call_ai(
+            db,
+            user_id=user_id,
+            agent_type="chat_structured_summary_repair",
+            messages=repair_messages,
+            input_context={"chat_id": str(chat.id), "previous_agent_run_id": str(run.id)},
+        )
+        try:
+            summary = parse_structured_summary_output(raw_text)
+        except HTTPException:
+            chat.structured_summary_status = "failed"
+            chat.structured_summary_agent_run_id = run.id
+            chat.structured_summary_updated_at = datetime.now(UTC)
+            obj.updated_at = datetime.now(UTC)
+            await db.flush()
+            await create_revision(
+                db,
+                object_id=obj.id,
+                user_id=user_id,
+                changed_by="ai",
+                agent_run_id=run.id,
+                before_snapshot=before,
+                after_snapshot=_chat_structured_snapshot(chat),
+            )
+            raise
+
+    chat.structured_summary = summary.model_dump(mode="json")
+    chat.structured_summary_status = "previewed"
+    chat.structured_summary_agent_run_id = run.id
+    chat.structured_summary_updated_at = datetime.now(UTC)
+    chat.structured_summary_hash = structured_summary_hash(summary)
+    obj.updated_at = datetime.now(UTC)
+    await db.flush()
+    await create_revision(
+        db,
+        object_id=obj.id,
+        user_id=user_id,
+        changed_by="ai",
+        agent_run_id=run.id,
+        before_snapshot=before,
+        after_snapshot=_chat_structured_snapshot(chat),
+    )
+    return summary
+
+
+def get_existing_structured_summary(chat: Chat) -> StructuredChatSummary | None:
+    if not chat.structured_summary:
+        return None
+    return StructuredChatSummary.model_validate(chat.structured_summary)
 
 
 def build_structured_summary_messages(obj: KosObject, chat: Chat) -> list[dict[str, str]]:
@@ -193,3 +280,22 @@ def _collect_strings(value: Any, parts: list[str]) -> None:
     elif isinstance(value, list):
         for child in value:
             _collect_strings(child, parts)
+
+
+def _chat_structured_snapshot(chat: Chat) -> dict[str, Any]:
+    return {
+        "id": str(chat.id),
+        "structured_summary": chat.structured_summary,
+        "structured_summary_status": chat.structured_summary_status,
+        "structured_summary_agent_run_id": (
+            str(chat.structured_summary_agent_run_id)
+            if chat.structured_summary_agent_run_id
+            else None
+        ),
+        "structured_summary_updated_at": (
+            chat.structured_summary_updated_at.isoformat()
+            if chat.structured_summary_updated_at
+            else None
+        ),
+        "structured_summary_hash": chat.structured_summary_hash,
+    }

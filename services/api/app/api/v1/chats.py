@@ -13,8 +13,13 @@ from app.db.session import get_db
 from app.models.chat import Chat
 from app.models.object import KosObject
 from app.models.user import User
-from app.schemas.chat import ChatImportJson, ChatImportResponse, ChatOut
-from app.services import chat_service, reindex_service
+from app.schemas.chat import (
+    ChatImportJson,
+    ChatImportResponse,
+    ChatOut,
+    StructuredSummaryPreviewOut,
+)
+from app.services import chat_service, chat_structured_service, reindex_service
 
 router = APIRouter(prefix="/chats", tags=["chats"])
 
@@ -44,6 +49,10 @@ def build_chat_out(obj: KosObject, chat: Chat) -> ChatOut:
         parsed_turns=chat.parsed_turns,
         content_text=chat.content_text,
         metadata_=chat.metadata_,
+        structured_summary=chat.structured_summary,
+        structured_summary_status=chat.structured_summary_status,
+        structured_summary_agent_run_id=chat.structured_summary_agent_run_id,
+        structured_summary_updated_at=chat.structured_summary_updated_at,
     )
 
 
@@ -184,3 +193,44 @@ async def reindex_chat(
     obj, chat = await chat_service.get_chat_or_404(db, chat_id, user.id)
     reindex_service.enqueue_reindex_object(obj.id)
     return build_chat_out(obj, chat)
+
+
+@router.post("/{chat_id}/structured-summary", response_model=StructuredSummaryPreviewOut)
+async def generate_structured_summary(
+    chat_id: uuid.UUID,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> StructuredSummaryPreviewOut:
+    obj, chat = await chat_service.get_chat_or_404(db, chat_id, user.id)
+    summary = await chat_structured_service.generate_structured_summary_preview(
+        db,
+        obj=obj,
+        chat=chat,
+        user_id=user.id,
+    )
+    await db.commit()
+    await db.refresh(chat)
+    if chat.structured_summary_agent_run_id is None:
+        raise HTTPException(status_code=500, detail="Structured summary agent run was not saved")
+    return StructuredSummaryPreviewOut(
+        structured_summary=summary,
+        agent_run_id=chat.structured_summary_agent_run_id,
+        status="previewed",
+    )
+
+
+@router.get("/{chat_id}/structured-summary", response_model=StructuredSummaryPreviewOut)
+async def get_structured_summary(
+    chat_id: uuid.UUID,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> StructuredSummaryPreviewOut:
+    _, chat = await chat_service.get_chat_or_404(db, chat_id, user.id)
+    summary = chat_structured_service.get_existing_structured_summary(chat)
+    if summary is None or chat.structured_summary_agent_run_id is None:
+        raise HTTPException(status_code=404, detail="Structured summary not found")
+    return StructuredSummaryPreviewOut(
+        structured_summary=summary,
+        agent_run_id=chat.structured_summary_agent_run_id,
+        status=chat.structured_summary_status,
+    )

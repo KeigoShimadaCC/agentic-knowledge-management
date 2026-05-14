@@ -163,7 +163,7 @@ See [`project-phases/PHASE-6B-STRUCTURED-CHAT-IMPORT.md`](project-phases/PHASE-6
 - [x] **Subtask 1** — Minimal AI/revision/claim-task prerequisites
 - [x] **Subtask 2** — Structured summary data model
 - [x] **Subtask 3** — Structured summary schema and prompt
-- [ ] **Subtask 4** — Structured summary preview API
+- [x] **Subtask 4** — Structured summary preview API
 - [ ] **Subtask 5** — Apply structured summary and extracted objects
 - [ ] **Subtask 6** — Search/index integration
 - [ ] **Subtask 7** — Chat detail UI
@@ -225,12 +225,12 @@ See [`project-phases/PHASE-6B-STRUCTURED-CHAT-IMPORT.md`](project-phases/PHASE-6
 | 8A | Workspace Lite | ✅ Complete | 7 / 7 subtasks |
 | 5 | AI Assistant + Inbox/Triage | ⬜ Planned | 0 / 12 subtasks |
 | 6A | Chat Import Lite | ✅ Complete | 8 / 8 subtasks |
-| 6B | Structured Chat Import | ⬜ In Progress | 4 / 9 subtasks |
+| 6B | Structured Chat Import | ⬜ In Progress | 5 / 9 subtasks |
 | 7 | MCP Server (staged) | ⬜ Planned | 0 / 6 subtasks |
 | 8 | Multi-Pane Workspaces | ⬜ Planned | 0 / 8 subtasks |
 | 9 | Career & Project Memory | ⬜ Planned | 0 / 8 subtasks |
 
-**Total:** 52 / 91 subtasks complete
+**Total:** 53 / 91 subtasks complete
 
 **Key cross-cutting concepts to track:**
 - Inbox/Triage (Phase 5): AI-classified staging area for unprocessed items
@@ -245,3 +245,4 @@ See [`project-phases/PHASE-6B-STRUCTURED-CHAT-IMPORT.md`](project-phases/PHASE-6
 - Phase 6B Subtask 1 added a minimal audited AI client, `object_revisions` ORM/service support, and generic `claim`/`task` object-kind support for extraction.
 - Phase 6B Subtask 2 added chat structured-summary fields in migration `0006_add_structured_chat_summary.py`.
 - Phase 6B Subtask 3 added strict structured-summary schemas plus prompt/output parsing helpers.
+- Phase 6B Subtask 4 added authenticated structured-summary preview/get endpoints with AI audit runs and revision entries.
