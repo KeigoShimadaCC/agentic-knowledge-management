@@ -129,3 +129,38 @@ export class ApiError extends Error {
     this.name = "ApiError";
   }
 }
+
+export type SearchMode = "keyword" | "semantic" | "hybrid";
+
+export interface SearchResult {
+  id: string;
+  kind: string;
+  title: string;
+  snippet: string | null;
+  tags: string[];
+  score: number;
+  updated_at: string;
+  source_type: string | null;
+  ingestion_status: string | null;
+}
+
+export interface SearchResponse {
+  results: SearchResult[];
+  total: number;
+  query: string;
+  mode: string;
+}
+
+export interface HybridSearchResult extends SearchResult {
+  keyword_score: number;
+  vector_score: number;
+  recency_boost: number;
+}
+
+export interface HybridSearchResponse {
+  results: HybridSearchResult[];
+  total: number;
+  query: string;
+  mode: string;
+  embeddings_used: boolean;
+}

@@ -7,8 +7,10 @@ import type {
   PageCreateResponse,
   PageOut,
   PaginatedResponse,
+  HybridSearchResponse,
   SourceCreate,
   SourceOut,
+  SearchResponse,
 } from "@/types";
 import { ApiError } from "@/types";
 
@@ -137,3 +139,33 @@ export const listEdges = (params?: { source_id?: string; target_id?: string; kin
     "/api/v1/edges" +
       (params ? "?" + new URLSearchParams(params as Record<string, string>).toString() : "")
   );
+
+export async function keywordSearch(
+  q: string,
+  opts?: { kind?: string; limit?: number }
+): Promise<SearchResponse> {
+  const params = new URLSearchParams({ q });
+  if (opts?.kind) params.set("kind", opts.kind);
+  if (opts?.limit) params.set("limit", String(opts.limit));
+  return request<SearchResponse>(`/api/v1/search/keyword?${params}`);
+}
+
+export async function vectorSearch(
+  q: string,
+  opts?: { kind?: string; limit?: number }
+): Promise<SearchResponse> {
+  return request<SearchResponse>("/api/v1/search/vector", {
+    method: "POST",
+    body: JSON.stringify({ q, kind: opts?.kind ?? null, limit: opts?.limit ?? 10 }),
+  });
+}
+
+export async function hybridSearch(
+  q: string,
+  opts?: { kind?: string; limit?: number }
+): Promise<HybridSearchResponse> {
+  return request<HybridSearchResponse>("/api/v1/search/hybrid", {
+    method: "POST",
+    body: JSON.stringify({ q, kind: opts?.kind ?? null, limit: opts?.limit ?? 10 }),
+  });
+}
