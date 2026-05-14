@@ -2,7 +2,13 @@
 name = "kos-worker"
 version = "0.1.0"
 requires-python = ">=3.12"
-dependencies = []
+dependencies = [
+    'rq>=1.16',
+    'psycopg2-binary>=2.9',
+    'sqlalchemy>=2.0',
+    'redis[hiredis]>=5.0',
+    'aiofiles>=23.2',
+]
 
 [build-system]
 requires = ["hatchling"]
