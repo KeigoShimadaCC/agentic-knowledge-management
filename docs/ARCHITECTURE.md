@@ -137,3 +137,17 @@ Source types: PDFs, images, videos, YouTube URLs, web articles, and CSV files. C
 | Inbox/Triage | AI-classified staging area for unprocessed items |
 | Chat Import | ChatGPT/Claude export → searchable chat history + linked knowledge objects |
 | MCP | Staged rollout: read/search tools first, then create, then update/archive |
+
+## Phase 4: Graph Lite
+
+Graph Lite uses Postgres `edges` as the canonical graph source. It does not require Kuzu, Qdrant, embeddings, or Phase 3 search endpoints.
+
+Current graph flow:
+
+1. API validates both objects belong to the authenticated user and are not soft-deleted.
+2. API validates edge kind against code-level taxonomy.
+3. API creates or restores the unique `(source_id, target_id, kind)` edge.
+4. Object-centered endpoints read incoming/outgoing edges and hydrate source/target summaries from Postgres.
+5. Related-object traversal runs over Postgres edges with depth capped at 2.
+
+Kuzu remains a future derived index. It should be introduced only if Postgres edge traversal is no longer sufficient for the local-first workload.

@@ -105,13 +105,28 @@ Known edge kinds:
 
 | Kind | Meaning |
 | --- | --- |
+| `links_to` | Canonical generic user-authored link |
 | `derives_from` | Phase 2: a source derives from an uploaded asset or another source |
 | `cites` | Phase 2: a page cites a source |
-| `link` | One object links to another |
-| `embed` | One object embeds another |
-| `child` | Parent-child hierarchy, such as collection membership |
-| `related` | User or system marked relationship |
-| `citation` | Generic citation relationship when `cites` is too narrow |
+| `mentions` | One object mentions a person, organization, concept, source, or other object |
+| `supports` | One object supports another object's claim or interpretation |
+| `contradicts` | One object contradicts another object's claim or interpretation |
+| `related_to` | Canonical generic related-object relationship |
+| `summarizes` | One object summarizes another object |
+| `belongs_to_project` | Object belongs to a project memory |
+| `evidence_for` | Object is evidence for another object |
+| `created_from` | Object was created from another object or import |
+
+Legacy accepted kinds:
+
+| Kind | Meaning |
+| --- | --- |
+| `link` | Legacy alias for `links_to`; do not rewrite existing rows automatically |
+| `related` | Legacy alias for `related_to`; do not rewrite existing rows automatically |
+| `citation` | Legacy citation relationship; prefer `cites` for page-to-source citations |
+| `embed` | Legacy embedded-object relationship |
+| `child` | Legacy parent-child hierarchy relationship |
+| `tag` | Legacy object-to-tag relationship |
 
 ### `chunks`
 
@@ -238,6 +253,20 @@ Phase 3 extends the `chunks` table for idempotent search indexing (migration `00
 - `embedding_status` drives the reindex worker's work queue.
 - `source_locator` preserves provenance (e.g., which PDF page a chunk came from).
 - Reindexing is always idempotent: `UPSERT` on `(object_id, chunk_idx)`.
+
+## Phase 4: Graph Lite
+
+Phase 4A uses the existing Postgres `edges` table as the canonical graph. Kuzu remains a future derived index and is not part of Graph Lite.
+
+Graph Lite rules:
+
+- Edge kinds are validated in application code, not a PostgreSQL enum.
+- Edges remain directed, but object-centered APIs expose direction relative to the requested object.
+- Creating the same `(source_id, target_id, kind)` is idempotent.
+- Soft-deleted matching edges are restored instead of duplicated.
+- Both source and target objects must belong to the same authenticated user.
+- Deleted objects and deleted edges are excluded from graph APIs by default.
+- Related-object traversal is intentionally limited to depth 1 or 2 over Postgres edges.
 
 ## Object Type Registry (Design Note)
 

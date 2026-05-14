@@ -25,7 +25,7 @@ The full product vision is in [`project-phases/IDEA-DRAFT.md`](project-phases/ID
 
 ## Current Status
 
-**Phase 1 — Foundation** ✅ and **Phase 2 — Sources & Rich Media** ✅ are complete. **Phase 3 — Search** is next.
+**Phase 1 — Foundation** ✅ and **Phase 2 — Sources & Rich Media** ✅ are complete. **Phase 3 — Search** and backend-first **Phase 4 — Graph Lite** are in progress.
 
 See [`PROGRESS.md`](PROGRESS.md) for the canonical progress tracker.
 
@@ -33,7 +33,8 @@ See [`PROGRESS.md`](PROGRESS.md) for the canonical progress tracker.
 |---|---|
 | Phase 1 — Foundation | ✅ Complete (25 tests) |
 | Phase 2 — Sources & Rich Media | ✅ Complete (45 tests) |
-| Phase 3 — Search | ⬜ Next |
+| Phase 3 — Search | ⬜ In progress |
+| Phase 4 — Graph Lite | ⬜ Backend in progress |
 
 **Phase 2 added:**
 - Typed `source` objects (PDF, image, video, YouTube, web article, CSV)
@@ -268,8 +269,8 @@ The complete product is built across 9 phases. Phase 1 is done; phases 2–9 are
 |---|---|---|
 | 1 — Foundation | Docker, Postgres, auth, page CRUD, Tiptap editor, asset upload, 25 tests | **Done** |
 | 2 — Sources & Rich Media | PDF/YouTube/web/CSV ingestion, RQ worker, citation edges, 45 tests | **Done** |
-| 3 — Search | Chunking, Postgres FTS, Qdrant vectors, hybrid search, Cmd+K UI | **Next** |
-| 4 — Graph Lite | Typed edge UI, backlinks, related objects from Postgres; Kùzu later | Planned |
+| 3 — Search | Chunking, Postgres FTS, Qdrant vectors, hybrid search, Cmd+K UI | In progress |
+| 4 — Graph Lite | Typed edge API, backlinks, related objects from Postgres; Kùzu later | Backend in progress |
 | 5 — AI Assistant + Inbox/Triage | AI sidebar, summarize/extract/suggest, KB Q&A, triage inbox | Planned |
 | 6 — Chat Import | Raw upload/paste of ChatGPT/Claude exports; LLM structured import | Planned |
 | 7 — MCP Server | Staged: read/search tools → create tools → update/archive tools | Planned |

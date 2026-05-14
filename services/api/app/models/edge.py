@@ -5,9 +5,10 @@ from sqlalchemy import DateTime, Float, ForeignKey, Index, String, UniqueConstra
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 
+from app.core.edge_kinds import VALID_EDGE_KINDS
 from app.db.base import Base
 
-VALID_KINDS = ("link", "embed", "child", "tag", "related", "citation")
+VALID_KINDS = tuple(sorted(VALID_EDGE_KINDS))
 
 
 class Edge(Base):

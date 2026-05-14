@@ -211,6 +211,25 @@ POST /api/v1/edges
 {"source_id": "<page_id>", "target_id": "<source_id>", "kind": "cites"}
 ```
 
+## Graph Lite
+
+Agents should treat Postgres `edges` as the canonical graph and use API endpoints rather than direct DB writes.
+
+Use:
+
+```text
+POST /api/v1/edges
+GET /api/v1/objects/{id}/edges
+GET /api/v1/objects/{id}/backlinks
+GET /api/v1/objects/{id}/related
+```
+
+Preferred edge kinds are `links_to`, `cites`, `derives_from`, `mentions`, `supports`, `contradicts`, `related_to`, `summarizes`, `belongs_to_project`, `evidence_for`, and `created_from`.
+
+Legacy kinds such as `link`, `related`, and `citation` may appear in older data, but new agent writes should use canonical kinds unless preserving existing semantics requires otherwise.
+
+Do not create Kuzu records directly. Kuzu is a future derived graph index, not canonical storage.
+
 ## Updating Content Safely
 
 When editing an existing page:

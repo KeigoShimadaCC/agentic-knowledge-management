@@ -96,7 +96,9 @@ CREATE TABLE edges (
     user_id   UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     source_id UUID NOT NULL REFERENCES objects(id) ON DELETE CASCADE,
     target_id UUID NOT NULL REFERENCES objects(id) ON DELETE CASCADE,
-    kind      TEXT NOT NULL DEFAULT 'link' CHECK (kind IN ('link','embed','child','tag','related','citation')),
+    -- Edge kind is validated in application code so legacy and future graph kinds
+    -- can coexist without a destructive enum/check migration.
+    kind      TEXT NOT NULL DEFAULT 'link',
     weight    FLOAT NOT NULL DEFAULT 1.0,
     metadata  JSONB NOT NULL DEFAULT '{}',
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),

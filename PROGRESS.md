@@ -1,6 +1,6 @@
 # KnowledgeOS — Progress Tracker
 
-> Last updated: 2026-05-14 (Phase 2 complete)
+> Last updated: 2026-05-14 (Phase 3 search indexing underway)
 
 ---
 
@@ -47,16 +47,16 @@ Build a **local-first personal AI Knowledge OS** where the user can dump, struct
 
 ---
 
-## Phase 3 — Search ⬜ Planned
+## Phase 3 — Search ⬜ In Progress
 
 **Goal:** Make all knowledge searchable — by exact keyword, by semantic meaning, and by a hybrid of both — with a clean search UI. Keyword search must work offline with no API keys.
 
 See [`project-phases/PHASE-3-SEARCH.md`](project-phases/PHASE-3-SEARCH.md) for the full subtask spec.
 
 - [x] **Subtask 0** — Phase 2 audit + Phase 3 stabilization: `chunks` migration 0003 (user_id, source_locator, content_hash, embedding_status, embedding_model, embedded_at, qdrant_point_id, updated_at); search eval fixtures; offline/degradation docs; revision history design; README + PROGRESS.md roadmap refresh
-- [ ] **Subtask 1** — Chunking pipeline: split page/source text into overlapping chunks; store in `chunks` table with `chunk_idx`, `token_count`, `source_locator`, `content_hash`; idempotent upsert on `(object_id, chunk_idx)`
-- [ ] **Subtask 2** — Embedding provider abstraction + Qdrant collection setup: `EmbeddingProvider` protocol; `OpenAIEmbeddingProvider` + `NoOpEmbeddingProvider`; collection init idempotent; graceful app boot when Qdrant unavailable
-- [ ] **Subtask 3** — Reindex worker jobs: `reindex_object(object_id)` (chunk → embed → upsert Qdrant); `reindex_all_objects()`; triggered on page/source save; deterministic RQ job ID to prevent queue flooding
+- [x] **Subtask 1** — Chunking pipeline: `services/api/app/search/chunker.py` splits text into overlapping chunks; `chunk_service.py` chunks pages, sources, and asset metadata into `chunks` rows with `chunk_idx`, `token_count`, `source_locator`, and `content_hash`
+- [x] **Subtask 2** — Embedding provider abstraction + Qdrant collection setup: `EmbeddingProvider`, disabled/mock/OpenAI providers, Qdrant client wrapper, `knowledgeos_chunks` collection init on API startup, graceful Qdrant-unavailable startup behavior
+- [~] **Subtask 3** — Reindex worker jobs: `reindex_object(object_id)`, `reindex_all_objects()`, worker-side embedding/Qdrant upsert, and page/source reindex enqueue hooks are implemented in the worktree but not yet finalized/tested/committed
 - [ ] **Subtask 4** — Keyword search API: `GET /search/keyword?q=&kind=&limit=&offset=`; Postgres FTS with `plainto_tsquery` + snippet; works with no API key
 - [ ] **Subtask 5** — Vector search API: `POST /search/vector`; graceful 503 when embeddings disabled; Qdrant nearest neighbors → hydrate from Postgres
 - [ ] **Subtask 6** — Hybrid search API: `POST /search/hybrid`; parallel keyword + vector → combined score; keyword-only fallback when embeddings unavailable; `debug` mode for score breakdown
@@ -66,15 +66,16 @@ See [`project-phases/PHASE-3-SEARCH.md`](project-phases/PHASE-3-SEARCH.md) for t
 
 ---
 
-## Phase 4 — Graph Lite ⬜ Planned
+## Phase 4 — Graph Lite ⬜ In Progress
 
 **Goal:** Give the knowledge base a graph backbone using the existing Postgres `edges` table. Surface typed links and backlinks in the UI without requiring Kùzu yet.
 
-- [ ] **Subtask 1** — Typed link UI: "Link to…" button in page editor opens object picker; creates typed edge (`links_to`, `mentions`, `supports`, `contradicts`, `derived_from`)
-- [ ] **Subtask 2** — Backlinks panel: right sidebar shows all objects that link to the current page; clicking navigates to the linking object
-- [ ] **Subtask 3** — Related objects API: `GET /objects/{id}/related?depth=1&kinds=links_to,mentions` — Postgres edge traversal, one hop
-- [ ] **Subtask 4** — Related panel UI: collapsible "Related" section in right sidebar; grouped by edge type
-- [ ] **Subtask 5** — Tests + docs: edge traversal tests; update `docs/DATA_MODEL.md` + `docs/ARCHITECTURE.md`
+- [x] **Subtask 0** — Phase 3 audit + backend-first Graph Lite plan saved to [`project-phases/PHASE-4-GRAPH-LITE.md`](project-phases/PHASE-4-GRAPH-LITE.md); UI/search-router work deferred to avoid Phase 3 conflicts
+- [x] **Subtask 1** — Edge taxonomy + validation: canonical graph edge kinds, legacy kind preservation, service/schema validation
+- [x] **Subtask 2** — Harden edge API: idempotent create, soft-delete restoration, ownership checks, deleted object exclusion, metadata/weight support
+- [x] **Subtask 3** — Object graph APIs: `GET /objects/{id}/edges`, `/backlinks`, `/related` over Postgres edges, depth 1–2
+- [x] **Subtask 4** — Tests + docs: graph API coverage; update `docs/DATA_MODEL.md`, `docs/API.md`, `docs/ARCHITECTURE.md`, `docs/AGENT_GUIDE.md`
+- [ ] **Subtask 5** — Phase 4B UI after Phase 3 search UI stabilizes: object picker, typed link creation, backlinks/related panels, citation UX cleanup
 
 **Kùzu (optional extension):** If graph traversal needs more than 1–2 hops, add Kùzu as an embedded graph layer. Mirror Postgres edges to Kùzu on each edge create/delete. Not required for Phase 4 baseline.
 
@@ -168,18 +169,23 @@ See [`project-phases/PHASE-3-SEARCH.md`](project-phases/PHASE-3-SEARCH.md) for t
 |---|---|---|---|
 | 1 | Foundation | ✅ Complete | 8 / 8 subtasks |
 | 2 | Sources & Rich Media | ✅ Complete | 9 / 9 subtasks |
-| 3 | Search | ⬜ In Progress | 1 / 10 subtasks (subtask 0 done) |
-| 4 | Graph Lite | ⬜ Planned | 0 / 5 subtasks |
+| 3 | Search | ⬜ In Progress | 3 / 10 subtasks complete; subtask 3 in progress |
+| 4 | Graph Lite | ⬜ In Progress | 5 / 6 subtasks; Phase 4B UI deferred |
 | 5 | AI Assistant + Inbox/Triage | ⬜ Planned | 0 / 12 subtasks |
 | 6 | Chat Import | ⬜ Planned | 0 / 8 subtasks |
 | 7 | MCP Server (staged) | ⬜ Planned | 0 / 6 subtasks |
 | 8 | Multi-Pane Workspaces | ⬜ Planned | 0 / 8 subtasks |
 | 9 | Career & Project Memory | ⬜ Planned | 0 / 8 subtasks |
 
-**Total:** 18 / 74 subtasks complete
+**Total:** 25 / 75 subtasks complete
 
 **Key cross-cutting concepts to track:**
 - Inbox/Triage (Phase 5): AI-classified staging area for unprocessed items
 - Search evaluation (Phase 3+): `tests/fixtures/search_eval_cases.json` as regression anchors
 - Revision history (Phase 5 prerequisite): required before MCP write tools go live — see `docs/REVISION_HISTORY.md`
 - Offline/degradation contract: keyword search always works; AI features degrade gracefully — see `docs/ARCHITECTURE.md`
+
+**Current repo state notes (2026-05-14):**
+- `main` is one local commit ahead of `origin/main` (`docs: revise roadmap around search quality, graph lite, chat import, and MCP staging`).
+- The worktree contains in-progress reindex changes in `services/api/app/api/v1/pages.py`, `services/api/app/api/v1/sources.py`, `services/worker/kos_worker/tasks.py`, `services/worker/kos_worker/indexer.py`, `services/worker/pyproject.toml`, and `uv.lock`.
+- Search endpoints (`/api/v1/search/keyword`, `/api/v1/search/vector`, `/api/v1/search/hybrid`) and search UI are not present yet.

@@ -635,19 +635,68 @@ Creates an edge. Duplicate edges (same `source_id` + `target_id` + `kind`) are i
 Request:
 
 ```json
-{ "source_id": "uuid", "target_id": "uuid", "kind": "cites" }
+{
+  "source_id": "uuid",
+  "target_id": "uuid",
+  "kind": "cites",
+  "weight": 1.0,
+  "metadata": {}
+}
 ```
 
-Common kinds: `"cites"` (page → source), `"derives_from"` (source → asset).
+Canonical kinds: `"links_to"`, `"cites"`, `"derives_from"`, `"mentions"`, `"supports"`, `"contradicts"`, `"related_to"`, `"summarizes"`, `"belongs_to_project"`, `"evidence_for"`, `"created_from"`.
+
+Legacy accepted kinds: `"link"`, `"related"`, `"citation"`, `"embed"`, `"child"`, `"tag"`.
 
 Response: EdgeOut. Status codes: `200`, `201`, `401`, `422`.
 
 ### `GET /api/v1/edges`
 
-Lists edges, optionally filtered by `source_id`, `target_id`, or `kind`.
+Lists edges, optionally filtered by `source_id`, `target_id`, `kind`, or `include_deleted`.
 
 Response: `list[EdgeOut]`. Status codes: `200`, `401`.
 
 ### `DELETE /api/v1/edges/{id}`
 
-Deletes an edge. Status codes: `200`, `401`, `404`.
+Soft-deletes an edge by setting `deleted_at`. Status codes: `200`, `401`, `404`.
+
+### `GET /api/v1/objects/{id}/edges`
+
+Lists graph edges touching one object.
+
+Query parameters:
+
+| Name | Type | Notes |
+| --- | --- | --- |
+| `direction` | `incoming`, `outgoing`, `both` | Default `both` |
+| `kind` | string | Optional edge kind filter |
+| `include_deleted` | boolean | Default `false` |
+
+Response items include the edge, source object summary, target object summary, and direction relative to `{id}`.
+
+Status codes: `200`, `401`, `404`, `422`.
+
+### `GET /api/v1/objects/{id}/backlinks`
+
+Lists incoming edges for one object. This is equivalent to object edges with `direction=incoming`.
+
+Query parameters: optional `kind`.
+
+Status codes: `200`, `401`, `404`, `422`.
+
+### `GET /api/v1/objects/{id}/related`
+
+Returns related objects by traversing Postgres edges.
+
+Query parameters:
+
+| Name | Type | Notes |
+| --- | --- | --- |
+| `depth` | integer | Default `1`; max `2` |
+| `edge_types` | repeated string | Optional edge kind filter |
+| `direction` | `incoming`, `outgoing`, `both` | Default `both` |
+| `limit` | integer | Default `20`; max `100` |
+
+Response items include object summary, traversal distance, score, and the edge path used.
+
+Status codes: `200`, `401`, `404`, `422`.
