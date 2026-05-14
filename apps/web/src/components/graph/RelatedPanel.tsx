@@ -2,8 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { Columns2 } from "lucide-react";
 import { getObjectRelated } from "@/lib/api";
 import { objectRoute } from "@/lib/objectRouting";
+import { useWorkspaceLite } from "@/components/workspace/WorkspaceLiteProvider";
 import type { RelatedObjectOut } from "@/types";
 
 interface RelatedPanelProps {
@@ -40,6 +42,7 @@ function SkeletonRows() {
 
 export function RelatedPanel({ objectId }: RelatedPanelProps) {
   const router = useRouter();
+  const { openSidePane } = useWorkspaceLite();
   const [related, setRelated] = useState<RelatedObjectOut[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -74,21 +77,33 @@ export function RelatedPanel({ objectId }: RelatedPanelProps) {
   return (
     <div className="divide-y divide-gray-900">
       {related.map((object) => (
-        <button
-          type="button"
+        <div
           key={`${object.id}-${object.direction}-${object.edge_kind}`}
-          onClick={() => router.push(objectRoute(object.kind, object.id))}
-          className="block w-full px-3 py-3 text-left hover:bg-gray-900"
+          className="flex items-stretch hover:bg-gray-900"
         >
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-gray-500">{object.direction === "incoming" ? "←" : "→"}</span>
-            <span className="min-w-0 flex-1 truncate text-sm text-gray-100">{object.title}</span>
-          </div>
-          <div className="mt-2 flex items-center gap-2">
-            <KindBadge kind={object.kind} />
-            <span className="truncate text-xs text-gray-500">{object.edge_kind}</span>
-          </div>
-        </button>
+          <button
+            type="button"
+            onClick={() => router.push(objectRoute(object.kind, object.id))}
+            className="min-w-0 flex-1 px-3 py-3 text-left"
+          >
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-gray-500">{object.direction === "incoming" ? "←" : "→"}</span>
+              <span className="min-w-0 flex-1 truncate text-sm text-gray-100">{object.title}</span>
+            </div>
+            <div className="mt-2 flex items-center gap-2">
+              <KindBadge kind={object.kind} />
+              <span className="truncate text-xs text-gray-500">{object.edge_kind}</span>
+            </div>
+          </button>
+          <button
+            type="button"
+            title="Open in side pane"
+            onClick={() => openSidePane({ id: object.id, kind: object.kind, title: object.title ?? "" })}
+            className="shrink-0 px-2 text-gray-600 hover:text-gray-200"
+          >
+            <Columns2 className="h-3.5 w-3.5" />
+          </button>
+        </div>
       ))}
     </div>
   );

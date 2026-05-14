@@ -2,8 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { Columns2 } from "lucide-react";
 import { getObjectBacklinks } from "@/lib/api";
 import { objectRoute } from "@/lib/objectRouting";
+import { useWorkspaceLite } from "@/components/workspace/WorkspaceLiteProvider";
 import type { EdgeWithObjectsOut } from "@/types";
 
 interface BacklinksPanelProps {
@@ -40,6 +42,7 @@ function SkeletonRows() {
 
 export function BacklinksPanel({ objectId }: BacklinksPanelProps) {
   const router = useRouter();
+  const { openSidePane } = useWorkspaceLite();
   const [backlinks, setBacklinks] = useState<EdgeWithObjectsOut[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -78,18 +81,27 @@ export function BacklinksPanel({ objectId }: BacklinksPanelProps) {
         if (!source) return null;
 
         return (
-          <button
-            type="button"
-            key={edge.id}
-            onClick={() => router.push(objectRoute(source.kind, source.id))}
-            className="block w-full px-3 py-3 text-left hover:bg-gray-900"
-          >
-            <div className="truncate text-sm text-gray-100">{source.title}</div>
-            <div className="mt-2 flex items-center gap-2">
-              <KindBadge kind={source.kind} />
-              <span className="truncate text-xs text-gray-500">{edge.kind}</span>
-            </div>
-          </button>
+          <div key={edge.id} className="flex items-stretch hover:bg-gray-900">
+            <button
+              type="button"
+              onClick={() => router.push(objectRoute(source.kind, source.id))}
+              className="min-w-0 flex-1 px-3 py-3 text-left"
+            >
+              <div className="truncate text-sm text-gray-100">{source.title}</div>
+              <div className="mt-2 flex items-center gap-2">
+                <KindBadge kind={source.kind} />
+                <span className="truncate text-xs text-gray-500">{edge.kind}</span>
+              </div>
+            </button>
+            <button
+              type="button"
+              title="Open in side pane"
+              onClick={() => openSidePane({ id: source.id, kind: source.kind, title: source.title ?? "" })}
+              className="shrink-0 px-2 text-gray-600 hover:text-gray-200"
+            >
+              <Columns2 className="h-3.5 w-3.5" />
+            </button>
+          </div>
         );
       })}
     </div>
