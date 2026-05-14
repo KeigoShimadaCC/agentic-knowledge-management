@@ -4,6 +4,8 @@ from typing import Literal
 
 from pydantic import BaseModel, model_validator
 
+from app.core.url_safety import UnsafeUrlError, validate_safe_http_url
+
 SourceType = Literal["pdf", "image", "video", "audio", "youtube", "web", "csv", "file"]
 
 FILE_SOURCE_TYPES = {"pdf", "image", "video", "audio", "csv", "file"}
@@ -24,6 +26,11 @@ class SourceCreate(BaseModel):
             raise ValueError("asset_id is required for file-backed sources")
         if self.source_type in URL_SOURCE_TYPES and self.url is None:
             raise ValueError("url is required for URL-backed sources")
+        if self.source_type in URL_SOURCE_TYPES and self.url is not None:
+            try:
+                validate_safe_http_url(self.url)
+            except UnsafeUrlError as exc:
+                raise ValueError(str(exc)) from exc
         return self
 
 

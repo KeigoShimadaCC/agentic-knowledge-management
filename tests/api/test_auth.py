@@ -25,11 +25,44 @@ async def test_register_sets_session_cookie(client: AsyncClient):
 
 
 @pytest.mark.asyncio
-async def test_register_duplicate_email_returns_409(client: AsyncClient):
+async def test_register_duplicate_email_returns_400(client: AsyncClient):
     payload = {"email": "dup@test.com", "password": "password123", "display_name": "Dup"}
     await client.post("/api/v1/auth/register", json=payload)
     resp = await client.post("/api/v1/auth/register", json=payload)
-    assert resp.status_code == 409
+    assert resp.status_code == 400
+    assert resp.json()["detail"] == "Unable to complete registration"
+
+
+@pytest.mark.asyncio
+async def test_register_disabled_returns_403(client: AsyncClient, monkeypatch: pytest.MonkeyPatch):
+    from app.config import settings
+
+    monkeypatch.setattr(settings, "allow_open_registration", False)
+    resp = await client.post(
+        "/api/v1/auth/register",
+        json={"email": "closed@test.com", "password": "password123", "display_name": "Closed"},
+    )
+    assert resp.status_code == 403
+
+
+@pytest.mark.asyncio
+async def test_session_cookie_uses_secure_when_configured(
+    client: AsyncClient, monkeypatch: pytest.MonkeyPatch
+):
+    from app.config import settings
+
+    monkeypatch.setattr(settings, "cookie_secure", True)
+    resp = await client.post(
+        "/api/v1/auth/register",
+        json={
+            "email": "securecookie@test.com",
+            "password": "password123",
+            "display_name": "Secure Cookie",
+        },
+    )
+    assert resp.status_code == 201
+    set_cookie = resp.headers.get("set-cookie", "")
+    assert "secure" in set_cookie.lower()
 
 
 @pytest.mark.asyncio

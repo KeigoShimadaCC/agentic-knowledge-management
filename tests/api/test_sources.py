@@ -73,6 +73,15 @@ async def test_create_source_url_requires_url(auth_client: AsyncClient):
 
 
 @pytest.mark.asyncio
+async def test_create_source_rejects_loopback_url(auth_client: AsyncClient):
+    resp = await auth_client.post(
+        "/api/v1/sources",
+        json={"source_type": "web", "url": "http://127.0.0.1/", "title": "bad"},
+    )
+    assert resp.status_code == 422
+
+
+@pytest.mark.asyncio
 async def test_list_sources_empty(auth_client: AsyncClient):
     resp = await auth_client.get("/api/v1/sources")
     assert resp.status_code == 200

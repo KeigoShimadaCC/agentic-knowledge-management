@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.config import settings
 from app.core.deps import get_current_user
 from app.core.security import generate_session_token, hash_password, hash_token, verify_password
 from app.db.session import get_db
@@ -23,6 +24,7 @@ def _set_session_cookie(response: Response, token: str) -> None:
         value=token,
         httponly=True,
         samesite="lax",
+        secure=settings.cookie_secure,
         max_age=SESSION_DAYS * 24 * 3600,
         path="/",
     )
@@ -34,9 +36,12 @@ async def register(
     response: Response,
     db: AsyncSession = Depends(get_db),
 ) -> AuthResponse:
+    if not settings.allow_open_registration:
+        raise HTTPException(status_code=403, detail="Registration is disabled")
+
     existing = await db.execute(select(User).where(User.email == body.email))
     if existing.scalar_one_or_none():
-        raise HTTPException(status_code=409, detail="Email already registered")
+        raise HTTPException(status_code=400, detail="Unable to complete registration")
 
     user = User(
         email=body.email,
@@ -92,7 +97,6 @@ async def logout(
     request: Request,
     db: AsyncSession = Depends(get_db),
 ) -> dict:
-    from fastapi import Request as _Request  # noqa: F401
     from sqlalchemy import delete
 
     token = request.cookies.get(SESSION_COOKIE)
@@ -101,7 +105,7 @@ async def logout(
         await db.execute(delete(Session).where(Session.token_hash == token_hash))
         await db.commit()
 
-    response.delete_cookie(key=SESSION_COOKIE, path="/")
+    response.delete_cookie(key=SESSION_COOKIE, path="/", secure=settings.cookie_secure)
     return {"ok": True}
 
 

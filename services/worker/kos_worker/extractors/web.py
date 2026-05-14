@@ -7,7 +7,15 @@ logger = logging.getLogger(__name__)
 def extract(source, db) -> dict:
     """Fetch web article title and body text via httpx + BeautifulSoup."""
     import httpx
+    from bs4 import BeautifulSoup
+
     from app.config import settings
+    from app.core.url_safety import (
+        DEFAULT_MAX_BODY_BYTES,
+        UnsafeUrlError,
+        safe_http_get,
+        validate_safe_http_url,
+    )
 
     if not source.url:
         return {"ingestion_status": "error", "error_message": "Web source has no URL"}
@@ -17,17 +25,28 @@ def extract(source, db) -> dict:
             "User-Agent": "KnowledgeOS/1.0 (personal knowledge base; not a crawler)",
             "Accept": "text/html,application/xhtml+xml",
         }
-        resp = httpx.get(source.url, headers=headers, timeout=15, follow_redirects=True)
+        try:
+            page = safe_http_get(
+                source.url,
+                headers=headers,
+                timeout=15.0,
+                max_body_bytes=DEFAULT_MAX_BODY_BYTES,
+            )
+        except UnsafeUrlError as exc:
+            return {"ingestion_status": "error", "error_message": str(exc)}
+        except httpx.HTTPError as exc:
+            logger.exception("HTTP error fetching %s", source.url)
+            return {"ingestion_status": "error", "error_message": str(exc)[:500]}
 
-        if resp.status_code != 200:
+        if page.status_code != 200:
             return {
                 "ingestion_status": "error",
-                "error_message": f"HTTP {resp.status_code} fetching {source.url}",
+                "error_message": f"HTTP {page.status_code} fetching {source.url}",
             }
 
-        from bs4 import BeautifulSoup
+        html = page.content.decode(errors="replace")
 
-        soup = BeautifulSoup(resp.text, "html.parser")
+        soup = BeautifulSoup(html, "html.parser")
 
         title = soup.title.string.strip() if soup.title and soup.title.string else ""
 
@@ -44,11 +63,17 @@ def extract(source, db) -> dict:
             "extracted_text": extracted_text,
         }
 
-        # Try og:image for thumbnail
         og_image = soup.find("meta", property="og:image")
         if og_image and og_image.get("content"):
+            thumb_url = og_image["content"].strip()
             try:
-                thumb_resp = httpx.get(og_image["content"], timeout=10, follow_redirects=True)
+                validate_safe_http_url(thumb_url)
+                thumb_resp = safe_http_get(
+                    thumb_url,
+                    headers=headers,
+                    timeout=10.0,
+                    max_body_bytes=12 * 1024 * 1024,
+                )
                 if thumb_resp.status_code == 200:
                     from PIL import Image
 
@@ -59,7 +84,7 @@ def extract(source, db) -> dict:
                     thumb_path = thumb_dir / "thumbnail.jpg"
                     img.convert("RGB").save(thumb_path, "JPEG")
                     result["thumbnail_path"] = f"sources/{source.id}/thumbnail.jpg"
-            except Exception as e:
+            except (UnsafeUrlError, OSError, ValueError) as e:
                 logger.debug("Could not fetch og:image thumbnail: %s", e)
 
         return result
