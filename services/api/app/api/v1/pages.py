@@ -1,6 +1,7 @@
 import uuid
 
 from fastapi import APIRouter, Depends
+from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.deps import get_current_user
@@ -8,7 +9,7 @@ from app.db.session import get_db
 from app.models.user import User
 from app.schemas.object import ObjectOut
 from app.schemas.page import PageCreate, PageOut, PageUpdate
-from app.services import page_service
+from app.services import page_service, reindex_service
 
 router = APIRouter(prefix="/pages", tags=["pages"])
 
@@ -17,9 +18,6 @@ class PageCreateResponse:
     def __init__(self, object: ObjectOut, page: PageOut):
         self.object = object
         self.page = page
-
-
-from pydantic import BaseModel
 
 
 class PageCreateOut(BaseModel):
@@ -59,6 +57,7 @@ async def replace_page(
 ) -> PageOut:
     page = await page_service.update_page(db, page_id, user.id, body)
     await db.commit()
+    reindex_service.enqueue_reindex_object(page.id)
     await db.refresh(page)
     return PageOut.model_validate(page)
 
@@ -72,5 +71,6 @@ async def patch_page(
 ) -> PageOut:
     page = await page_service.update_page(db, page_id, user.id, body)
     await db.commit()
+    reindex_service.enqueue_reindex_object(page.id)
     await db.refresh(page)
     return PageOut.model_validate(page)

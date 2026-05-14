@@ -1,11 +1,18 @@
+import os
 from datetime import UTC, datetime
 from typing import Any
 
+import redis
 from app.models.ingestion_job import IngestionJob
+from app.models.object import KosObject
 from app.models.source import Source
+from rq import Queue
+from sqlalchemy import select
 
 from kos_worker.db import get_session
 from kos_worker.extractors import run_extractor
+
+SEARCH_QUEUE_NAME = "kos-ingest"
 
 
 def _now() -> datetime:
@@ -44,6 +51,8 @@ def ingest_source(job_id: str) -> None:
         job.result = result
         job.finished_at = _now()
         db.commit()
+
+        enqueue_reindex_object(str(source.id))
     except Exception as exc:
         db.rollback()
         message = str(exc)
@@ -61,3 +70,70 @@ def ingest_source(job_id: str) -> None:
         raise
     finally:
         db.close()
+
+
+def _sync_chunk_object(object_id: str) -> list[str]:
+    import asyncio
+    import uuid as _uuid
+
+    from app.db.session import AsyncSessionLocal
+    from app.services.chunk_service import chunk_object as _async_chunk
+
+    async def _run():
+        async with AsyncSessionLocal() as db:
+            chunks = await _async_chunk(db, _uuid.UUID(object_id))
+            return [str(c.id) for c in chunks]
+
+    return asyncio.run(_run())
+
+
+def reindex_object(object_id: str) -> dict:
+    """Chunk + embed + upsert one object. Safe to call multiple times (idempotent)."""
+    import uuid as _uuid
+
+    from kos_worker.indexer import embed_and_upsert_chunks
+
+    db = get_session()
+    try:
+        obj = db.get(KosObject, _uuid.UUID(object_id))
+        if obj is None or obj.deleted_at is not None:
+            return {"skipped": True, "reason": "not_found_or_deleted"}
+
+        chunk_ids = _sync_chunk_object(object_id)
+        embedded_count = embed_and_upsert_chunks(db, object_id, chunk_ids)
+        return {"object_id": object_id, "chunks": len(chunk_ids), "embedded": embedded_count}
+    finally:
+        db.close()
+
+
+def reindex_all_objects() -> dict:
+    """Enqueue reindex_object for every non-deleted page and source."""
+    db = get_session()
+    try:
+        objects = (
+            db.execute(
+                select(KosObject).where(
+                    KosObject.deleted_at.is_(None),
+                    KosObject.kind.in_(["page", "source"]),
+                )
+            )
+            .scalars()
+            .all()
+        )
+
+        for obj in objects:
+            enqueue_reindex_object(str(obj.id))
+
+        return {"enqueued": len(objects)}
+    finally:
+        db.close()
+
+
+def enqueue_reindex_object(object_id: str) -> None:
+    redis_url = os.environ.get("REDIS_URL", "redis://localhost:6379/0")
+    q = Queue(SEARCH_QUEUE_NAME, connection=redis.from_url(redis_url))
+    q.enqueue(
+        reindex_object,
+        object_id,
+        job_id=f"reindex:{object_id}",
+    )

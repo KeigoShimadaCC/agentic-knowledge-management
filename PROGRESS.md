@@ -56,7 +56,7 @@ See [`project-phases/PHASE-3-SEARCH.md`](project-phases/PHASE-3-SEARCH.md) for t
 - [x] **Subtask 0** — Phase 2 audit + Phase 3 stabilization: `chunks` migration 0003 (user_id, source_locator, content_hash, embedding_status, embedding_model, embedded_at, qdrant_point_id, updated_at); search eval fixtures; offline/degradation docs; revision history design; README + PROGRESS.md roadmap refresh
 - [x] **Subtask 1** — Chunking pipeline: `services/api/app/search/chunker.py` splits text into overlapping chunks; `chunk_service.py` chunks pages, sources, and asset metadata into `chunks` rows with `chunk_idx`, `token_count`, `source_locator`, and `content_hash`
 - [x] **Subtask 2** — Embedding provider abstraction + Qdrant collection setup: `EmbeddingProvider`, disabled/mock/OpenAI providers, Qdrant client wrapper, `knowledgeos_chunks` collection init on API startup, graceful Qdrant-unavailable startup behavior
-- [~] **Subtask 3** — Reindex worker jobs: `reindex_object(object_id)`, `reindex_all_objects()`, worker-side embedding/Qdrant upsert, and page/source reindex enqueue hooks are implemented in the worktree but not yet finalized/tested/committed
+- [x] **Subtask 3** — Reindex worker jobs: `reindex_object(object_id)`, `reindex_all_objects()`, worker-side embedding/Qdrant upsert, deterministic RQ job IDs, page/source save hooks, and source-ingestion completion hook
 - [ ] **Subtask 4** — Keyword search API: `GET /search/keyword?q=&kind=&limit=&offset=`; Postgres FTS with `plainto_tsquery` + snippet; works with no API key
 - [ ] **Subtask 5** — Vector search API: `POST /search/vector`; graceful 503 when embeddings disabled; Qdrant nearest neighbors → hydrate from Postgres
 - [ ] **Subtask 6** — Hybrid search API: `POST /search/hybrid`; parallel keyword + vector → combined score; keyword-only fallback when embeddings unavailable; `debug` mode for score breakdown
@@ -185,7 +185,7 @@ See [`project-phases/PHASE-3-SEARCH.md`](project-phases/PHASE-3-SEARCH.md) for t
 |---|---|---|---|
 | 1 | Foundation | ✅ Complete | 8 / 8 subtasks |
 | 2 | Sources & Rich Media | ✅ Complete | 9 / 9 subtasks |
-| 3 | Search | ⬜ In Progress | 3 / 10 subtasks complete; subtask 3 in progress |
+| 3 | Search | ⬜ In Progress | 4 / 10 subtasks complete |
 | 4 | Graph Lite | ⬜ Backend Complete; UI Deferred | 5 / 6 subtasks; Phase 4B UI deferred |
 | 5 | AI Assistant + Inbox/Triage | ⬜ Planned | 0 / 12 subtasks |
 | 6 | Chat Import | ⬜ Planned | 0 / 8 subtasks |
@@ -193,7 +193,7 @@ See [`project-phases/PHASE-3-SEARCH.md`](project-phases/PHASE-3-SEARCH.md) for t
 | 8 | Multi-Pane Workspaces | ⬜ Planned | 0 / 8 subtasks |
 | 9 | Career & Project Memory | ⬜ Planned | 0 / 8 subtasks |
 
-**Total:** 25 / 75 subtasks complete
+**Total:** 26 / 75 subtasks complete
 
 **Key cross-cutting concepts to track:**
 - Inbox/Triage (Phase 5): AI-classified staging area for unprocessed items
@@ -202,6 +202,5 @@ See [`project-phases/PHASE-3-SEARCH.md`](project-phases/PHASE-3-SEARCH.md) for t
 - Offline/degradation contract: keyword search always works; AI features degrade gracefully — see `docs/ARCHITECTURE.md`
 
 **Current repo state notes (2026-05-14):**
-- `main` is one local commit ahead of `origin/main` (`docs: revise roadmap around search quality, graph lite, chat import, and MCP staging`).
-- The worktree contains in-progress reindex changes in `services/api/app/api/v1/pages.py`, `services/api/app/api/v1/sources.py`, `services/worker/kos_worker/tasks.py`, `services/worker/kos_worker/indexer.py`, `services/worker/pyproject.toml`, and `uv.lock`.
+- Phase 3 reindex jobs are implemented locally and ready to commit/push.
 - Search endpoints (`/api/v1/search/keyword`, `/api/v1/search/vector`, `/api/v1/search/hybrid`) and search UI are not present yet.

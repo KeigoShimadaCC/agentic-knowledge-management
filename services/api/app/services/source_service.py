@@ -17,6 +17,7 @@ from app.models.source import Source
 from app.schemas.source import SourceCreate, SourceUpdate
 
 logger = logging.getLogger(__name__)
+INGEST_QUEUE_NAME = "kos-ingest"
 
 
 async def ensure_source_dir(source_id: str) -> Path:
@@ -60,11 +61,10 @@ async def create_source(
 
     try:
         redis_conn = Redis.from_url(settings.redis_url)
-        queue = Queue("ingestion", connection=redis_conn)
+        queue = Queue(INGEST_QUEUE_NAME, connection=redis_conn)
         await asyncio.to_thread(
             queue.enqueue,
             "kos_worker.tasks.ingest_source",
-            str(source.id),
             str(job.id),
         )
     except Exception:

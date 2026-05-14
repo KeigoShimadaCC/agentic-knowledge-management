@@ -11,7 +11,7 @@ from app.models.object import KosObject
 from app.models.source import Source
 from app.models.user import User
 from app.schemas.source import SourceCreate, SourceOut, SourceUpdate
-from app.services import source_service
+from app.services import reindex_service, source_service
 
 router = APIRouter()
 
@@ -96,6 +96,7 @@ async def patch_source(
     obj, source = await source_service.get_source_or_404(db, source_id, user.id)
     obj = await source_service.update_source(db, obj, body)
     await db.commit()
+    reindex_service.enqueue_reindex_object(obj.id)
     await db.refresh(obj)
     await db.refresh(source)
     return build_source_out(obj, source)

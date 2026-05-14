@@ -16,6 +16,19 @@ def stub_ingestion_queue(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr("app.services.source_service.Queue", NoopQueue)
 
 
+class RecordingQueue:
+    instances: list["RecordingQueue"] = []
+
+    def __init__(self, name: str, *args, **kwargs):
+        self.name = name
+        self.calls: list[tuple[tuple, dict]] = []
+        self.__class__.instances.append(self)
+
+    def enqueue(self, *args, **kwargs):
+        self.calls.append((args, kwargs))
+        return None
+
+
 async def create_source(
     auth_client: AsyncClient,
     monkeypatch: pytest.MonkeyPatch,
@@ -61,6 +74,30 @@ async def test_create_source_youtube(auth_client: AsyncClient, monkeypatch: pyte
 
 
 @pytest.mark.asyncio
+async def test_create_source_enqueues_ingestion_job(
+    auth_client: AsyncClient,
+    monkeypatch: pytest.MonkeyPatch,
+):
+    RecordingQueue.instances = []
+    monkeypatch.setattr("app.services.source_service.Queue", RecordingQueue)
+
+    resp = await auth_client.post(
+        "/api/v1/sources",
+        json={"source_type": "web", "url": "https://example.com"},
+    )
+
+    assert resp.status_code == 201
+    assert len(RecordingQueue.instances) == 1
+    queue = RecordingQueue.instances[0]
+    assert queue.name == "kos-ingest"
+    assert len(queue.calls) == 1
+    args, kwargs = queue.calls[0]
+    assert args[0] == "kos_worker.tasks.ingest_source"
+    assert len(args) == 2
+    assert kwargs == {}
+
+
+@pytest.mark.asyncio
 async def test_create_source_file_requires_asset_id(auth_client: AsyncClient):
     resp = await auth_client.post("/api/v1/sources", json={"source_type": "pdf"})
     assert resp.status_code == 422
@@ -99,7 +136,10 @@ async def test_list_sources(auth_client: AsyncClient, monkeypatch: pytest.Monkey
 
 
 @pytest.mark.asyncio
-async def test_list_sources_filter_by_type(auth_client: AsyncClient, monkeypatch: pytest.MonkeyPatch):
+async def test_list_sources_filter_by_type(
+    auth_client: AsyncClient,
+    monkeypatch: pytest.MonkeyPatch,
+):
     await create_source(auth_client, monkeypatch, source_type="web", url="https://example.com")
     await create_source(
         auth_client,
@@ -144,6 +184,11 @@ async def test_get_source_not_found(auth_client: AsyncClient):
 
 @pytest.mark.asyncio
 async def test_update_source(auth_client: AsyncClient, monkeypatch: pytest.MonkeyPatch):
+    reindex_calls: list[str] = []
+    monkeypatch.setattr(
+        "app.services.reindex_service.enqueue_reindex_object",
+        lambda object_id: reindex_calls.append(str(object_id)) or True,
+    )
     created = await create_source(auth_client, monkeypatch, title="Old Title")
     resp = await auth_client.patch(
         f"/api/v1/sources/{created['id']}",
@@ -151,6 +196,7 @@ async def test_update_source(auth_client: AsyncClient, monkeypatch: pytest.Monke
     )
     assert resp.status_code == 200
     assert resp.json()["title"] == "New Title"
+    assert reindex_calls == [created["id"]]
 
 
 @pytest.mark.asyncio
@@ -190,7 +236,10 @@ async def test_source_text_not_found(auth_client: AsyncClient, monkeypatch: pyte
 
 
 @pytest.mark.asyncio
-async def test_source_thumbnail_not_found(auth_client: AsyncClient, monkeypatch: pytest.MonkeyPatch):
+async def test_source_thumbnail_not_found(
+    auth_client: AsyncClient,
+    monkeypatch: pytest.MonkeyPatch,
+):
     created = await create_source(auth_client, monkeypatch)
     resp = await auth_client.get(f"/api/v1/sources/{created['id']}/thumbnail")
     assert resp.status_code == 404

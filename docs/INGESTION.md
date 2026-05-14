@@ -96,7 +96,7 @@ Source ingestion may create graph relationships:
 
 Extraction itself should not invent page citations. Citation edges should be created by explicit user or agent action.
 
-## Phase 3 Preview: Chunking and Embeddings
+## Phase 3: Chunking, Reindexing, and Embeddings
 
 Phase 3 extends ingestion from extraction to retrieval:
 
@@ -107,4 +107,15 @@ Phase 3 extends ingestion from extraction to retrieval:
 5. Store vectors in Qdrant.
 6. Use vector search for semantic retrieval, AI question answering, and context assembly.
 
-Chunking should be repeatable so an object can be reindexed when content or extraction logic changes.
+Chunking is repeatable so an object can be reindexed when content or extraction logic changes.
+
+Reindex triggers:
+
+| Event | Action |
+| --- | --- |
+| Page `PUT`/`PATCH` save | Enqueue `reindex_object(page_id)` |
+| Source `PATCH` metadata update | Enqueue `reindex_object(source_id)` |
+| Source ingestion completion | Enqueue `reindex_object(source_id)` |
+| Manual rebuild | `reindex_all_objects()` enqueues all non-deleted pages and sources |
+
+Reindex jobs use deterministic RQ job IDs (`reindex:{object_id}`) to avoid flooding the queue during repeated saves.

@@ -74,9 +74,9 @@ Turn KnowledgeOS from a storage/ingestion system into a **retrieval system**. Al
 ## Subtask Checklist
 
 - [x] Subtask 0 — Phase 2 stabilization + chunks migration 0003
-- [ ] Subtask 1 — Embedding provider abstraction + Qdrant collection setup
-- [ ] Subtask 2 — Chunking pipeline (page + source content → chunks table)
-- [ ] Subtask 3 — Reindex worker jobs (reindex_object, reindex_all)
+- [x] Subtask 1 — Embedding provider abstraction + Qdrant collection setup
+- [x] Subtask 2 — Chunking pipeline (page + source content → chunks table)
+- [x] Subtask 3 — Reindex worker jobs (reindex_object, reindex_all)
 - [ ] Subtask 4 — Keyword search API (`GET /search/keyword`)
 - [ ] Subtask 5 — Vector search API (`POST /search/vector`)
 - [ ] Subtask 6 — Hybrid search API (`POST /search/hybrid`)
@@ -214,7 +214,7 @@ async def delete_chunks_for_object(db: AsyncSession, object_id: uuid.UUID) -> in
 
 ---
 
-### Subtask 3 — Reindex worker jobs
+### Subtask 3 — Reindex worker jobs ✅
 
 **Goal**: Worker tasks that embed pending chunks, upsert to Qdrant, and clean up stale points.
 
@@ -256,6 +256,12 @@ Use deterministic RQ job ID `f"reindex:{object_id}"` to prevent queue flooding f
 
 **Commit**: `feat(worker): reindex_object and reindex_all_objects jobs`
 **Codex-delegatable**: Yes
+
+**Implemented notes**:
+- `services/worker/kos_worker/tasks.py` exposes `reindex_object(object_id)` and `reindex_all_objects()`.
+- `services/worker/kos_worker/indexer.py` embeds chunks and writes Qdrant points with chunk/object payload metadata.
+- Page `PUT`/`PATCH`, source `PATCH`, and completed source ingestion enqueue `reindex_object` with deterministic `job_id=f"reindex:{object_id}"`.
+- Source ingestion now enqueues to the worker's `kos-ingest` queue with the correct `ingest_source(job_id)` argument shape.
 
 ---
 

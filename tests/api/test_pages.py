@@ -37,10 +37,32 @@ async def test_patch_page_updates_title(auth_client: AsyncClient):
 
 
 @pytest.mark.asyncio
+async def test_patch_page_enqueues_reindex(
+    auth_client: AsyncClient,
+    monkeypatch: pytest.MonkeyPatch,
+):
+    calls: list[str] = []
+    monkeypatch.setattr(
+        "app.services.reindex_service.enqueue_reindex_object",
+        lambda object_id: calls.append(str(object_id)) or True,
+    )
+    create = await auth_client.post("/api/v1/pages", json={"title": "Old Title"})
+    page_id = create.json()["page"]["id"]
+
+    resp = await auth_client.patch(f"/api/v1/pages/{page_id}", json={"title": "New Title"})
+
+    assert resp.status_code == 200
+    assert calls == [page_id]
+
+
+@pytest.mark.asyncio
 async def test_put_page_replaces_content(auth_client: AsyncClient):
     create = await auth_client.post("/api/v1/pages", json={"title": "Replace Test"})
     page_id = create.json()["page"]["id"]
-    new_content = {"type": "doc", "content": [{"type": "paragraph", "content": [{"type": "text", "text": "hello"}]}]}
+    new_content = {
+        "type": "doc",
+        "content": [{"type": "paragraph", "content": [{"type": "text", "text": "hello"}]}],
+    }
     resp = await auth_client.put(
         f"/api/v1/pages/{page_id}",
         json={"content_json": new_content, "content_text": "hello"},
