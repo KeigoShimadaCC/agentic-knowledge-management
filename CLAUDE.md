@@ -40,6 +40,7 @@ These apply to Claude, Codex, and any other agent at all times.
 - **No arbitrary shell execution through MCP.** MCP tools are read/search/write/ingest only.
 - **No paid SaaS dependencies without explicit approval.** Local-first and free infrastructure except AI API costs (OpenAI, Anthropic).
 - **Update the relevant doc in `docs/` whenever schema, API, MCP tools, or ingestion behavior changes.**
+- **Keep `PROGRESS.md` current.** When a task, subtask, or phase milestone is completed, update `PROGRESS.md` before handoff/commit so completed work, current status, totals, and repo state notes reflect the actual repository.
 
 ---
 
@@ -135,6 +136,7 @@ Integration tests spin up against `knowledgeos_test` database (auto-created, tor
 - **Commit after each coherent unit:** schema migration, API endpoint, UI component, worker pipeline, MCP tool, test suite, docs update. Not before.
 - **Do not mix unrelated changes in one commit.**
 - **Run the relevant quality gates before every commit.**
+- **Update `PROGRESS.md` for completed phase work before committing.**
 - **Push after committing** unless explicitly told otherwise.
 - Use conventional commit prefixes: `feat`, `fix`, `refactor`, `test`, `docs`, `chore`, `infra`.
 - Keep commit messages explicit: what changed and why, not just what file changed.

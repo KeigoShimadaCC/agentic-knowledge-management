@@ -202,5 +202,5 @@ See [`project-phases/PHASE-3-SEARCH.md`](project-phases/PHASE-3-SEARCH.md) for t
 - Offline/degradation contract: keyword search always works; AI features degrade gracefully — see `docs/ARCHITECTURE.md`
 
 **Current repo state notes (2026-05-14):**
-- Phase 3 reindex jobs are implemented locally and ready to commit/push.
+- Phase 3 reindex jobs are implemented, committed, and pushed (`a28e634`).
 - Search endpoints (`/api/v1/search/keyword`, `/api/v1/search/vector`, `/api/v1/search/hybrid`) and search UI are not present yet.

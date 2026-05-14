@@ -25,7 +25,7 @@ Tests are pytest-based integration tests using real FastAPI and Postgres. Add or
 
 ## Commit & Pull Request Guidelines
 
-Git history uses conventional prefixes such as `feat(search):`, `fix:`, `test:`, and `docs:`. Keep commits focused and include tests or docs when behavior changes. Pull requests should summarize the change, list verification commands, link related issues or phase docs, and include screenshots for UI changes.
+Git history uses conventional prefixes such as `feat(search):`, `fix:`, `test:`, and `docs:`. Keep commits focused and include tests or docs when behavior changes. Before handing off or committing completed project work, update `PROGRESS.md` so the finished subtasks, current phase status, and repo state notes match the actual code. Pull requests should summarize the change, list verification commands, link related issues or phase docs, and include screenshots for UI changes.
 
 ## Security & Agent-Specific Instructions
 
