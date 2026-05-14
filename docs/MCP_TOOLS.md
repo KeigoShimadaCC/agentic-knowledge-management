@@ -186,6 +186,8 @@ Traverse the knowledge graph from a given object.
 
 ## Phase 7B — Write Tools (Planned)
 
+Phase 7B is unblocked now that Phase 5 `object_revisions` ships. The implementation plan is [`project-phases/PHASE-7B-MCP-WRITE.md`](../project-phases/PHASE-7B-MCP-WRITE.md).
+
 | Tool | Endpoint | Phase |
 |---|---|---|
 | `create_page` | `POST /api/v1/pages` | 7B |

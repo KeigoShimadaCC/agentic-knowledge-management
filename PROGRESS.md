@@ -212,10 +212,10 @@ See [`project-phases/PHASE-7A-MCP.md`](project-phases/PHASE-7A-MCP.md) for the f
 
 ## Phase 7B — MCP Write Tools ⬜ Planned
 
-**Goal:** Add create/update/archive write tools to MCP. Requires Phase 5 `object_revisions` table.
+**Goal:** Add create/update/archive write tools to MCP. Phase 5 `object_revisions` now ships, so this phase is unblocked and planned in [`project-phases/PHASE-7B-MCP-WRITE.md`](project-phases/PHASE-7B-MCP-WRITE.md).
 
-- [ ] **v2 — Create Tools:** `create_page`, `create_edge`, `ingest_url`, `ingest_file`; validates agent identity + writes `agent_runs`
-- [ ] **v3 — Update/Archive Tools:** `update_page`, `archive_object`; before/after diff logged; rollback supported
+- [ ] **v2 — Create Tools:** `create_page`, `create_edge`, `ingest_url`, `ingest_file`; validates agent identity + writes `agent_runs` and `object_revisions`
+- [ ] **v3 — Update/Archive Tools:** `update_page`, `archive_object`; before/after snapshots logged; rollback supported
 - [ ] **MCP resources:** `knowledgeos://objects/{id}`, `knowledgeos://pages/{id}`, `knowledgeos://sources/{id}`
 - [ ] **Tests + docs**
 
@@ -274,7 +274,7 @@ See [`project-phases/PHASE-7A-MCP.md`](project-phases/PHASE-7A-MCP.md) for the f
 **Key cross-cutting concepts to track:**
 - Inbox/Triage (Phase 5): AI-classified staging area for unprocessed items
 - Search evaluation (Phase 3+): `tests/fixtures/search_eval_cases.json` as regression anchors
-- Revision history (Phase 5 prerequisite): required before MCP write tools go live — see `docs/REVISION_HISTORY.md`
+- Revision history: implemented for Phase 5/6B and required for MCP write tools — see `docs/REVISION_HISTORY.md`
 - Offline/degradation contract: keyword search always works; AI features degrade gracefully — see `docs/ARCHITECTURE.md`
 
 **Current repo state notes (2026-05-15 audit):**
