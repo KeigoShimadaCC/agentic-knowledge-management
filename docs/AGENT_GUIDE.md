@@ -8,7 +8,7 @@ Agents must follow these rules:
 
 | Rule | Requirement |
 | --- | --- |
-| Use the API | All reads and writes should go through `http://localhost:8000/api/v1`. |
+| Use the API | All reads and writes should go through the FastAPI boundary. Host-side Docker Compose clients use `http://127.0.0.1:8001/api/v1`; native API runs commonly use `http://127.0.0.1:8000/api/v1`. |
 | No direct DB writes | Do not connect to Postgres or mutate tables directly. |
 | Soft-delete only | Delete through API endpoints that set `deleted_at`; never hard-delete records or files. |
 | No shell execution | Do not run shell commands as part of normal KnowledgeOS operation. |
@@ -98,7 +98,7 @@ Example:
 
 ```http
 GET /api/v1/pages/8b7b8b2a-0000-4000-9000-000000000001 HTTP/1.1
-Host: localhost:8000
+Host: 127.0.0.1:8001
 Cookie: kos_session=...
 User-Agent: KnowledgeOS-Agent/Codex
 ```
@@ -177,7 +177,7 @@ Example:
 
 ```http
 GET /api/v1/objects?q=embeddings&kind=page&page=1&limit=20 HTTP/1.1
-Host: localhost:8000
+Host: 127.0.0.1:8001
 Cookie: kos_session=...
 User-Agent: KnowledgeOS-Agent/Codex
 ```
@@ -331,7 +331,7 @@ Agents may work with:
 
 ```text
 ~/KnowledgeOS
-http://localhost:8000/api/v1
+http://127.0.0.1:8001/api/v1
 ```
 
 Agents must not:

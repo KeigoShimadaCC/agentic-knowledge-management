@@ -43,9 +43,11 @@ MCP_INTERNAL_TOKEN=<your-random-token>
 
 ```dotenv
 MCP_ENABLED=true
-MCP_API_BASE_URL=http://127.0.0.1:8000
+MCP_API_BASE_URL=http://127.0.0.1:8001
 MCP_INTERNAL_TOKEN=<same-token-as-above>
 ```
+
+`127.0.0.1:8001` is the host-side default for Docker Compose (`8001 -> api:8000`). If you run the API natively with `uvicorn --port 8000`, point `MCP_API_BASE_URL` at `http://127.0.0.1:8000`. If a future MCP process runs inside the Docker network, use `http://api:8000`.
 
 ### 4. Start the API
 
@@ -71,7 +73,7 @@ Add to your MCP client config (e.g., `claude_desktop_config.json`):
       "args": ["run", "--project", "/path/to/agentic-knowledge-management/services/mcp", "kos-mcp"],
       "env": {
         "MCP_ENABLED": "true",
-        "MCP_API_BASE_URL": "http://127.0.0.1:8000",
+        "MCP_API_BASE_URL": "http://127.0.0.1:8001",
         "MCP_INTERNAL_TOKEN": "<your-token>"
       }
     }

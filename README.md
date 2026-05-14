@@ -184,6 +184,21 @@ docker compose -f infra/docker-compose.yml down -v    # stop + wipe volumes (des
 
 Compose defaults include bind-mounted sources, Alembic before uvicorn, and optional demo seed. With seeding enabled, sign in as **demo@example.com** / **demo-demo-demo** unless overridden in `infra/.env`.
 
+### Local Ports
+
+Docker Compose publishes services on loopback-only host ports:
+
+| Service | Host | In-container |
+|---|---|---|
+| Web | `127.0.0.1:3000` | `3000` |
+| API | `127.0.0.1:8001` | `8000` |
+| Postgres | `127.0.0.1:5433` | `5432` |
+| Redis | `127.0.0.1:6379` | `6379` |
+| Qdrant HTTP | `127.0.0.1:6333` | `6333` |
+| Qdrant gRPC | `127.0.0.1:6334` | `6334` |
+
+Use `http://127.0.0.1:8001` for host-side clients talking to the dockerized API. Use `http://api:8000` only from inside the Docker network. If you run the API natively with `uvicorn --port 8000`, host-side clients should use `http://127.0.0.1:8000`.
+
 ---
 
 ## File Layout
@@ -303,7 +318,7 @@ Each phase has a detailed spec in [`project-phases/`](project-phases/).
 
 **Phase 7A is shipped.** KnowledgeOS exposes a local stdio MCP server in `services/mcp/` that external agents (Claude Desktop, Claude Code, Cursor, Codex) can spawn as a subprocess. The server talks to FastAPI over `127.0.0.1` using a shared `MCP_INTERNAL_TOKEN`.
 
-Enable it by setting `MCP_ENABLED=true` and a random `MCP_INTERNAL_TOKEN` in `infra/.env`, then point your agent client at `uv run --project services/mcp kos-mcp`.
+Enable it by setting `MCP_ENABLED=true` and a random `MCP_INTERNAL_TOKEN` in `infra/.env`, then point your agent client at `uv run --project services/mcp kos-mcp`. For the dockerized API, keep `MCP_API_BASE_URL=http://127.0.0.1:8001`; for a native API run on port 8000, override it to `http://127.0.0.1:8000`.
 
 **Read/search tools (Phase 7A — live):** `search_objects`, `hybrid_search`, `get_object`, `get_page`, `get_source`, `get_related_objects`  
 **Disabled stub:** `answer_from_kb` — wiring this to `POST /api/v1/ai/answer` is a known follow-up now that Phase 5 is complete.  

@@ -13,9 +13,10 @@ Next.js web (:3000)
   |
   | /api/v1/* requests
   v
-FastAPI api (:8000)
+FastAPI api (host :8001 -> container :8000)
   |\
-  | \-- Postgres (:5432)  users, sessions, objects, pages, assets, edges,
+  | \-- Postgres (host :5433 -> container :5432)
+  |                        users, sessions, objects, pages, assets, edges,
   |                        chunks, ingestion_jobs, agent_runs
   |
   |---- Redis (:6379)     RQ queue and job coordination
@@ -28,18 +29,20 @@ RQ worker
   |
   \---- Filesystem        read originals, write extracted derivatives
 
-Qdrant (:6333)           reserved for vector search in a later phase
+Qdrant (host/container :6333)  vector search index
 ```
 
 ## Services
 
-| Service | Port | Purpose |
-| --- | ---: | --- |
-| `web` | `3000` | Next.js 14 App Router frontend. Provides the editor and object browsing UI. |
-| `api` | `8000` | FastAPI application. Owns authentication, object CRUD, page content, asset upload/download, and future ingestion endpoints. |
-| `postgres` | `5432` | Primary durable database. Stores users, sessions, universal object records, specialization tables, edges, chunks, jobs, and agent audit records. |
-| `redis` | `6379` | Queue backend for RQ. Used by the API to enqueue jobs and by the worker to claim work. |
-| `qdrant` | `6333` | Vector database reserved for semantic search in Phase 3+. It is part of the local stack but not central to Phase 1 behavior. |
+| Service | Host port | Container port | Purpose |
+| --- | ---: | ---: | --- |
+| `web` | `3000` | `3000` | Next.js 14 App Router frontend. Provides the editor and object browsing UI. |
+| `api` | `8001` | `8000` | FastAPI application. Owns authentication, object CRUD, page content, asset upload/download, ingestion endpoints, AI routes, and internal MCP auth. |
+| `postgres` | `5433` | `5432` | Primary durable database. Stores users, sessions, universal object records, specialization tables, edges, chunks, jobs, revisions, and agent audit records. |
+| `redis` | `6379` | `6379` | Queue backend for RQ. Used by the API to enqueue jobs and by the worker to claim work. |
+| `qdrant` | `6333` / `6334` | `6333` / `6334` | Rebuildable vector database for semantic search. |
+
+All published ports bind to `127.0.0.1`. Use container hostnames such as `api:8000` or `postgres:5432` only from inside the Docker network; host-side tools should use `127.0.0.1:8001` for the API and `127.0.0.1:5433` for Postgres.
 
 ## Runtime Responsibilities
 
