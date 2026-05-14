@@ -285,7 +285,7 @@ See [`project-phases/PHASE-7A-MCP.md`](project-phases/PHASE-7A-MCP.md) for the f
 - Alembic migrations 0001–0006 all present and consistent.
 
 *Phase deviations / known gaps surfaced during this audit:*
-- **Phase 5 inbox endpoint path**: spec says `GET /api/v1/objects/inbox`; implementation lives at `GET /api/v1/ai/inbox`. Frontend matches the actual path. Spec doc is the one that's stale, not the code.
+- **Phase 5 inbox endpoint path**: ✅ resolved — `PHASE-5-AI-ASSISTANT.md` updated to `GET /api/v1/ai/inbox` (was `/api/v1/objects/inbox`). Frontend and code were already correct.
 - **Phase 7A `answer_from_kb` stub is obsolete**: `services/mcp/kos_mcp/tools.py` still raises `"Phase 5 AI assistant endpoint has not been implemented yet."` even though Phase 5 is now complete. Wiring this to `POST /api/v1/ai/answer` is a clean Phase 7A follow-up (not Phase 7B since it is read-only).
 - **Phase 2 docker-compose gap**: `infra/docker-compose.yml` defines `postgres`, `redis`, `qdrant`, `api`, `web` but no `worker` service. RQ jobs (PDF extraction, embedding, reindex) only run if the user manually starts `rq worker kos-ingest` on the host. `docker compose up -d` alone leaves all source ingestion stuck in `pending`.
 - **Phase 2 worker tests missing**: `tests/worker/` was specified in `PHASE-2-SOURCES.md` (extractor tests with `sample.pdf`, `sample.jpg`, `sample.csv`) but does not exist. Extractor logic in `services/worker/kos_worker/extractors/` has no automated coverage.
