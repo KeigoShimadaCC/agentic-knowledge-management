@@ -35,7 +35,8 @@ async def test_invalid_token_falls_through_to_cookie_auth(
     await _register_user(client)
     monkeypatch.setattr(settings, "mcp_internal_token", "correct-token")
 
-    # Wrong token value — falls through to cookie path, no cookie → 401
+    # Clear cookie so only the token is checked; wrong token → 401
+    client.cookies.clear()
     resp = await client.get(
         "/api/v1/objects",
         headers={"X-KOS-Internal-Token": "wrong-token"},
@@ -50,8 +51,10 @@ async def test_empty_token_config_ignores_header(
     from app.config import settings
 
     await _register_user(client)
-    # Token is empty in config — any header value must be ignored
+    # Token is empty in config — any header value must be ignored; clear cookie so only
+    # the token path is tested
     monkeypatch.setattr(settings, "mcp_internal_token", "")
+    client.cookies.clear()
 
     resp = await client.get(
         "/api/v1/objects",
