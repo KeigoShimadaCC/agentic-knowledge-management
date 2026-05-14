@@ -25,29 +25,32 @@ The full product vision is in [`project-phases/IDEA-DRAFT.md`](project-phases/ID
 
 ## Current Status
 
-Phases 1-4, Phase 6A Chat Import Lite, and Phase 6B Structured Chat Import are complete. Phase 5 AI Assistant/Inbox and Phase 7 MCP remain planned.
+Phases 1–4, Phase 5 AI Assistant, Phase 6A/6B Chat Import, Phase 7A MCP Read/Search, and Phase 8A Workspace Lite are complete. Phase 7B (MCP write tools), Phase 8 (multi-pane workspaces), Phase 9 (career memory), and the multilingual search hardening track are in progress or planned.
 
 See [`PROGRESS.md`](PROGRESS.md) for the canonical progress tracker.
 
 | Phase | Status |
 |---|---|
-| Phase 1 — Foundation | ✅ Complete (25 tests) |
-| Phase 2 — Sources & Rich Media | ✅ Complete (45 tests) |
+| Phase 1 — Foundation | ✅ Complete |
+| Phase 2 — Sources & Rich Media | ✅ Complete |
 | Phase 3 — Search | ✅ Complete |
 | Phase 4 — Graph Lite | ✅ Complete |
-| Phase 5 — AI Assistant + Inbox/Triage | ⬜ Planned |
+| Phase 5 — AI Assistant + Inbox/Triage | ✅ Complete |
 | Phase 6A — Chat Import Lite | ✅ Complete |
 | Phase 6B — Structured Chat Import | ✅ Complete |
-| Phase 7 — MCP Server | ⬜ Planned |
+| Phase 7A — MCP Read/Search | ✅ Complete |
+| Phase 8A — Workspace Lite (split pane) | ✅ Complete |
+| Hardening — Search Quality / Multilingual | 🚧 Partial (ILIKE fallback only) |
+| Phase 7B — MCP Write Tools | ⬜ Planned |
+| Phase 8 — Multi-Pane Workspaces | ⬜ Planned |
+| Phase 9 — Career & Project Memory | ⬜ Planned |
 
-**Phase 2 added:**
-- Typed `source` objects (PDF, image, video, YouTube, web article, CSV)
-- RQ background worker with per-type extractors (text, metadata, thumbnail, transcript)
-- Sources list + detail UI with status polling
-- Citation edges in the Tiptap page editor (`CitationExtension`)
-- `POST/GET/PATCH/DELETE /api/v1/sources` and `POST/GET/DELETE /api/v1/edges`
+**Test counts (as of 2026-05-15):**
+- API integration tests: 112 across `tests/api/` (auth 10, objects 10, pages 5, assets 3, sources 17, edges 13, search 13, chats 21, ai 14, mcp_auth 5, health 1)
+- Unit tests: 16 in `tests/unit/`
+- MCP package tests: 19 in `services/mcp/tests/`
 
-See [`project-phases/PHASE-2-SOURCES.md`](project-phases/PHASE-2-SOURCES.md) for the full subtask spec.
+See each phase's plan in [`project-phases/`](project-phases/) for the full subtask spec.
 
 ---
 
@@ -86,7 +89,7 @@ MCP Server (:8765)
 | Editor | Tiptap / ProseMirror (stores content as JSON) |
 | Backend API | FastAPI + SQLAlchemy 2.0 async |
 | Background workers | Python + Redis + RQ |
-| MCP server | Python MCP server (Phase 6) |
+| MCP server | Python MCP server over stdio (Phase 7A) |
 | Operational DB | Postgres 16 |
 | Vector DB | Qdrant (local Docker) |
 | Graph DB | Kùzu (embedded in worker process) |
@@ -153,9 +156,13 @@ Tests run against a live `knowledgeos_test` Postgres database (auto-created and 
 
 ```bash
 cd tests
-uv run pytest api/ -v                          # all 45 integration tests
+uv run pytest api/ -v                          # all 112 integration tests
+uv run pytest unit/ -v                         # 16 unit tests (parsers, URL safety)
 uv run pytest api/test_pages.py -v             # single file
 uv run pytest api/test_pages.py::test_create_page  # single test
+
+# MCP package tests (separate project)
+cd ../services/mcp && uv run pytest tests/ -v   # 19 MCP tool + config tests
 ```
 
 ### Alembic Migrations
@@ -199,17 +206,18 @@ Compose defaults include bind-mounted sources, Alembic before uvicorn, and optio
 │       ├── schemas/        Pydantic request/response schemas
 │       └── services/      Business logic layer
 │
-├── services/worker/       RQ background worker (Phase 2+)
-├── services/mcp/          MCP server (Phase 6+)
+├── services/worker/       RQ background worker (Phase 2+) — run as `rq worker kos-ingest`
+├── services/mcp/          MCP server, stdio transport (Phase 7A)
 │
 ├── packages/
-│   ├── shared-types/      Shared TypeScript types (Phase 2+)
-│   ├── schemas/           JSON schemas (Phase 2+)
-│   └── prompts/           Shared AI prompt templates (Phase 5+)
+│   ├── shared-types/      Reserved (currently empty placeholder)
+│   ├── schemas/           Reserved (currently empty placeholder)
+│   └── prompts/           Reserved (currently empty placeholder)
 │
 ├── infra/                 Docker Compose, Dockerfiles, .env.example
-├── scripts/               setup.sh, backup.sh, reindex.py (Phase 3+)
-├── tests/api/             Integration tests (pytest + httpx)
+├── scripts/               setup.sh, run_tests.sh
+├── tests/api/             Integration tests (pytest + httpx ASGI)
+├── tests/unit/            Pure unit tests (parsers, URL safety)
 ├── docs/                  Architecture, data model, API, MCP, ingestion, security
 └── project-phases/        Phase-by-phase implementation plans
 ```
@@ -249,20 +257,23 @@ All user-owned records use `deleted_at` (nullable timestamp). Hard deletes are n
 
 ## Product Modules (Full Vision)
 
-The complete product is built across 9 phases. Phase 1 is done; phases 2–9 are planned.
+The complete product is built across 9 phases. Phases 1–6B, Phase 7A, and Phase 8A are done; remaining phases are planned.
 
-| Module | Description | Phase |
-|---|---|---|
-| **Wiki pages** | Rich Tiptap editor, subpages, backlinks, typed links | 1 ✅ |
-| **Asset library** | Upload, preview, and manage files (images, PDFs, videos, CSV) | 1 ✅ |
-| **Rich media sources** | PDF viewer, YouTube metadata, web article ingestion, image OCR | 2 ✅ |
-| **Keyword + semantic search** | Postgres FTS + Qdrant vector + hybrid reranking | 3 |
-| **Graph Lite** | Typed edge UI, backlinks panel, related objects from Postgres edges | 4 |
-| **AI assistant + Inbox/Triage** | Summarize, extract, suggest links, RAG Q&A, triage inbox | 5 |
-| **Chat import** | Import ChatGPT/Claude exports → searchable chats + structured objects | 6 |
-| **MCP server** | Staged rollout: read/search → create → update/archive | 7 |
-| **Multi-pane workspaces** | Side-by-side research desks, saved layouts, drag-across-pane | 8 |
-| **Career/project memory** | Project schema, evidence-linked resume bullets, interview stories | 9 |
+| Module | Description | Phase | Status |
+|---|---|---|---|
+| **Wiki pages** | Rich Tiptap editor, auto-save, word count, typed links | 1 | ✅ |
+| **Asset library** | Upload, dedup, preview, gallery, full-screen modal | 1 | ✅ |
+| **Rich media sources** | PDF text+thumbnail, YouTube oEmbed+transcript, web article, CSV preview | 2 | ✅ |
+| **Keyword + semantic search** | Postgres FTS, Qdrant vector, hybrid reranking, Cmd+K modal | 3 | ✅ |
+| **Graph Lite** | Typed edges, backlinks, related, ObjectPicker, LinkToModal, GraphPanel | 4 | ✅ |
+| **AI assistant + Inbox/Triage** | Summarize, extract claims/tasks, suggest links, KB Q&A, triage inbox | 5 | ✅ |
+| **Chat import (raw)** | ChatGPT/Claude/Markdown/plain text import → searchable chats | 6A | ✅ |
+| **Chat structured import** | AI summary, decisions, claims/tasks extracted with turn refs | 6B | ✅ |
+| **MCP read/search server** | stdio MCP with `search_objects`, `hybrid_search`, `get_*`, `get_related_objects` | 7A | ✅ |
+| **Workspace Lite (split pane)** | Open any object in a side pane from search/backlinks/related | 8A | ✅ |
+| **MCP write tools** | `create_page`, `update_page`, `create_edge`, `archive_object`, `ingest_url` | 7B | ⬜ |
+| **Multi-pane workspaces** | Persistent layouts, drag-across-pane, workspace-scoped AI | 8 | ⬜ |
+| **Career/project memory** | Project schema, evidence-linked resume bullets, STAR stories | 9 | ⬜ |
 
 ---
 
@@ -270,16 +281,19 @@ The complete product is built across 9 phases. Phase 1 is done; phases 2–9 are
 
 | Phase | Goal | Status |
 |---|---|---|
-| 1 — Foundation | Docker, Postgres, auth, page CRUD, Tiptap editor, asset upload, 25 tests | **Done** |
-| 2 — Sources & Rich Media | PDF/YouTube/web/CSV ingestion, RQ worker, citation edges, 45 tests | **Done** |
-| 3 — Search | Chunking, Postgres FTS, Qdrant vectors, hybrid search, Cmd+K UI | Done |
-| 4 — Graph Lite | Typed edge API, backlinks, related objects from Postgres; Kùzu later | Done |
-| 5 — AI Assistant + Inbox/Triage | AI sidebar, summarize/extract/suggest, KB Q&A, triage inbox | Planned |
-| 6A — Chat Import Lite | Raw upload/paste of ChatGPT/Claude/Markdown/text exports; searchable chats | Done |
-| 6B — Structured Chat Import | AI summaries, extracted claims/tasks, turn-grounded graph links | Done |
-| 7 — MCP Server | Staged: read/search tools → create tools → update/archive tools | Planned |
-| 8 — Workspaces | Multi-pane layout engine, saved workspaces, AI scoped to workspace | Planned |
-| 9 — Career Memory | Project schema UI, resume bullet generator, interview story generator | Planned |
+| 1 — Foundation | Docker, Postgres, auth, page CRUD, Tiptap editor, asset upload | **Done** |
+| 2 — Sources & Rich Media | PDF/YouTube/web/CSV ingestion, RQ worker, citation edges | **Done** |
+| 3 — Search | Chunking, Postgres FTS, Qdrant vectors, hybrid search, Cmd+K UI | **Done** |
+| 4 — Graph Lite | Typed edge API, backlinks, related objects from Postgres edges | **Done** |
+| 5 — AI Assistant + Inbox/Triage | AI sidebar, summarize/extract/suggest, KB Q&A, triage inbox | **Done** |
+| 6A — Chat Import Lite | Raw upload/paste of ChatGPT/Claude/Markdown/text exports | **Done** |
+| 6B — Structured Chat Import | AI summaries, extracted claims/tasks, turn-grounded graph links | **Done** |
+| 7A — MCP Read/Search | stdio MCP server, read-only tools, internal-token auth | **Done** |
+| 8A — Workspace Lite | Frontend split pane (no schema change) | **Done** |
+| Hardening — Search Quality | Multilingual ILIKE fallback ✅; snippet sanitization, JP fixtures, debug UI, index-status endpoint pending | **Partial** |
+| 7B — MCP Write Tools | `create_page`, `update_page`, `create_edge`, `archive_object`, `ingest_url` | Planned |
+| 8 — Multi-Pane Workspaces | Persistent layout engine, saved workspaces, workspace-scoped AI | Planned |
+| 9 — Career Memory | Project schema UI, resume bullet generator, STAR story generator | Planned |
 
 Each phase has a detailed spec in [`project-phases/`](project-phases/).
 
@@ -287,11 +301,14 @@ Each phase has a detailed spec in [`project-phases/`](project-phases/).
 
 ## MCP & Agent Access
 
-Phase 7 will expose KnowledgeOS through a local MCP server.
+**Phase 7A is shipped.** KnowledgeOS exposes a local stdio MCP server in `services/mcp/` that external agents (Claude Desktop, Claude Code, Cursor, Codex) can spawn as a subprocess. The server talks to FastAPI over `127.0.0.1` using a shared `MCP_INTERNAL_TOKEN`.
 
-**Read/search tools:** `search_objects`, `hybrid_search`, `get_object`, `get_page`, `get_related_objects`, `answer_from_kb`  
-**Write tools:** `create_page`, `update_page`, `create_claim`, `create_edge`, `archive_object`  
-**Ingestion tools:** `ingest_url`, `ingest_file`, `import_chat`, `triage_inbox`
+Enable it by setting `MCP_ENABLED=true` and a random `MCP_INTERNAL_TOKEN` in `infra/.env`, then point your agent client at `uv run --project services/mcp kos-mcp`.
+
+**Read/search tools (Phase 7A — live):** `search_objects`, `hybrid_search`, `get_object`, `get_page`, `get_source`, `get_related_objects`  
+**Disabled stub:** `answer_from_kb` — wiring this to `POST /api/v1/ai/answer` is a known follow-up now that Phase 5 is complete.  
+**Write tools (Phase 7B — planned):** `create_page`, `update_page`, `create_edge`, `archive_object`  
+**Ingestion tools (Phase 7B — planned):** `ingest_url`, `ingest_file`, `import_chat`
 
 **Safety invariants (always enforced):**
 - Every agent write logs an `agent_runs` row (identity, model, input, output, changed objects)

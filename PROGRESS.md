@@ -1,6 +1,6 @@
 # KnowledgeOS — Progress Tracker
 
-> Last updated: 2026-05-14 (Phase 7A MCP complete)
+> Last updated: 2026-05-15 (audit run; phase claims cross-checked against repo)
 
 ---
 
@@ -66,19 +66,19 @@ See [`project-phases/PHASE-3-SEARCH.md`](project-phases/PHASE-3-SEARCH.md) for t
 
 ---
 
-## Hardening Track — Search Quality + Multilingual Retrieval 🚧 In Progress
+## Hardening Track — Search Quality + Multilingual Retrieval 🚧 Partial
 
 **Goal:** Strengthen retrieval quality for multilingual content (Japanese focus), harden security of search snippets, and increase observability and debug visibility.
 
 See [`project-phases/HARDENING-SEARCH-QUALITY-MULTILINGUAL.md`](project-phases/HARDENING-SEARCH-QUALITY-MULTILINGUAL.md) for the full subtask spec.
 
-- [x] **Subtask 0** — Audit and finalize plan: add plan to `project-phases/`, update `PROGRESS.md`
-- [ ] **Subtask 1** — Multilingual keyword fallback: support Japanese/mixed-language via `ILIKE` fallback + `pg_trgm`
-- [ ] **Subtask 2** — Search snippet sanitization: prevent XSS in highlighted snippets
-- [ ] **Subtask 3** — Search eval fixture expansion: add Japanese and mixed-language cases to `search_eval_cases.json`
-- [ ] **Subtask 4** — Search debug visibility: display ranking scores in UI (optional/dev-mode)
-- [ ] **Subtask 5** — Index/reindex observability: add index status endpoint and document reindex commands
-- [ ] **Subtask 6** — Documentation and final validation: update API/Architecture/Security docs
+- [x] **Subtask 0** — Audit and finalize plan: added to `project-phases/`, PROGRESS updated
+- [x] **Subtask 1** — Multilingual keyword fallback: `ILIKE` fallback over title + text in `search_service.py` (commits `8bfc61d`, `f42287f`). No `pg_trgm` migration yet, so the fallback runs without a trigram GIN index.
+- [ ] **Subtask 2** — Search snippet sanitization: backend still ships raw `<mark>` snippets via Postgres `ts_headline`; `SearchResultCard.tsx` still calls `dangerouslySetInnerHTML` with no sanitizer. **XSS risk if a user pastes script tags into a page or extracted source text.**
+- [ ] **Subtask 3** — Search eval fixture expansion: `tests/fixtures/search_eval_cases.json` still has no Japanese or mixed-language cases.
+- [ ] **Subtask 4** — Search debug visibility: backend `HybridRequest.debug: bool = False` plumbed through `schemas/search.py`, but `SearchModal.tsx` does not expose a debug toggle or render scores.
+- [ ] **Subtask 5** — Index/reindex observability: no `GET /api/v1/objects/{id}/index-status` endpoint; no doc on `reindex_object` / `reindex_all_objects` worker jobs.
+- [ ] **Subtask 6** — Documentation and final validation: not yet rolled into `docs/API.md` / `docs/SECURITY.md` / `docs/ARCHITECTURE.md`.
 
 ---
 
@@ -144,6 +144,10 @@ See [`project-phases/PHASE-5-AI-ASSISTANT.md`](project-phases/PHASE-5-AI-ASSISTA
 ---
 
 ## Phase 6A — Chat Import Lite ✅ Complete
+
+> Historical note: the bottom `Structured Import (requires Phase 5 AI)` subtasks listed under this phase have been superseded by the standalone Phase 6B section below. They are retained for traceability only.
+
+
 
 **Goal:** Turn pasted/uploaded ChatGPT, Claude, Markdown, and plain-text conversations into durable, searchable chat objects without AI extraction.
 
@@ -260,11 +264,12 @@ See [`project-phases/PHASE-7A-MCP.md`](project-phases/PHASE-7A-MCP.md) for the f
 | 6A | Chat Import Lite | ✅ Complete | 8 / 8 subtasks |
 | 6B | Structured Chat Import | ✅ Complete | 9 / 9 subtasks |
 | 7A | MCP Read/Search | ✅ Complete | 10 / 10 subtasks |
+| Hardening | Search Quality + Multilingual | 🚧 Partial | 2 / 7 subtasks |
 | 7B | MCP Write Tools | ⬜ Planned | 0 / 4 subtasks |
 | 8 | Multi-Pane Workspaces | ⬜ Planned | 0 / 8 subtasks |
 | 9 | Career & Project Memory | ⬜ Planned | 0 / 8 subtasks |
 
-**Total:** 76 / 96 subtasks complete
+**Total:** 78 / 103 subtasks complete (76 phase subtasks + 2 hardening subtasks of 7)
 
 **Key cross-cutting concepts to track:**
 - Inbox/Triage (Phase 5): AI-classified staging area for unprocessed items
@@ -272,16 +277,27 @@ See [`project-phases/PHASE-7A-MCP.md`](project-phases/PHASE-7A-MCP.md) for the f
 - Revision history (Phase 5 prerequisite): required before MCP write tools go live — see `docs/REVISION_HISTORY.md`
 - Offline/degradation contract: keyword search always works; AI features degrade gracefully — see `docs/ARCHITECTURE.md`
 
-**Current repo state notes (2026-05-14):**
-- Phase 3 search is complete, including keyword, vector, and hybrid API behavior, search UI, integration tests, and API/architecture documentation.
-- Phase 6A Chat Import Lite is complete: chat object model/API/parser/storage/search/UI and test coverage are in place. Chat migration is `0005_add_chats.py` because an existing local `0004_object_revisions.py` migration is present in the workspace.
-- Phase 6B Structured Chat Import is complete. The repo audit found Phase 5 incomplete, so Phase 6B includes only the minimal AI/revision/Claim/Task prerequisites needed for chat structure extraction.
-- Phase 6B Subtask 1 added a minimal audited AI client, `object_revisions` ORM/service support, and generic `claim`/`task` object-kind support for extraction.
-- Phase 6B Subtask 2 added chat structured-summary fields in migration `0006_add_structured_chat_summary.py`.
-- Phase 6B Subtask 3 added strict structured-summary schemas plus prompt/output parsing helpers.
-- Phase 6B Subtask 4 added authenticated structured-summary preview/get endpoints with AI audit runs and revision entries.
-- Phase 6B Subtask 5 added apply behavior that stores summaries, creates/reuses extracted `claim` and `task` objects, links them back to the source chat, and queues reindexing.
-- Phase 6B Subtask 6 added structured-summary text to chat chunk/search indexing and keyword search for generic `claim`/`task` objects.
-- Phase 6B Subtask 7 added chat detail controls for generating/applying structured summaries, rendering extracted knowledge, and showing AI provenance.
-- Phase 6B Subtask 8 added mocked AI/parser/API coverage and docs for the structured chat import data model, API, ingestion, architecture, security, agent behavior, and revision history.
-- Local validation caveat: the shared local Postgres currently has an unknown Alembic revision from another workspace and another pytest process has been running against the shared test DB, so full DB-backed validation should be rerun once the local database is clean.
+**Current repo state notes (2026-05-15 audit):**
+
+*Verified complete and matching the phase plans:*
+- Phase 1 Foundation, Phase 2 Sources, Phase 3 Search (incl. multilingual ILIKE fallback), Phase 4 Graph Lite, Phase 5 AI Assistant + Inbox, Phase 6A Chat Import, Phase 6B Structured Chat Import, Phase 7A MCP Read/Search, and Phase 8A Workspace Lite are all implemented and exercised by tests.
+- Test counts (2026-05-15): 112 API integration tests across `tests/api/`, 16 unit tests in `tests/unit/`, 19 MCP package tests in `services/mcp/tests/`.
+- Alembic migrations 0001–0006 all present and consistent.
+
+*Phase deviations / known gaps surfaced during this audit:*
+- **Phase 5 inbox endpoint path**: spec says `GET /api/v1/objects/inbox`; implementation lives at `GET /api/v1/ai/inbox`. Frontend matches the actual path. Spec doc is the one that's stale, not the code.
+- **Phase 7A `answer_from_kb` stub is obsolete**: `services/mcp/kos_mcp/tools.py` still raises `"Phase 5 AI assistant endpoint has not been implemented yet."` even though Phase 5 is now complete. Wiring this to `POST /api/v1/ai/answer` is a clean Phase 7A follow-up (not Phase 7B since it is read-only).
+- **Phase 2 docker-compose gap**: `infra/docker-compose.yml` defines `postgres`, `redis`, `qdrant`, `api`, `web` but no `worker` service. RQ jobs (PDF extraction, embedding, reindex) only run if the user manually starts `rq worker kos-ingest` on the host. `docker compose up -d` alone leaves all source ingestion stuck in `pending`.
+- **Phase 2 worker tests missing**: `tests/worker/` was specified in `PHASE-2-SOURCES.md` (extractor tests with `sample.pdf`, `sample.jpg`, `sample.csv`) but does not exist. Extractor logic in `services/worker/kos_worker/extractors/` has no automated coverage.
+- **Hardening track**: only Subtasks 0 + 1 are complete (see section above). Snippet sanitization, JP fixtures, debug UI, and index-status endpoint are still open.
+
+*Frontend routing oddities (not phase blockers but worth fixing):*
+- `Sidebar.tsx` links to `/app/trash` but no route exists at `(app)/app/trash/`.
+- `Sidebar.tsx` links to `/app/assets`, but the actual route file is `(app)/assets/page.tsx`, which serves at `/assets`. The active-state highlight and link both resolve to a 404 until you fix one side.
+- Inconsistent grouping: pages list is at `/app/pages` but page detail is at `/pages/[id]`; chats are entirely under `/app/chats/…`; sources are entirely under `/sources/…`. This is organic drift, not a phase-plan requirement.
+
+*Infrastructure oddities:*
+- `infra/.env.example` defines `MCP_INTERNAL_TOKEN=` twice and `MCP_API_BASE_URL=http://127.0.0.1:8000`, but the dockerized API is published on `127.0.0.1:8001` (compose maps `8001 → api:8000`). A host-side `kos-mcp` run against the dockerized API will need `MCP_API_BASE_URL=http://127.0.0.1:8001`.
+- Postgres in `docker-compose.yml` is published on `127.0.0.1:5433` (not 5432). Tests and scripts that assume 5432 should target 5433 or use the Docker network DNS.
+- `README.md` previously referenced `scripts/backup.sh` and `scripts/reindex.py`; only `scripts/setup.sh` and `scripts/run_tests.sh` exist. README has been corrected.
+- `test_output.txt` and `test_output_2.txt` are checked-in pytest log dumps (≈260KB / 21KB) at the repo root. They should be `.gitignore`d or deleted.
