@@ -1,38 +1,110 @@
-# Ingestion Pipeline
+# KnowledgeOS Ingestion
 
-> Phase 2+ — rich media ingestion not yet implemented.
+Ingestion is the path from external material into usable KnowledgeOS objects. Phase 1 supports manual asset upload. Phase 2 adds first-class sources and asynchronous extraction with RQ workers.
 
-## Supported Input Types
+## Phase 1: Manual Asset Upload
 
-| Input | Method |
-|-------|--------|
-| Manual page | Editor |
-| File | Drag/drop or upload |
-| URL | Paste URL |
-| YouTube | Paste URL |
-| Chat export | Upload JSON/Markdown |
-| CSV | Upload |
+Phase 1 ingestion is file storage plus metadata registration:
 
-## Pipeline Stages
+1. The browser sends `POST /api/v1/assets/upload` as `multipart/form-data`.
+2. The API receives the file and computes its SHA-256 digest.
+3. The API chooses the content-addressed storage path:
 
-1. Capture (upload / URL fetch / paste)
-2. Normalize (detect type, extract metadata)
-3. Store original (content-addressed filesystem)
-4. Extract text / transcript
-5. Generate thumbnails / previews
-6. Chunk for retrieval
-7. Generate embeddings (Phase 3)
-8. Extract entities / claims / tasks (Phase 5)
-9. Create graph links (Phase 4)
-10. Mark as processed
+   ```text
+   ~/KnowledgeOS/library/assets/{sha256[:2]}/{sha256}/original{ext}
+   ```
 
-## Job Types
+4. The original file is written to the local library.
+5. The API creates an `objects` row with `kind="asset"`.
+6. The API creates an `assets` row with filename, content type, size, digest, storage path, status, and optional media dimensions.
+7. The API returns asset metadata to the client.
 
-- `file_import`
-- `url_import`
-- `youtube_import`
-- `pdf_import`
-- `image_import`
-- `video_import`
-- `csv_import`
-- `chat_import`
+Phase 1 does not extract text, generate thumbnails, chunk content, or create embeddings. Uploaded files are durable originals that later phases can process.
+
+## Phase 2: Source Ingestion Flow
+
+Phase 2 introduces source objects for PDFs, images, videos, YouTube URLs, web articles, and CSV files. A source is a knowledge object that points to an uploaded asset or external URL and tracks extraction state.
+
+Expected flow:
+
+1. Client calls `POST /api/v1/sources`.
+2. API validates `source_type` and either `asset_id` or `url`.
+3. API creates an `objects` row with `kind="source"`.
+4. API creates a `sources` specialization row.
+5. API creates an `ingestion_jobs` row with `status="pending"`.
+6. API enqueues an RQ job in Redis.
+7. Worker claims the job and marks it `running`.
+8. Worker runs the extractor for the source type.
+9. Worker writes derivatives to the local library.
+10. Worker updates source metadata and status to `ready`, or records an error and sets status to `error`.
+
+The API remains the write boundary for interactive clients. The worker is trusted application code that updates ingestion state and derived metadata.
+
+## Source Types and Extractors
+
+| Source type | Input | Phase 2 extractor |
+| --- | --- | --- |
+| `pdf` | Uploaded PDF asset | `pypdf` for text and document metadata |
+| `image` | Uploaded image asset | `Pillow` for dimensions, format, EXIF where available, and thumbnails |
+| `csv` | Uploaded CSV asset | Python standard library `csv` module for headers, row counts, and previews |
+| `youtube` | YouTube URL | oEmbed for metadata and `youtube-transcript-api` for captions when available |
+| `web` | HTTP or HTTPS URL | `httpx` fetch plus `BeautifulSoup` parsing for title, metadata, and readable text |
+
+Extractors should be deterministic where possible, store their outputs as files, and write compact metadata to Postgres. Large extracted text should not be embedded directly into arbitrary JSON fields when a derivative file is more appropriate.
+
+## Job Lifecycle
+
+Ingestion jobs use a small lifecycle:
+
+| Status | Meaning |
+| --- | --- |
+| `pending` | DB record exists and work has been queued, but no worker has started it. |
+| `running` | A worker has claimed the job and extraction is in progress. |
+| `ready` | Extraction completed and source metadata/derivatives are available. |
+| `error` | Extraction failed. The job should retain an error message and enough metadata to debug or retry. |
+
+Source status should mirror the relevant job status for the current extraction attempt. A later retry can create a new job while preserving previous failure metadata for audit.
+
+## Derivative Storage
+
+Phase 2 derivatives should live under a source-specific directory:
+
+```text
+~/KnowledgeOS/library/sources/{source_id}/thumbnail.jpg
+~/KnowledgeOS/library/sources/{source_id}/extracted_text.txt
+~/KnowledgeOS/library/sources/{source_id}/preview.json
+```
+
+Recommended derivative meanings:
+
+| File | Purpose |
+| --- | --- |
+| `thumbnail.jpg` | Small visual preview for images, PDFs, videos, or web pages when available |
+| `extracted_text.txt` | Plain text extracted from the source |
+| `preview.json` | Structured preview such as title, author, page count, headers, sample rows, or transcript segments |
+
+Database rows should store paths, status, source type, and compact metadata. The filesystem should hold large derivative payloads.
+
+## Edge Creation
+
+Source ingestion may create graph relationships:
+
+| Edge | Created when |
+| --- | --- |
+| `source -> asset`, `kind="derives_from"` | A source is created from an uploaded asset |
+| `page -> source`, `kind="cites"` | A user or agent attaches a source citation to a page |
+
+Extraction itself should not invent page citations. Citation edges should be created by explicit user or agent action.
+
+## Phase 3 Preview: Chunking and Embeddings
+
+Phase 3 extends ingestion from extraction to retrieval:
+
+1. Read extracted text from pages and sources.
+2. Split text into chunks.
+3. Store chunks in the `chunks` table with object references and positions.
+4. Generate vector embeddings for each chunk.
+5. Store vectors in Qdrant.
+6. Use vector search for semantic retrieval, AI question answering, and context assembly.
+
+Chunking should be repeatable so an object can be reindexed when content or extraction logic changes.
