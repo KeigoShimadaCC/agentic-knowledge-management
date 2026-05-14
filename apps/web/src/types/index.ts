@@ -126,6 +126,67 @@ export interface ChatTurnOut {
   metadata: Record<string, unknown>;
 }
 
+export type StructuredConfidence = "low" | "medium" | "high";
+
+export interface StructuredTurnItem {
+  turn_refs: number[];
+  confidence: StructuredConfidence;
+}
+
+export interface StructuredDecision extends StructuredTurnItem {
+  decision: string;
+  rationale: string | null;
+}
+
+export interface StructuredOpenQuestion extends StructuredTurnItem {
+  question: string;
+  status: string;
+}
+
+export interface StructuredActionItem extends StructuredTurnItem {
+  task: string;
+  owner: string | null;
+  due_at: string | null;
+}
+
+export interface StructuredClaim extends StructuredTurnItem {
+  claim: string;
+  type: "fact" | "hypothesis" | "preference" | "decision_context" | "unknown";
+}
+
+export interface StructuredConcept extends StructuredTurnItem {
+  name: string;
+  type: "person" | "organization" | "product" | "technology" | "topic" | "project" | "unknown";
+}
+
+export interface StructuredSuggestedLink {
+  target_object_id: string | null;
+  target_title: string;
+  edge_kind:
+    | "related_to"
+    | "mentions"
+    | "supports"
+    | "contradicts"
+    | "belongs_to_project"
+    | "created_from";
+  rationale: string;
+  confidence: StructuredConfidence;
+}
+
+export interface StructuredChatSummary {
+  title: string;
+  summary: string;
+  date_range: { start: string | null; end: string | null };
+  topics: string[];
+  key_decisions: StructuredDecision[];
+  open_questions: StructuredOpenQuestion[];
+  action_items: StructuredActionItem[];
+  claims: StructuredClaim[];
+  concepts: StructuredConcept[];
+  suggested_links: StructuredSuggestedLink[];
+  warnings: string[];
+}
+
 export interface ChatOut {
   id: string;
   user_id: string;
@@ -150,7 +211,7 @@ export interface ChatOut {
   parsed_turns: ChatTurnOut[];
   content_text: string;
   metadata: Record<string, unknown>;
-  structured_summary: Record<string, unknown> | null;
+  structured_summary: StructuredChatSummary | null;
   structured_summary_status: "none" | "previewed" | "applied" | "failed" | string;
   structured_summary_agent_run_id: string | null;
   structured_summary_updated_at: string | null;
@@ -159,6 +220,19 @@ export interface ChatOut {
 export interface ChatImportResponse {
   imported: ChatOut[];
   total: number;
+}
+
+export interface StructuredSummaryPreviewResponse {
+  structured_summary: StructuredChatSummary;
+  agent_run_id: string;
+  status: "none" | "previewed" | "applied" | "failed";
+}
+
+export interface StructuredSummaryApplyResponse {
+  chat: ChatOut;
+  created_objects: ObjectOut[];
+  reused_objects: ObjectOut[];
+  edges: Array<Record<string, unknown>>;
 }
 
 export interface EdgeCreate {

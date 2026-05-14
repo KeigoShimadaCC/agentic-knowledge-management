@@ -17,6 +17,9 @@ import type {
   SourceCreate,
   SourceOut,
   SearchResponse,
+  StructuredChatSummary,
+  StructuredSummaryApplyResponse,
+  StructuredSummaryPreviewResponse,
 } from "@/types";
 import { ApiError } from "@/types";
 
@@ -179,6 +182,29 @@ export async function importChatFile(data: {
 }
 
 export const getRawChatUrl = (id: string) => `${BASE}/api/v1/chats/${id}/raw`;
+
+export const generateStructuredChatSummary = (id: string) =>
+  apiFetch<StructuredSummaryPreviewResponse>(`/api/v1/chats/${id}/structured-summary`, {
+    method: "POST",
+  });
+
+export const getStructuredChatSummary = (id: string) =>
+  apiFetch<StructuredSummaryPreviewResponse>(`/api/v1/chats/${id}/structured-summary`);
+
+export const applyStructuredChatSummary = (
+  id: string,
+  structured_summary?: StructuredChatSummary
+) =>
+  apiFetch<StructuredSummaryApplyResponse>(`/api/v1/chats/${id}/structured-summary/apply`, {
+    method: "POST",
+    body: JSON.stringify({
+      structured_summary,
+      create_claims: true,
+      create_tasks: true,
+      create_concepts: false,
+      link_existing_objects: true,
+    }),
+  });
 
 export const createEdge = (data: EdgeCreate) =>
   apiFetch<EdgeOut>("/api/v1/edges", { method: "POST", body: JSON.stringify(data) });
