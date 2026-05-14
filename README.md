@@ -25,30 +25,24 @@ The full product vision is in [`project-phases/IDEA-DRAFT.md`](project-phases/ID
 
 ## Current Status
 
-**Phase 1 — Foundation** is implemented and tested.
+**Phase 1 — Foundation** ✅ and **Phase 2 — Sources & Rich Media** ✅ are complete. **Phase 3 — Search** is next.
 
-| Subtask | Status |
+See [`PROGRESS.md`](PROGRESS.md) for the canonical progress tracker.
+
+| Phase | Status |
 |---|---|
-| Monorepo scaffold (pnpm + uv workspace) | ✅ Done |
-| Docker Compose: postgres, redis, qdrant, api, web | ✅ Done |
-| Postgres schema + SQLAlchemy 2.0 models | ✅ Done |
-| FastAPI shell + session-cookie auth (register/login/logout/me) | ✅ Done |
-| Objects, pages, assets CRUD + content-addressed storage | ✅ Done |
-| Next.js 14 app shell + 3-panel layout + auth flow | ✅ Done |
-| Tiptap page editor with 800ms auto-save | ✅ Done |
-| Asset upload UI (drag-and-drop + gallery + preview) | ✅ Done |
-| Integration test suite (25 tests, all passing) | ✅ Done |
+| Phase 1 — Foundation | ✅ Complete (25 tests) |
+| Phase 2 — Sources & Rich Media | ✅ Complete (45 tests) |
+| Phase 3 — Search | ⬜ Next |
 
-**Phase 1 Definition of Done:**
-- [ ] `docker compose up` — all 5 services healthy
-- [ ] `GET http://localhost:8000/health` → `{"status":"ok","db":true,"redis":true}`
-- [ ] Register + login at `http://localhost:3000`
-- [ ] Create page → type in Tiptap → auto-saves within 1s
-- [ ] Drag-drop file → uploads → appears in asset grid
-- [ ] `pytest -v` — all 25 tests pass
-- [ ] `pnpm typecheck` — zero errors
+**Phase 2 added:**
+- Typed `source` objects (PDF, image, video, YouTube, web article, CSV)
+- RQ background worker with per-type extractors (text, metadata, thumbnail, transcript)
+- Sources list + detail UI with status polling
+- Citation edges in the Tiptap page editor (`CitationExtension`)
+- `POST/GET/PATCH/DELETE /api/v1/sources` and `POST/GET/DELETE /api/v1/edges`
 
-See [`project-phases/PHASE-1-FOUNDATION.md`](project-phases/PHASE-1-FOUNDATION.md) for the complete subtask spec.
+See [`project-phases/PHASE-2-SOURCES.md`](project-phases/PHASE-2-SOURCES.md) for the full subtask spec.
 
 ---
 
@@ -154,7 +148,7 @@ Tests run against a live `knowledgeos_test` Postgres database (auto-created and 
 
 ```bash
 cd tests
-uv run pytest api/ -v                          # all 25 integration tests
+uv run pytest api/ -v                          # all 45 integration tests
 uv run pytest api/test_pages.py -v             # single file
 uv run pytest api/test_pages.py::test_create_page  # single test
 ```
@@ -257,12 +251,12 @@ The complete product is built across 9 phases. Phase 1 is done; phases 2–9 are
 |---|---|---|
 | **Wiki pages** | Rich Tiptap editor, subpages, backlinks, typed links | 1 ✅ |
 | **Asset library** | Upload, preview, and manage files (images, PDFs, videos, CSV) | 1 ✅ |
-| **Rich media sources** | PDF viewer, YouTube metadata, web article ingestion, image OCR | 2 |
+| **Rich media sources** | PDF viewer, YouTube metadata, web article ingestion, image OCR | 2 ✅ |
 | **Keyword + semantic search** | Postgres FTS + Qdrant vector + hybrid reranking | 3 |
-| **Graph traversal** | Typed edges, Kùzu graph sync, related-object traversal | 4 |
-| **AI assistant** | Summarize, extract claims/tasks/entities, suggest links, RAG Q&A | 5 |
-| **MCP server** | Agent read/search/write/ingest tools for Claude, ChatGPT, Codex | 6 |
-| **Chat import** | Import ChatGPT/Claude exports → structured summaries + linked objects | 7 |
+| **Graph Lite** | Typed edge UI, backlinks panel, related objects from Postgres edges | 4 |
+| **AI assistant + Inbox/Triage** | Summarize, extract, suggest links, RAG Q&A, triage inbox | 5 |
+| **Chat import** | Import ChatGPT/Claude exports → searchable chats + structured objects | 6 |
+| **MCP server** | Staged rollout: read/search → create → update/archive | 7 |
 | **Multi-pane workspaces** | Side-by-side research desks, saved layouts, drag-across-pane | 8 |
 | **Career/project memory** | Project schema, evidence-linked resume bullets, interview stories | 9 |
 
@@ -272,13 +266,13 @@ The complete product is built across 9 phases. Phase 1 is done; phases 2–9 are
 
 | Phase | Goal | Status |
 |---|---|---|
-| 1 — Foundation | Docker, Postgres, auth, page CRUD, Tiptap editor, asset upload, tests | **Done** |
-| 2 — Rich Media | PDF viewer, YouTube source, web article ingestion, media metadata | Planned |
-| 3 — Search | Postgres FTS, Qdrant vectors, chunking/embedding pipeline, hybrid search UI | Planned |
-| 4 — Graph | Edges table, typed links UI, Kùzu sync, graph neighborhood retrieval | Planned |
-| 5 — AI Assistant | OpenAI integration, AI sidebar, summarize/extract/suggest/answer from KB | Planned |
-| 6 — MCP | MCP server, read/write/ingest tools, audit logs, permission config | Planned |
-| 7 — Chat Import | ChatGPT/Claude export parser, LLM summarizer, object extraction pipeline | Planned |
+| 1 — Foundation | Docker, Postgres, auth, page CRUD, Tiptap editor, asset upload, 25 tests | **Done** |
+| 2 — Sources & Rich Media | PDF/YouTube/web/CSV ingestion, RQ worker, citation edges, 45 tests | **Done** |
+| 3 — Search | Chunking, Postgres FTS, Qdrant vectors, hybrid search, Cmd+K UI | **Next** |
+| 4 — Graph Lite | Typed edge UI, backlinks, related objects from Postgres; Kùzu later | Planned |
+| 5 — AI Assistant + Inbox/Triage | AI sidebar, summarize/extract/suggest, KB Q&A, triage inbox | Planned |
+| 6 — Chat Import | Raw upload/paste of ChatGPT/Claude exports; LLM structured import | Planned |
+| 7 — MCP Server | Staged: read/search tools → create tools → update/archive tools | Planned |
 | 8 — Workspaces | Multi-pane layout engine, saved workspaces, AI scoped to workspace | Planned |
 | 9 — Career Memory | Project schema UI, resume bullet generator, interview story generator | Planned |
 
