@@ -5,15 +5,33 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from app.api.v1.router import api_router
+from app.config import settings
 from app.core.library import ensure_library_structure
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    from app.search import qdrant_client as qc
+    import logging
 
+    from app.db.session import AsyncSessionLocal
+    from app.search import qdrant_client as qc
+    from app.services import demo_seed_service, reindex_service
+
+    log = logging.getLogger(__name__)
     ensure_library_structure()
     await qc.create_collection_if_not_exists()
+
+    if settings.seed_demo_examples:
+        async with AsyncSessionLocal() as db:
+            try:
+                reindex_ids = await demo_seed_service.seed_demo_examples(db)
+                await db.commit()
+                for oid in reindex_ids:
+                    reindex_service.enqueue_reindex_object(oid)
+            except Exception:
+                log.exception("Demo seed failed; continuing without demo data")
+                await db.rollback()
+
     yield
 
 

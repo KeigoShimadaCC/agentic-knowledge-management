@@ -31,6 +31,13 @@ class Settings(BaseSettings):
         default=25 * 1024 * 1024,
         description="Maximum accepted chat import payload size in bytes.",
     )
+    seed_demo_examples: bool = Field(
+        default=False,
+        description="On API startup, seed [Demo] pages/source/chat/edges for the demo user.",
+    )
+    demo_seed_email: str = Field(default="demo@knowledgeos.local")
+    demo_seed_password: str = Field(default="demo-demo-demo")
+    demo_seed_display_name: str = Field(default="Demo")
     cookie_secure: bool = Field(
         default=False,
         description="Set Secure flag on kos_session; enable when serving the API over HTTPS.",

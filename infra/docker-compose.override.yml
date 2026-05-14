@@ -5,15 +5,15 @@ services:
     volumes:
       - ../services/api:/app
       - library-data:/library
-    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    # Bind-mount replaces /app with services/api only; use uv to resolve the venv.
+    command: uv run uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
     environment:
       DEBUG: "true"
 
   web:
     build:
       target: development
+    # Match infra/Dockerfile.web development layout: deps live under /app, app under /app/apps/web.
     volumes:
-      - ../apps/web:/app
-      - /app/node_modules
-      - /app/.next
+      - ../apps/web:/app/apps/web
     command: pnpm dev

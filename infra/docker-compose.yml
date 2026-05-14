@@ -68,6 +68,8 @@ services:
       REDIS_URL: redis://redis:6379/0
       QDRANT_URL: http://qdrant:6333
       LIBRARY_ROOT: /library
+      # Seed [Demo] pages/source/chat on startup (login: DEMO_SEED_EMAIL / DEMO_SEED_PASSWORD).
+      SEED_DEMO_EXAMPLES: "true"
     volumes:
       - library-data:/library
     ports:
@@ -93,7 +95,8 @@ services:
     container_name: kos-web
     restart: unless-stopped
     environment:
-      NEXT_PUBLIC_API_URL: http://localhost:8000
+      # Host browsers call the published API port (8001 maps to api:8000).
+      NEXT_PUBLIC_API_URL: http://localhost:8001
       API_URL: http://api:8000
     ports:
       - "127.0.0.1:3000:3000"
