@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useSearch } from "@/lib/hooks/useSearch";
 import type { SearchMode } from "@/types";
 import { objectRoute } from "@/lib/objectRouting";
+import { useWorkspaceLite } from "@/components/workspace/WorkspaceLiteProvider";
 import { SearchResultCard } from "./SearchResultCard";
 
 const MODES: { label: string; value: SearchMode }[] = [
@@ -21,6 +22,7 @@ interface SearchModalProps {
 export function SearchModal({ isOpen, onClose }: SearchModalProps) {
   const router = useRouter();
   const { results, isLoading, error, query, setQuery, mode, setMode } = useSearch();
+  const { openSidePane } = useWorkspaceLite();
   const [selectedIdx, setSelectedIdx] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -134,6 +136,10 @@ export function SearchModal({ isOpen, onClose }: SearchModalProps) {
                 onSelect={() => {
                   onClose();
                   router.push(objectRoute(result.kind, result.id));
+                }}
+                onOpenInPane={(obj) => {
+                  openSidePane(obj);
+                  onClose();
                 }}
               />
             ))}
