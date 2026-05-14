@@ -1,0 +1,33 @@
+# JS/TS
+node_modules/
+.pnpm-store/
+dist/
+.next/
+.turbo/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+.uv/
+*.egg-info/
+
+# Env
+.env
+.env.local
+.env.*.local
+
+# Logs
+*.log
+logs/
+
+# Docker data
+postgres-data/
+qdrant-data/
+redis-data/
+kuzu-data/
+
+# OS
+.DS_Store
+Thumbs.db
