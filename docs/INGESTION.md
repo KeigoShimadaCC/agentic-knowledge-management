@@ -25,7 +25,7 @@ Phase 1 does not extract text, generate thumbnails, chunk content, or create emb
 
 Phase 2 introduces source objects for PDFs, images, videos, YouTube URLs, web articles, and CSV files. A source is a knowledge object that points to an uploaded asset or external URL and tracks extraction state.
 
-Expected flow:
+Flow:
 
 1. Client calls `POST /api/v1/sources`.
 2. API validates `source_type` and either `asset_id` or `url`.

@@ -47,7 +47,7 @@ The frontend is intentionally thin. It renders KnowledgeOS workflows in the brow
 
 The API is the system boundary for all application state changes. It validates requests, resolves the current user from the session cookie, writes metadata to Postgres, stores uploaded binary content in the library, and returns JSON responses to the frontend or trusted local clients.
 
-The worker is present in Phase 1 as a stub and becomes active in Phase 2. It is responsible for slow ingestion tasks such as extracting text from PDFs, generating previews, reading metadata, and updating source status after asynchronous work completes.
+The worker (`services/worker/kos_worker/`) runs as a separate process via `rq worker kos-ingest`. It is responsible for slow ingestion tasks: extracting text from PDFs, generating thumbnails, reading CSV previews, fetching YouTube transcripts, scraping web articles, and updating source status after asynchronous work completes.
 
 Postgres is the source of truth for identity, object metadata, page documents, asset records, graph edges, ingestion status, and agent run records. The filesystem is the source of truth for large original files and later extracted derivatives. Redis is transient coordination state and should not be treated as durable storage.
 
@@ -97,11 +97,11 @@ KnowledgeOS uses local session authentication:
 
 The browser cannot read the cookie from JavaScript because it is httponly. Logging out deletes or invalidates the session so subsequent requests no longer resolve to a user.
 
-## Phase 2 Preview: Sources and Worker Ingestion
+## Phase 2: Sources and Worker Ingestion
 
 Phase 2 promotes external material into first-class `source` objects. A source extends `KosObject` with `kind="source"` and a parallel `sources` table, matching the existing pattern for `pages` and `assets`.
 
-Expected source examples include PDFs, images, videos, YouTube URLs, web articles, and CSV files. Creating a source will enqueue an RQ job. The worker will extract text and metadata, write derivatives to the library, update source status, and create relationships such as:
+Source types: PDFs, images, videos, YouTube URLs, web articles, and CSV files. Creating a source enqueues an RQ job. The `kos-worker` process (`services/worker/`) extracts text and metadata, writes derivatives to the library, updates source status, and creates relationships:
 
 | Edge | Meaning |
 | --- | --- |

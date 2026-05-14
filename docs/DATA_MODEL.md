@@ -15,7 +15,7 @@ Supported object kinds:
 | `note` | Reserved | No specialization table yet |
 | `bookmark` | Reserved | No specialization table yet |
 | `collection` | Reserved | No specialization table yet |
-| `source` | Phase 2 | `sources` table, migration pending |
+| `source` | Phase 2 | `sources` table |
 
 The specialization table uses the same primary key as the base object row. For example, a page has `objects.id = pages.id`.
 
@@ -177,13 +177,40 @@ Asset binaries live outside Postgres. On upload, the API computes the file SHA-2
 
 The `assets` row stores the original filename, MIME type, file size, SHA-256 digest, and storage path. The digest path provides stable identity independent of user filenames and enables later deduplication.
 
-## Phase 2 Sources Preview
+## Phase 2: Sources
 
-Phase 2 adds a `sources` specialization table for objects with `kind="source"`. The exact fields will be defined in the Phase 2 migration, but expected fields include source type, URL or asset reference, extraction status, extracted metadata, derivative paths, and timestamps.
+Phase 2 adds a `sources` specialization table for objects with `kind="source"`. Migration `0002_add_sources` creates the `source_type_enum` PostgreSQL enum and the `sources` table.
 
-Sources will connect to other objects through edges. Examples:
+### `sources`
+
+| Field | Type | Constraints / Notes |
+| --- | --- | --- |
+| `id` | UUID | Primary key and FK to `objects.id` (CASCADE delete) |
+| `source_type` | source_type_enum | Required; one of `pdf`, `image`, `video`, `audio`, `youtube`, `web`, `csv`, `file` |
+| `url` | text | Required for `youtube` and `web` types; null for file-backed sources |
+| `asset_id` | UUID | Optional FK to `objects.id` (SET NULL); link to original upload |
+| `ingestion_status` | varchar(16) | `pending`, `running`, `ready`, or `error`; default `pending` |
+| `extracted_text` | text | Full text: PDF pages, web article body, YouTube transcript |
+| `page_count` | integer | PDF page count |
+| `thumbnail_path` | text | Relative path under `~/KnowledgeOS/library/` |
+| `preview_data` | JSONB | CSV preview rows, YouTube oEmbed JSON |
+| `error_message` | text | Last extraction error |
+| `created_at` | timestamptz | Required |
+| `updated_at` | timestamptz | Required |
+
+Source edge relationships:
 
 | Relationship | Edge |
 | --- | --- |
-| A PDF source derives from an uploaded PDF asset | `source -> asset`, `kind="derives_from"` |
-| A research page cites a web article source | `page -> source`, `kind="cites"` |
+| A PDF source was created from an uploaded asset | `source → asset`, `kind="derives_from"` |
+| A research page cites a web article source | `page → source`, `kind="cites"` |
+
+### Source storage
+
+Each source gets a directory under the library:
+
+```text
+~/KnowledgeOS/library/sources/{source_id}/
+  thumbnail.jpg        # PDF cover image, image thumbnail, YouTube thumbnail, og:image
+  extracted_text.txt   # written by extractor (backup; canonical copy is in DB)
+```

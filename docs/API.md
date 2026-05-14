@@ -518,50 +518,136 @@ Response:
 
 Status codes: `200`, `401`, `403`, `404`.
 
-## Coming in Phase 2
+## Source Endpoints
 
-### Sources
+Sources are first-class knowledge objects that wrap rich media files and URLs. They always have `kind="source"` in the base object table.
 
-Source endpoints will create and manage first-class source objects:
+### `POST /api/v1/sources`
 
-```text
-POST /api/v1/sources
-GET /api/v1/sources
-GET /api/v1/sources/{id}
-PATCH /api/v1/sources/{id}
-DELETE /api/v1/sources/{id}
+Creates a source from an asset or URL and enqueues an ingestion job.
+
+Request (file-backed):
+
+```json
+{ "source_type": "pdf", "asset_id": "uuid", "title": "My Paper" }
 ```
 
-Expected create request:
+Request (URL-backed):
+
+```json
+{ "source_type": "youtube", "url": "https://youtu.be/..." }
+```
+
+`source_type` must be one of: `pdf`, `image`, `video`, `audio`, `csv`, `file`, `youtube`, `web`.
+File-backed types require `asset_id`. URL-backed types (`youtube`, `web`) require `url`.
+
+Response: SourceOut (see below). `ingestion_status` will be `"pending"`.
+
+Status codes: `201`, `401`, `422`.
+
+### `GET /api/v1/sources`
+
+Lists non-deleted sources for the current user.
+
+Query parameters:
+
+| Name | Type | Notes |
+| --- | --- | --- |
+| `source_type` | string | Optional filter |
+| `ingestion_status` | string | Optional filter |
+| `q` | string | Optional title search |
+| `skip` | integer | Default `0` |
+| `limit` | integer | Default `100` |
+
+Response: `list[SourceOut]`.
+
+Status codes: `200`, `401`.
+
+### SourceOut shape
 
 ```json
 {
+  "id": "uuid",
+  "user_id": "uuid",
+  "kind": "source",
+  "title": "My Paper",
+  "description": null,
+  "tags": [],
+  "is_pinned": false,
+  "is_archived": false,
+  "created_at": "2026-05-14T00:00:00Z",
+  "updated_at": "2026-05-14T00:00:00Z",
+  "deleted_at": null,
   "source_type": "pdf",
-  "asset_id": "uuid",
   "url": null,
-  "title": "Optional title"
+  "asset_id": "uuid",
+  "ingestion_status": "pending",
+  "extracted_text": null,
+  "page_count": null,
+  "thumbnail_path": null,
+  "preview_data": null,
+  "error_message": null
 }
 ```
 
-### Edges
+### `GET /api/v1/sources/{id}`
 
-Edge endpoints will expose object relationships:
+Returns one non-deleted source. Status codes: `200`, `401`, `404`.
 
-```text
-POST /api/v1/edges
-GET /api/v1/edges
-GET /api/v1/objects/{id}/edges
-DELETE /api/v1/edges/{id}
-```
+### `PATCH /api/v1/sources/{id}`
 
-Expected create request:
+Updates `title`, `description`, or `tags`. Status codes: `200`, `401`, `404`, `422`.
+
+### `DELETE /api/v1/sources/{id}`
+
+Soft-deletes the source. Status codes: `200`, `401`, `404`.
+
+### `POST /api/v1/sources/{id}/restore`
+
+Restores a soft-deleted source. Status codes: `200`, `401`, `404`.
+
+### `GET /api/v1/sources/{id}/text`
+
+Streams `extracted_text` as `text/plain`. Returns `404` if no text has been extracted yet.
+
+### `GET /api/v1/sources/{id}/thumbnail`
+
+Serves the thumbnail JPEG. Returns `404` if no thumbnail exists.
+
+### `POST /api/v1/assets/upload?create_source=true`
+
+Uploads a file and immediately creates a source. The source type is inferred from the MIME type. A `derives_from` edge is created linking the source to the asset.
+
+Response when `create_source=true`:
 
 ```json
-{
-  "source_id": "uuid",
-  "target_id": "uuid",
-  "kind": "cites",
-  "weight": 1.0,
-  "metadata": {}
-}
+{ "object": AssetOut, "source": SourceOut }
 ```
+
+## Edge Endpoints
+
+Edges are typed, directed relationships between any two objects.
+
+### `POST /api/v1/edges`
+
+Creates an edge. Duplicate edges (same `source_id` + `target_id` + `kind`) are idempotent.
+
+Request:
+
+```json
+{ "source_id": "uuid", "target_id": "uuid", "kind": "cites" }
+```
+
+Common kinds: `"cites"` (page → source), `"derives_from"` (source → asset).
+
+Response: EdgeOut. Status codes: `200`, `201`, `401`, `422`.
+
+### `GET /api/v1/edges`
+
+Lists edges, optionally filtered by `source_id`, `target_id`, or `kind`.
+
+Response: `list[EdgeOut]`. Status codes: `200`, `401`.
+
+### `DELETE /api/v1/edges/{id}`
+
+Deletes an edge. Status codes: `200`, `401`, `404`.
