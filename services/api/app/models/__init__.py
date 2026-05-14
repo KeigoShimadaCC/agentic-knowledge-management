@@ -6,6 +6,7 @@ from app.models.ingestion_job import IngestionJob
 from app.models.object import KosObject
 from app.models.page import Page
 from app.models.session import Session
+from app.models.source import Source
 from app.models.user import User
 
 __all__ = [
@@ -17,5 +18,6 @@ __all__ = [
     "KosObject",
     "Page",
     "Session",
+    "Source",
     "User",
 ]
