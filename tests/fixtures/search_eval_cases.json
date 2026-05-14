@@ -1,0 +1,74 @@
+[
+  {
+    "id": "page-keyword-basic",
+    "query": "meeting notes",
+    "expected_kinds": ["page"],
+    "modes": ["keyword", "hybrid"],
+    "notes": "Should retrieve pages whose content_text or title contains 'meeting notes'."
+  },
+  {
+    "id": "source-pdf-basic",
+    "query": "PDF citation source",
+    "expected_kinds": ["source", "page"],
+    "modes": ["keyword", "hybrid"],
+    "notes": "Should retrieve source objects of type 'pdf' and pages that cite them."
+  },
+  {
+    "id": "youtube-transcript-basic",
+    "query": "YouTube transcript",
+    "expected_kinds": ["source"],
+    "modes": ["keyword", "hybrid"],
+    "notes": "Should retrieve YouTube source objects after extraction completes."
+  },
+  {
+    "id": "csv-preview-basic",
+    "query": "CSV preview table",
+    "expected_kinds": ["source"],
+    "modes": ["keyword", "hybrid"],
+    "notes": "Should retrieve CSV source objects via title or extracted preview text."
+  },
+  {
+    "id": "web-article-basic",
+    "query": "web article research",
+    "expected_kinds": ["source"],
+    "modes": ["keyword", "hybrid"],
+    "notes": "Should retrieve web article sources whose extracted_text contains relevant terms."
+  },
+  {
+    "id": "cross-kind-search",
+    "query": "knowledge base notes",
+    "expected_kinds": ["page", "source"],
+    "modes": ["keyword", "hybrid"],
+    "notes": "Hybrid results should surface both pages and sources — verifies cross-kind merge."
+  },
+  {
+    "id": "semantic-similar-meaning",
+    "query": "summarize documents automatically",
+    "expected_kinds": ["page", "source"],
+    "modes": ["vector", "hybrid"],
+    "notes": "Semantic search should surface content about summarization even without exact keyword match. Requires embeddings enabled."
+  },
+  {
+    "id": "empty-query-no-results",
+    "query": "xyzzy_nonexistent_term_9283",
+    "expected_kinds": [],
+    "modes": ["keyword", "hybrid"],
+    "notes": "Should return an empty result set, not an error."
+  },
+  {
+    "id": "kind-filter-page-only",
+    "query": "notes",
+    "expected_kinds": ["page"],
+    "filter_kind": "page",
+    "modes": ["keyword"],
+    "notes": "With kind=page filter, only page results should appear even if sources also match."
+  },
+  {
+    "id": "kind-filter-source-only",
+    "query": "research",
+    "expected_kinds": ["source"],
+    "filter_kind": "source",
+    "modes": ["keyword"],
+    "notes": "With kind=source filter, only source results should appear."
+  }
+]
