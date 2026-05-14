@@ -92,6 +92,22 @@ See [`project-phases/PHASE-3-SEARCH.md`](project-phases/PHASE-3-SEARCH.md) for t
 
 ---
 
+## Phase 8A — Workspace Lite ⬜ In Progress
+
+**Goal:** Let the user open a second object beside their current view without navigating away. Frontend-only split pane (no DB schema changes). Runs in parallel with Phase 5 and Phase 6 on branch `phase8a-workspace-lite`.
+
+See [`project-phases/PHASE-8A-WORKSPACE-LITE.md`](project-phases/PHASE-8A-WORKSPACE-LITE.md) for the full subtask spec.
+
+- [x] **Subtask 0** — Audit + plan files: create phase doc, update PROGRESS.md
+- [ ] **Subtask 1** — Routing helper (`objectRoute`) + `WorkspaceLiteProvider` React context
+- [ ] **Subtask 2** — `ObjectPaneViewer`: `PagePaneView`, `SourcePaneView`, asset/fallback views
+- [ ] **Subtask 3** — Side pane layout: `WorkspaceSidePane` + AppShell integration (`min-w-0`, conditional pane)
+- [ ] **Subtask 4** — Open in side pane from search results (`SearchResultCard` + `SearchModal`)
+- [ ] **Subtask 5** — Open in side pane from graph panels (`BacklinksPanel`, `RelatedPanel`)
+- [ ] **Subtask 6** — Polish (ESC key, responsive behavior, smooth transition) + docs
+
+---
+
 ## Phase 5 — AI Assistant + Inbox/Triage ⬜ Planned
 
 **Goal:** Embed AI directly into the editing and research workflow. Prerequisite: `object_revisions` table in place before AI can write back to pages (see `docs/REVISION_HISTORY.md`).
@@ -182,13 +198,14 @@ See [`project-phases/PHASE-3-SEARCH.md`](project-phases/PHASE-3-SEARCH.md) for t
 | 2 | Sources & Rich Media | ✅ Complete | 9 / 9 subtasks |
 | 3 | Search | ✅ Complete | 10 / 10 subtasks |
 | 4 | Graph Lite | ✅ Complete | 6 / 6 subtasks |
+| 8A | Workspace Lite | ⬜ In Progress | 1 / 7 subtasks |
 | 5 | AI Assistant + Inbox/Triage | ⬜ Planned | 0 / 12 subtasks |
 | 6 | Chat Import | ⬜ Planned | 0 / 8 subtasks |
 | 7 | MCP Server (staged) | ⬜ Planned | 0 / 6 subtasks |
 | 8 | Multi-Pane Workspaces | ⬜ Planned | 0 / 8 subtasks |
 | 9 | Career & Project Memory | ⬜ Planned | 0 / 8 subtasks |
 
-**Total:** 33 / 75 subtasks complete
+**Total:** 34 / 82 subtasks complete
 
 **Key cross-cutting concepts to track:**
 - Inbox/Triage (Phase 5): AI-classified staging area for unprocessed items
