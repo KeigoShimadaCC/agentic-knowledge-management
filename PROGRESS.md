@@ -151,6 +151,26 @@ See [`project-phases/PHASE-6A-CHAT-IMPORT-LITE.md`](project-phases/PHASE-6A-CHAT
 
 ---
 
+## Phase 6B — Structured Chat Import ⬜ In Progress
+
+**Goal:** Turn imported chats into structured, linked, reusable knowledge through explicit AI-backed summary generation and apply flow.
+
+See [`project-phases/PHASE-6B-STRUCTURED-CHAT-IMPORT.md`](project-phases/PHASE-6B-STRUCTURED-CHAT-IMPORT.md) for the full subtask spec.
+
+**Audit note:** The repo has Phase 6A complete, but Phase 5 is only partially present. Phase 6B includes the minimal AI client, revision service, and generic Claim/Task object support needed for structured chat import; it does not implement the full Phase 5 AI Assistant/Inbox scope.
+
+- [x] **Subtask 0** — Audit + Phase 6B plan artifact
+- [ ] **Subtask 1** — Minimal AI/revision/claim-task prerequisites
+- [ ] **Subtask 2** — Structured summary data model
+- [ ] **Subtask 3** — Structured summary schema and prompt
+- [ ] **Subtask 4** — Structured summary preview API
+- [ ] **Subtask 5** — Apply structured summary and extracted objects
+- [ ] **Subtask 6** — Search/index integration
+- [ ] **Subtask 7** — Chat detail UI
+- [ ] **Subtask 8** — Tests and docs
+
+---
+
 ## Phase 7 — MCP Server ⬜ Planned
 
 **Goal:** Expose KnowledgeOS as a local MCP server. Staged rollout: read/search first, then create, then update/archive (requires revision history from Phase 5).
@@ -205,11 +225,12 @@ See [`project-phases/PHASE-6A-CHAT-IMPORT-LITE.md`](project-phases/PHASE-6A-CHAT
 | 8A | Workspace Lite | ✅ Complete | 7 / 7 subtasks |
 | 5 | AI Assistant + Inbox/Triage | ⬜ Planned | 0 / 12 subtasks |
 | 6A | Chat Import Lite | ✅ Complete | 8 / 8 subtasks |
+| 6B | Structured Chat Import | ⬜ In Progress | 1 / 9 subtasks |
 | 7 | MCP Server (staged) | ⬜ Planned | 0 / 6 subtasks |
 | 8 | Multi-Pane Workspaces | ⬜ Planned | 0 / 8 subtasks |
 | 9 | Career & Project Memory | ⬜ Planned | 0 / 8 subtasks |
 
-**Total:** 48 / 82 subtasks complete
+**Total:** 49 / 91 subtasks complete
 
 **Key cross-cutting concepts to track:**
 - Inbox/Triage (Phase 5): AI-classified staging area for unprocessed items
@@ -220,3 +241,4 @@ See [`project-phases/PHASE-6A-CHAT-IMPORT-LITE.md`](project-phases/PHASE-6A-CHAT
 **Current repo state notes (2026-05-14):**
 - Phase 3 search is complete, including keyword, vector, and hybrid API behavior, search UI, integration tests, and API/architecture documentation.
 - Phase 6A Chat Import Lite is complete: chat object model/API/parser/storage/search/UI and test coverage are in place. Chat migration is `0005_add_chats.py` because an existing local `0004_object_revisions.py` migration is present in the workspace.
+- Phase 6B Structured Chat Import is active. The repo audit found Phase 5 incomplete, so Phase 6B includes only the minimal AI/revision/Claim/Task prerequisites needed for chat structure extraction.
