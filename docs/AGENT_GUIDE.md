@@ -154,9 +154,7 @@ Expected response:
 
 If the agent needs exact page content, it should call `GET /api/v1/pages/{id}` for each relevant page after search.
 
-## Create a Source in Phase 2
-
-Source creation is coming in Phase 2. Expected endpoint:
+## Create a Source (Phase 2 — Live)
 
 ```text
 POST /api/v1/sources
@@ -182,15 +180,36 @@ Create a source from a URL:
 }
 ```
 
-Expected behavior:
+Supported `source_type` values: `pdf`, `image`, `video`, `audio`, `youtube`, `web`, `csv`, `file`.
 
-1. API creates a `source` object.
-2. API creates the `sources` specialization row.
-3. API enqueues an RQ ingestion job.
-4. Worker extracts text and metadata.
-5. Source status changes from `pending` to `running` to `ready` or `error`.
+Behavior:
+1. API creates a `source` object and `sources` row.
+2. API enqueues an RQ ingestion job.
+3. Worker extracts text/metadata; status progresses `pending → running → ready | error`.
+4. Poll `GET /api/v1/sources/{id}` until `ingestion_status == "ready"` before reading `extracted_text`.
 
-Agents should not simulate source ingestion by writing files or database rows themselves.
+Agents must not simulate ingestion by writing rows or files directly.
+
+## Search (Phase 3 — In Progress)
+
+Once Phase 3 is complete, agents should use the search endpoints rather than listing all objects:
+
+```text
+GET /api/v1/search/keyword?q=embeddings&kind=page
+POST /api/v1/search/vector  {"q": "semantic similarity", "limit": 10}
+POST /api/v1/search/hybrid  {"q": "research notes", "kind": "source"}
+```
+
+**Offline-safe:** Keyword search works with no API keys. Vector and hybrid search return graceful errors (`503 embeddings_disabled`) when `OPENAI_API_KEY` is absent — agents should fall back to keyword search in that case.
+
+**User scope:** All search results are scoped to the authenticated user. Agents cannot search across user accounts.
+
+**Citation edges:** When an agent creates a page that references a source, it should create a `cites` edge:
+
+```text
+POST /api/v1/edges
+{"source_id": "<page_id>", "target_id": "<source_id>", "kind": "cites"}
+```
 
 ## Updating Content Safely
 

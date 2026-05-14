@@ -108,13 +108,32 @@ Source types: PDFs, images, videos, YouTube URLs, web articles, and CSV files. C
 | `source -> asset` with `kind="derives_from"` | A source was created from an uploaded asset. |
 | `page -> source` with `kind="cites"` | A page cites or references an ingested source. |
 
-## Phase 3+ Direction
+## Offline and AI Provider Degradation
 
-Later phases build on the same local-first boundary:
+**Core app features work fully offline** — page editing, source creation, asset uploads, keyword search, and all CRUD operations require no internet connection and no API keys.
+
+**AI/API-backed features degrade gracefully** when external providers are unavailable:
+
+| Feature | Requires | Offline behavior |
+| --- | --- | --- |
+| Keyword search | Nothing | Always available |
+| Vector embedding | `OPENAI_API_KEY` | Returns 503 with `{"detail": "embeddings_disabled"}` — not a 500 |
+| Hybrid search | `OPENAI_API_KEY` | Falls back to keyword-only; adds `"embeddings_disabled": true` to response |
+| Source extraction (YouTube transcript, web scrape) | Network | Worker marks job `error`; extracted_text left blank; manual retry supported |
+| AI summarization, extraction, Q&A | `OPENAI_API_KEY` | Endpoint returns 503; no partial state written |
+| AI suggestions and link proposals | `OPENAI_API_KEY` | Same graceful error |
+
+**No user data is sent to external AI providers unless the user explicitly invokes an AI-backed feature.** Indexing and search are local by default. AI features activate only when `OPENAI_API_KEY` is set and the user triggers the action.
+
+**Local LLM support** (e.g., Ollama) is a future option behind the `EmbeddingProvider` abstraction. No current code assumes OpenAI as the only option.
+
+## Phase 3+ Direction
 
 | Area | Planned Role |
 | --- | --- |
-| Vector search | Use Qdrant for embeddings over chunks, source text, page content, and asset-derived text. |
-| Graph | Add Kuzu or another graph layer for richer relationship traversal beyond direct SQL edge queries. |
-| AI workflows | Add local or remote model integrations for summarization, question answering, extraction, tagging, and writing assistance. |
-| MCP | Expose KnowledgeOS as a controlled local tool surface for AI agents through Model Context Protocol, with API-mediated writes and auditable actions. |
+| Vector search | Qdrant for chunk embeddings; gracefully disabled when no API key |
+| Graph Lite | Typed edge UI, backlinks, related objects from Postgres; Kùzu added later |
+| AI workflows | Summarization, Q&A, extraction — all behind provider abstraction, all opt-in |
+| Inbox/Triage | AI-classified staging area for unprocessed items |
+| Chat Import | ChatGPT/Claude export → searchable chat history + linked knowledge objects |
+| MCP | Staged rollout: read/search tools first, then create, then update/archive |

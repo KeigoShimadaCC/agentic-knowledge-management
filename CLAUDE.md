@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project North Star
 
-KnowledgeOS is a **local-first personal AI knowledge base** that runs entirely on the user's Mac via Docker Compose. The user dumps, structures, searches, and reasons over personal and professional knowledge — pages, rich media, sources, projects, AI chat histories — through a browser-only UI. The system is **agent-ready**: Claude, Codex, ChatGPT, and local agents can safely search, read, create, update, and link knowledge through the built-in MCP server and internal API. Every feature must work offline, stay private, and keep all data under `~/KnowledgeOS/`.
+KnowledgeOS is a **local-first personal AI knowledge base** that runs entirely on the user's Mac via Docker Compose. The user dumps, structures, searches, and reasons over personal and professional knowledge — pages, rich media, sources, projects, AI chat histories — through a browser-only UI. The system is **agent-ready**: Claude, Codex, ChatGPT, and local agents can safely search, read, create, update, and link knowledge through the built-in MCP server and internal API. Core app features must work offline; AI/API-backed features must degrade gracefully when API keys are unavailable. All data stays under `~/KnowledgeOS/`.
 
 ---
 
