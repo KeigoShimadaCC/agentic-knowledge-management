@@ -49,84 +49,86 @@ Build a **local-first personal AI Knowledge OS** where the user can dump, struct
 
 ## Phase 3 — Search ⬜ Planned
 
-**Goal:** Make all knowledge searchable — by exact keyword, by semantic meaning, and by a hybrid of both — with a clean search UI.
+**Goal:** Make all knowledge searchable — by exact keyword, by semantic meaning, and by a hybrid of both — with a clean search UI. Keyword search must work offline with no API keys.
 
-- [ ] **Subtask 1** — Chunking pipeline: split page/source text into overlapping chunks; store in `chunks` table with `chunk_idx`, `token_count`, `source_locator` (page/paragraph reference)
-- [ ] **Subtask 2** — Embedding pipeline: OpenAI `text-embedding-3-small` for each chunk; store vector ID in Qdrant with payload (`object_id`, `chunk_id`, `kind`)
-- [ ] **Subtask 3** — Postgres full-text search: `tsvector` column on `objects` (title) and `pages` (content_text); GIN index; `GET /search/keyword?q=` endpoint
-- [ ] **Subtask 4** — Qdrant vector search: `POST /search/vector` endpoint; query embedding → Qdrant nearest neighbors → return ranked objects
-- [ ] **Subtask 5** — Hybrid search endpoint: `POST /search/hybrid` — parallel keyword + vector → merge + rerank by combined score
-- [ ] **Subtask 6** — Search UI: global search bar (Cmd+K), unified results panel (tabs: All / Pages / Sources / Assets), result cards with excerpt highlighting
-- [ ] **Subtask 7** — Re-index worker job: `reindex_object(object_id)` — chunk → embed → upsert to Qdrant; triggered on page/source create and update
-- [ ] **Subtask 8** — Tests + docs: search API tests, embedding mock fixtures, update `docs/ARCHITECTURE.md` + `docs/INGESTION.md`
+See [`project-phases/PHASE-3-SEARCH.md`](project-phases/PHASE-3-SEARCH.md) for the full subtask spec.
+
+- [x] **Subtask 0** — Phase 2 audit + Phase 3 stabilization: `chunks` migration 0003 (user_id, source_locator, content_hash, embedding_status, embedding_model, embedded_at, qdrant_point_id, updated_at); search eval fixtures; offline/degradation docs; revision history design; README + PROGRESS.md roadmap refresh
+- [ ] **Subtask 1** — Chunking pipeline: split page/source text into overlapping chunks; store in `chunks` table with `chunk_idx`, `token_count`, `source_locator`, `content_hash`; idempotent upsert on `(object_id, chunk_idx)`
+- [ ] **Subtask 2** — Embedding provider abstraction + Qdrant collection setup: `EmbeddingProvider` protocol; `OpenAIEmbeddingProvider` + `NoOpEmbeddingProvider`; collection init idempotent; graceful app boot when Qdrant unavailable
+- [ ] **Subtask 3** — Reindex worker jobs: `reindex_object(object_id)` (chunk → embed → upsert Qdrant); `reindex_all_objects()`; triggered on page/source save; deterministic RQ job ID to prevent queue flooding
+- [ ] **Subtask 4** — Keyword search API: `GET /search/keyword?q=&kind=&limit=&offset=`; Postgres FTS with `plainto_tsquery` + snippet; works with no API key
+- [ ] **Subtask 5** — Vector search API: `POST /search/vector`; graceful 503 when embeddings disabled; Qdrant nearest neighbors → hydrate from Postgres
+- [ ] **Subtask 6** — Hybrid search API: `POST /search/hybrid`; parallel keyword + vector → combined score; keyword-only fallback when embeddings unavailable; `debug` mode for score breakdown
+- [ ] **Subtask 7** — Search UI: Cmd+K modal; unified results (tabs: All / Pages / Sources); result cards with title, kind badge, snippet, date; keyboard navigation
+- [ ] **Subtask 8** — Search eval fixtures → test assertions: load `tests/fixtures/search_eval_cases.json`; at least one fixture-driven test asserts keyword results contain expected kinds
+- [ ] **Subtask 9** — Tests + docs: `test_search.py` (~15 tests); chunking tests; update `docs/ARCHITECTURE.md`, `docs/INGESTION.md`, `docs/API.md`; target ~65 total tests
 
 ---
 
-## Phase 4 — Graph ⬜ Planned
+## Phase 4 — Graph Lite ⬜ Planned
 
-**Goal:** Give the knowledge base a graph backbone — typed bidirectional links between any objects, traversable graph neighborhoods, and visual backlink panels.
+**Goal:** Give the knowledge base a graph backbone using the existing Postgres `edges` table. Surface typed links and backlinks in the UI without requiring Kùzu yet.
 
-- [ ] **Subtask 1** — Typed link UI: "Link to…" button in page editor opens object picker; creates typed edge (`links_to`, `derived_from`, `mentions`, `supports`, `contradicts`, etc.)
+- [ ] **Subtask 1** — Typed link UI: "Link to…" button in page editor opens object picker; creates typed edge (`links_to`, `mentions`, `supports`, `contradicts`, `derived_from`)
 - [ ] **Subtask 2** — Backlinks panel: right sidebar shows all objects that link to the current page; clicking navigates to the linking object
-- [ ] **Subtask 3** — Kùzu graph DB setup: embedded Kùzu instance in the worker process; stored under `~/KnowledgeOS/data/kuzu/`
-- [ ] **Subtask 4** — Graph sync worker: on every edge create/delete in Postgres, mirror to Kùzu; full re-sync script `scripts/reindex_graph.py`
-- [ ] **Subtask 5** — Graph neighborhood retrieval: `GET /objects/{id}/related?depth=2&edge_types=links_to,mentions` — traverses Kùzu up to N hops, returns ranked related objects
-- [ ] **Subtask 6** — Graph search endpoint: `POST /search/graph` — find objects reachable from a seed set via specified edge types
-- [ ] **Subtask 7** — Graph panel UI: collapsible "Related" section in right sidebar showing linked objects grouped by edge type
-- [ ] **Subtask 8** — Tests + docs: edge traversal tests, Kùzu sync tests, update `docs/DATA_MODEL.md` + `docs/ARCHITECTURE.md`
+- [ ] **Subtask 3** — Related objects API: `GET /objects/{id}/related?depth=1&kinds=links_to,mentions` — Postgres edge traversal, one hop
+- [ ] **Subtask 4** — Related panel UI: collapsible "Related" section in right sidebar; grouped by edge type
+- [ ] **Subtask 5** — Tests + docs: edge traversal tests; update `docs/DATA_MODEL.md` + `docs/ARCHITECTURE.md`
+
+**Kùzu (optional extension):** If graph traversal needs more than 1–2 hops, add Kùzu as an embedded graph layer. Mirror Postgres edges to Kùzu on each edge create/delete. Not required for Phase 4 baseline.
 
 ---
 
-## Phase 5 — AI Assistant ⬜ Planned
+## Phase 5 — AI Assistant + Inbox/Triage ⬜ Planned
 
-**Goal:** Embed AI directly into the editing and research workflow — summarize, extract, suggest links, and answer questions grounded in the local knowledge base with source citations.
+**Goal:** Embed AI directly into the editing and research workflow. Prerequisite: `object_revisions` table in place before AI can write back to pages (see `docs/REVISION_HISTORY.md`).
 
 **Prerequisite:** OpenAI API key set in `infra/.env`.
 
-- [ ] **Subtask 1** — OpenAI client setup: typed wrapper around `openai` Python SDK; configurable model; cost tracking to `agent_runs` table; retries with exponential backoff
-- [ ] **Subtask 2** — AI sidebar component: collapsible right panel; chat-style UI; scoped to current page, selected text, or whole workspace; shows "AI" badge on AI-generated content
-- [ ] **Subtask 3** — Summarize page: `POST /ai/summarize` → LLM summary stored back on the page object; one-click in toolbar
-- [ ] **Subtask 4** — Summarize source: same for PDF/web/YouTube sources; displays summary in source detail panel
-- [ ] **Subtask 5** — Extract claims: `POST /ai/extract-claims` → creates `Claim` objects linked to source/page via `derived_from` edge
-- [ ] **Subtask 6** — Extract tasks + entities: extract action items (→ Task objects), people, orgs, concepts from a page or source
-- [ ] **Subtask 7** — Suggest links: `POST /ai/suggest-links` → LLM reviews current page content, searches KB, proposes edges to related objects with explanation
-- [ ] **Subtask 8** — KB Q&A with citations: `POST /ai/answer` — hybrid retrieval → context pack → LLM answer → response includes `[source_id, chunk_id]` citations; displayed as clickable chips in AI sidebar
-- [ ] **Subtask 9** — Triage inbox: `POST /ai/triage-inbox` → LLM classifies and routes unprocessed items in `library/inbox/`
-- [ ] **Subtask 10** — All AI writes create `agent_runs` audit rows; UI shows AI-generated badge on agent-created objects
-- [ ] **Subtask 11** — Tests + docs: mock OpenAI responses in tests; update `docs/AGENT_GUIDE.md`
+- [ ] **Subtask 1** — OpenAI client setup: typed wrapper, configurable model, cost tracking to `agent_runs`, retries with exponential backoff
+- [ ] **Subtask 2** — AI sidebar component: collapsible right panel, chat-style UI, scoped to current page/selected text/workspace; "AI" badge on agent-generated content
+- [ ] **Subtask 3** — Summarize page: `POST /ai/summarize` → LLM summary stored back on page; one-click in toolbar
+- [ ] **Subtask 4** — Summarize source: same for PDF/web/YouTube; displays in source detail panel
+- [ ] **Subtask 5** — Extract claims: `POST /ai/extract-claims` → creates `Claim` objects linked via `derived_from` edge
+- [ ] **Subtask 6** — Extract tasks + entities: action items → Task objects; people/orgs/concepts mentioned
+- [ ] **Subtask 7** — Suggest links: `POST /ai/suggest-links` → search KB, propose edges with explanation
+- [ ] **Subtask 8** — KB Q&A with citations: `POST /ai/answer` — hybrid retrieval → context pack → LLM answer with `[source_id, chunk_id]` citations
+- [ ] **Subtask 9** — Inbox/Triage: `POST /ai/triage-inbox` → LLM classifies and routes unprocessed items in `library/inbox/`; inbox view in sidebar
+- [ ] **Subtask 10** — `object_revisions` table: implement as prerequisite to AI page writes; link to `agent_runs`; rollback API
+- [ ] **Subtask 11** — All AI writes create `agent_runs` rows; UI shows AI-generated badge
+- [ ] **Subtask 12** — Tests + docs: mock OpenAI in tests; update `docs/AGENT_GUIDE.md`, `docs/REVISION_HISTORY.md`
 
 ---
 
-## Phase 6 — MCP Server ⬜ Planned
+## Phase 6 — Chat Import ⬜ Planned
 
-**Goal:** Expose the knowledge base as a first-class MCP server so that Claude, ChatGPT, Codex, and local agents can search, read, write, and ingest knowledge through standardized tools.
+**Goal:** Turn exported ChatGPT and Claude conversations into durable, searchable, linked knowledge objects.
 
-- [ ] **Subtask 1** — MCP server scaffold: `services/mcp/server.py`; listens on `:8765`; wired into `docker-compose.yml`
-- [ ] **Subtask 2** — Read/search tools: `search_objects`, `hybrid_search`, `get_object`, `get_page`, `get_source`, `get_project`, `get_related_objects`, `answer_from_kb`
-- [ ] **Subtask 3** — Write tools: `create_page`, `update_page`, `create_claim`, `create_edge`, `archive_object`; each call validates agent identity + writes `agent_runs` row
-- [ ] **Subtask 4** — Ingestion tools: `ingest_url`, `ingest_file`, `import_chat`, `triage_inbox`, `run_ingestion_job`
-- [ ] **Subtask 5** — MCP resources: stable `knowledgeos://objects/{id}`, `knowledgeos://pages/{id}`, `knowledgeos://sources/{id}`, `knowledgeos://search?q=…` URIs
-- [ ] **Subtask 6** — MCP prompts: `kb_search_prompt`, `source_summary_prompt`, `claim_extraction_prompt`, `chat_import_summary_prompt`
-- [ ] **Subtask 7** — Agent identity + audit: every MCP write requires `agent_id` header; logs to `agent_runs`; before/after diff for page edits
-- [ ] **Subtask 8** — Safety enforcement: no shell execution tools; no file access outside `LIBRARY_ROOT`; API keys redacted from all tool outputs; per-tool enable/disable config
-- [ ] **Subtask 9** — MCP server docker service + `infra/.env` wiring; local-only bind by default
-- [ ] **Subtask 10** — Tests + docs: MCP tool integration tests; `docs/MCP_TOOLS.md` with full tool reference; `docs/SECURITY.md` updated
+**Chat Import Lite (minimal, useful early):**
+- [ ] **Subtask 1** — Chat upload UI: drag-and-drop JSON/Markdown, paste transcript; Chats section in sidebar
+- [ ] **Subtask 2** — Parser: ChatGPT `conversations.json` + Claude export → normalized `ChatTurn[]`
+- [ ] **Subtask 3** — Raw storage under `library/chats/{provider}/{chat_id}/raw.json`
+- [ ] **Subtask 4** — Basic search: chunk and index chat content into `chunks` + Qdrant
+- [ ] **Subtask 5** — Chat list/detail UI: show turns, search within chats
+
+**Structured Import (requires Phase 5 AI):**
+- [ ] **Subtask 6** — LLM summarizer: decisions, open questions, action items, claims, concepts, projects
+- [ ] **Subtask 7** — Object extraction: Claim, Task, concept → edges from chat
+- [ ] **Subtask 8** — Tests + docs: fixture exports; update `docs/INGESTION.md`
 
 ---
 
-## Phase 7 — Chat Import ⬜ Planned
+## Phase 7 — MCP Server ⬜ Planned
 
-**Goal:** Turn exported ChatGPT and Claude conversations into durable, searchable, linked knowledge objects — capturing decisions, claims, tasks, and concepts as first-class KB entities.
+**Goal:** Expose KnowledgeOS as a local MCP server. Staged rollout: read/search first, then create, then update/archive (requires revision history from Phase 5).
 
-- [ ] **Subtask 1** — Chat upload UI: drag-and-drop JSON/Markdown upload; paste transcript; Chats section in sidebar
-- [ ] **Subtask 2** — ChatGPT export parser: parse `conversations.json` format (ChatGPT export); normalize into internal `ChatTurn[]` structure
-- [ ] **Subtask 3** — Claude export parser: parse Claude conversation export format
-- [ ] **Subtask 4** — Raw storage: store original export file unchanged under `library/chats/{provider}/{chat_id}/raw.json`
-- [ ] **Subtask 5** — LLM summarizer pipeline: turn parsed chat into `structured_summary` JSON (title, date, key decisions, open questions, action items, claims, concepts, projects, sources)
-- [ ] **Subtask 6** — Object extraction worker: create linked KB objects from summary — `Claim` objects, `Task` objects, concept mentions → edges
-- [ ] **Subtask 7** — Chat object UI: chat detail view with structured summary; expandable raw transcript; linked objects panel
-- [ ] **Subtask 8** — Chat indexing: chunk and embed chat content for vector search; add to Qdrant and Kùzu graph
-- [ ] **Subtask 9** — Tests + docs: import pipeline tests with fixture exports; `docs/INGESTION.md` updated
+- [ ] **v1 — Read/Search Tools:** `search_objects`, `hybrid_search`, `get_object`, `get_page`, `get_source`, `get_related_objects`, `answer_from_kb`
+- [ ] **v2 — Create Tools:** `create_page`, `create_edge`, `ingest_url`, `ingest_file`; each call validates agent identity + writes `agent_runs`
+- [ ] **v3 — Update/Archive Tools (requires Phase 5 object_revisions):** `update_page`, `archive_object`; before/after diff logged; rollback supported
+- [ ] **MCP resources:** `knowledgeos://objects/{id}`, `knowledgeos://pages/{id}`, `knowledgeos://sources/{id}`, `knowledgeos://search?q=…`
+- [ ] **Safety:** no shell execution; no paths outside `LIBRARY_ROOT`; API keys redacted; per-tool enable/disable
+- [ ] **Tests + docs:** `docs/MCP_TOOLS.md` full reference; `docs/SECURITY.md` updated
 
 ---
 
@@ -166,12 +168,18 @@ Build a **local-first personal AI Knowledge OS** where the user can dump, struct
 |---|---|---|---|
 | 1 | Foundation | ✅ Complete | 8 / 8 subtasks |
 | 2 | Sources & Rich Media | ✅ Complete | 9 / 9 subtasks |
-| 3 | Search | ⬜ Planned | 0 / 8 subtasks |
-| 4 | Graph | ⬜ Planned | 0 / 8 subtasks |
-| 5 | AI Assistant | ⬜ Planned | 0 / 11 subtasks |
-| 6 | MCP Server | ⬜ Planned | 0 / 10 subtasks |
-| 7 | Chat Import | ⬜ Planned | 0 / 9 subtasks |
+| 3 | Search | ⬜ In Progress | 1 / 10 subtasks (subtask 0 done) |
+| 4 | Graph Lite | ⬜ Planned | 0 / 5 subtasks |
+| 5 | AI Assistant + Inbox/Triage | ⬜ Planned | 0 / 12 subtasks |
+| 6 | Chat Import | ⬜ Planned | 0 / 8 subtasks |
+| 7 | MCP Server (staged) | ⬜ Planned | 0 / 6 subtasks |
 | 8 | Multi-Pane Workspaces | ⬜ Planned | 0 / 8 subtasks |
 | 9 | Career & Project Memory | ⬜ Planned | 0 / 8 subtasks |
 
-**Total:** 17 / 80 subtasks complete
+**Total:** 18 / 74 subtasks complete
+
+**Key cross-cutting concepts to track:**
+- Inbox/Triage (Phase 5): AI-classified staging area for unprocessed items
+- Search evaluation (Phase 3+): `tests/fixtures/search_eval_cases.json` as regression anchors
+- Revision history (Phase 5 prerequisite): required before MCP write tools go live — see `docs/REVISION_HISTORY.md`
+- Offline/degradation contract: keyword search always works; AI features degrade gracefully — see `docs/ARCHITECTURE.md`
