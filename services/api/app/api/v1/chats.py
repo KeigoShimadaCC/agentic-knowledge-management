@@ -17,6 +17,8 @@ from app.schemas.chat import (
     ChatImportJson,
     ChatImportResponse,
     ChatOut,
+    StructuredSummaryApplyIn,
+    StructuredSummaryApplyOut,
     StructuredSummaryPreviewOut,
 )
 from app.services import chat_service, chat_structured_service, reindex_service
@@ -233,4 +235,30 @@ async def get_structured_summary(
         structured_summary=summary,
         agent_run_id=chat.structured_summary_agent_run_id,
         status=chat.structured_summary_status,
+    )
+
+
+@router.post("/{chat_id}/structured-summary/apply", response_model=StructuredSummaryApplyOut)
+async def apply_structured_summary(
+    chat_id: uuid.UUID,
+    data: StructuredSummaryApplyIn,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> StructuredSummaryApplyOut:
+    obj, chat = await chat_service.get_chat_or_404(db, chat_id, user.id)
+    created, reused, edges, _ = await chat_structured_service.apply_structured_summary(
+        db,
+        obj=obj,
+        chat=chat,
+        user_id=user.id,
+        data=data,
+    )
+    await db.commit()
+    await db.refresh(obj)
+    await db.refresh(chat)
+    return StructuredSummaryApplyOut(
+        chat=build_chat_out(obj, chat),
+        created_objects=[chat_structured_service.object_summary_dict(item) for item in created],
+        reused_objects=[chat_structured_service.object_summary_dict(item) for item in reused],
+        edges=[chat_structured_service.edge_summary_dict(edge) for edge in edges],
     )

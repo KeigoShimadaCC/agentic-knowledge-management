@@ -5,16 +5,24 @@ import json
 import re
 import uuid
 from datetime import UTC, datetime
+from decimal import Decimal
 from typing import Any
 
 from fastapi import HTTPException
 from pydantic import ValidationError
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.ai.client import call_ai
+from app.models.agent_run import AgentRun
 from app.models.chat import Chat
+from app.models.edge import Edge
 from app.models.object import KosObject
-from app.schemas.chat import StructuredChatSummary
+from app.schemas.chat import StructuredChatSummary, StructuredSummaryApplyIn
+from app.schemas.object import ObjectOut
+from app.services.agent_run_service import create_agent_run, finish_agent_run
+from app.services.edge_service import create_edge
+from app.services.reindex_service import enqueue_reindex_object
 from app.services.revision_service import create_revision
 
 STRUCTURED_CHAT_SUMMARY_SYSTEM_PROMPT = """You extract durable knowledge from imported chats.
@@ -177,6 +185,138 @@ def get_existing_structured_summary(chat: Chat) -> StructuredChatSummary | None:
     return StructuredChatSummary.model_validate(chat.structured_summary)
 
 
+async def apply_structured_summary(
+    db: AsyncSession,
+    *,
+    obj: KosObject,
+    chat: Chat,
+    user_id: uuid.UUID,
+    data: StructuredSummaryApplyIn,
+) -> tuple[list[KosObject], list[KosObject], list[Edge], AgentRun]:
+    summary = data.structured_summary or get_existing_structured_summary(chat)
+    if summary is None:
+        raise HTTPException(status_code=422, detail="No structured summary to apply")
+
+    before = _chat_structured_snapshot(chat)
+    summary_hash = structured_summary_hash(summary)
+    apply_run = await create_agent_run(
+        db,
+        user_id=user_id,
+        agent_type="chat_structured_summary_apply",
+        input_payload={
+            "chat_id": str(chat.id),
+            "structured_summary_hash": summary_hash,
+            "create_claims": data.create_claims,
+            "create_tasks": data.create_tasks,
+            "create_concepts": data.create_concepts,
+            "link_existing_objects": data.link_existing_objects,
+        },
+    )
+
+    chat.structured_summary = summary.model_dump(mode="json")
+    chat.structured_summary_status = "applied"
+    chat.structured_summary_agent_run_id = chat.structured_summary_agent_run_id or apply_run.id
+    chat.structured_summary_updated_at = datetime.now(UTC)
+    chat.structured_summary_hash = summary_hash
+    obj.title = summary.title or obj.title
+    obj.updated_at = datetime.now(UTC)
+    await db.flush()
+
+    created: list[KosObject] = []
+    reused: list[KosObject] = []
+    edges: list[Edge] = []
+    if data.create_claims:
+        for index, claim in enumerate(summary.claims):
+            extracted, was_created = await _create_or_reuse_extracted_object(
+                db,
+                user_id=user_id,
+                kind="claim",
+                title=_short_title(claim.claim),
+                description=claim.claim,
+                extraction_key=_extraction_key("claim", chat.id, claim.claim, claim.turn_refs),
+                metadata={
+                    "ai_generated": True,
+                    "source_chat_id": str(chat.id),
+                    "turn_refs": claim.turn_refs,
+                    "confidence": claim.confidence,
+                    "claim_type": claim.type,
+                    "agent_run_id": str(apply_run.id),
+                    "summary_hash": summary_hash,
+                    "item_index": index,
+                },
+            )
+            (created if was_created else reused).append(extracted)
+            edge = await create_edge(
+                db,
+                extracted.id,
+                chat.id,
+                "derived_from",
+                user_id=user_id,
+                metadata_={"turn_refs": claim.turn_refs, "agent_run_id": str(apply_run.id)},
+            )
+            edges.append(edge)
+            enqueue_reindex_object(extracted.id)
+
+    if data.create_tasks:
+        for index, item in enumerate(summary.action_items):
+            extracted, was_created = await _create_or_reuse_extracted_object(
+                db,
+                user_id=user_id,
+                kind="task",
+                title=_short_title(item.task),
+                description=item.task,
+                extraction_key=_extraction_key("task", chat.id, item.task, item.turn_refs),
+                metadata={
+                    "ai_generated": True,
+                    "source_chat_id": str(chat.id),
+                    "turn_refs": item.turn_refs,
+                    "confidence": item.confidence,
+                    "owner": item.owner,
+                    "due_at": item.due_at,
+                    "agent_run_id": str(apply_run.id),
+                    "summary_hash": summary_hash,
+                    "item_index": index,
+                },
+            )
+            (created if was_created else reused).append(extracted)
+            edge = await create_edge(
+                db,
+                extracted.id,
+                chat.id,
+                "created_from",
+                user_id=user_id,
+                metadata_={"turn_refs": item.turn_refs, "agent_run_id": str(apply_run.id)},
+            )
+            edges.append(edge)
+            enqueue_reindex_object(extracted.id)
+
+    if data.create_concepts:
+        summary.warnings.append("Concept object creation is not available in this phase.")
+
+    await create_revision(
+        db,
+        object_id=obj.id,
+        user_id=user_id,
+        changed_by="ai",
+        agent_run_id=apply_run.id,
+        before_snapshot=before,
+        after_snapshot=_chat_structured_snapshot(chat),
+    )
+    await finish_agent_run(
+        db,
+        apply_run,
+        status="success",
+        output={
+            "created_object_ids": [str(item.id) for item in created],
+            "reused_object_ids": [str(item.id) for item in reused],
+            "edge_ids": [str(edge.id) for edge in edges],
+        },
+        cost_usd=Decimal("0"),
+    )
+    enqueue_reindex_object(chat.id)
+    return created, reused, edges, apply_run
+
+
 def build_structured_summary_messages(obj: KosObject, chat: Chat) -> list[dict[str, str]]:
     turns = _format_turns(chat.parsed_turns)
     warning = ""
@@ -299,3 +439,69 @@ def _chat_structured_snapshot(chat: Chat) -> dict[str, Any]:
         ),
         "structured_summary_hash": chat.structured_summary_hash,
     }
+
+
+async def _create_or_reuse_extracted_object(
+    db: AsyncSession,
+    *,
+    user_id: uuid.UUID,
+    kind: str,
+    title: str,
+    description: str,
+    extraction_key: str,
+    metadata: dict[str, Any],
+) -> tuple[KosObject, bool]:
+    result = await db.execute(
+        select(KosObject).where(
+            KosObject.user_id == user_id,
+            KosObject.kind == kind,
+            KosObject.deleted_at.is_(None),
+            KosObject.metadata_["extraction_key"].astext == extraction_key,
+        )
+    )
+    existing = result.scalar_one_or_none()
+    if existing is not None:
+        return existing, False
+
+    obj = KosObject(
+        user_id=user_id,
+        kind=kind,
+        title=title,
+        description=description,
+        metadata_={**metadata, "extraction_key": extraction_key},
+        ai_generated=True,
+    )
+    db.add(obj)
+    await db.flush()
+    return obj, True
+
+
+def object_summary_dict(obj: KosObject) -> dict[str, Any]:
+    return ObjectOut.model_validate(obj).model_dump(mode="json")
+
+
+def edge_summary_dict(edge: Edge) -> dict[str, Any]:
+    return {
+        "id": str(edge.id),
+        "source_id": str(edge.source_id),
+        "target_id": str(edge.target_id),
+        "kind": edge.kind,
+        "metadata": edge.metadata_,
+    }
+
+
+def _extraction_key(kind: str, chat_id: uuid.UUID, text: str, turn_refs: list[int]) -> str:
+    payload = json.dumps(
+        {"kind": kind, "chat_id": str(chat_id), "text": text, "turn_refs": sorted(turn_refs)},
+        ensure_ascii=False,
+        sort_keys=True,
+        separators=(",", ":"),
+    )
+    return hashlib.sha256(payload.encode("utf-8")).hexdigest()
+
+
+def _short_title(value: str) -> str:
+    cleaned = " ".join(value.split())
+    if len(cleaned) <= 80:
+        return cleaned
+    return f"{cleaned[:77].rstrip()}..."
