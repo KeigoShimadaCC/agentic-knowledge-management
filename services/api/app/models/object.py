@@ -7,7 +7,7 @@ from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.base import Base
 
-VALID_KINDS = ("page", "asset", "note", "bookmark", "collection")
+VALID_KINDS = ("page", "asset", "note", "bookmark", "collection", "source")
 
 
 class KosObject(Base):
