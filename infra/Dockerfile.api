@@ -5,13 +5,17 @@ RUN pip install --no-cache-dir uv && \
     rm -rf /var/lib/apt/lists/*
 
 FROM base AS development
-COPY services/api/pyproject.toml services/api/uv.lock* ./
-RUN uv sync --frozen
-COPY services/api .
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+COPY pyproject.toml uv.lock* ./
+COPY services/api/pyproject.toml ./services/api/
+RUN uv sync --frozen --no-install-project --package kos-api
+COPY services/api ./services/api
+ENV PYTHONPATH=/app/services/api
+CMD [".venv/bin/uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
 
 FROM base AS production
-COPY services/api/pyproject.toml services/api/uv.lock* ./
-RUN uv sync --frozen --no-dev
-COPY services/api .
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "2"]
+COPY pyproject.toml uv.lock* ./
+COPY services/api/pyproject.toml ./services/api/
+RUN uv sync --frozen --no-dev --no-install-project --package kos-api
+COPY services/api ./services/api
+ENV PYTHONPATH=/app/services/api
+CMD [".venv/bin/uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "2"]

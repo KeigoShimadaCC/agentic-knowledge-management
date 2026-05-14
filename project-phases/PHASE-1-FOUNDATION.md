@@ -1,21 +1,21 @@
 # Phase 1 — Foundation
 
-**Status:** In Progress  
+**Status:** Complete ✓  
 **Goal:** Docker, schema, page CRUD, Tiptap editor, auth, asset upload
 
 ---
 
 ## Subtask Checklist
 
-- [ ] 0 — Monorepo scaffold (root configs, directory tree, doc stubs)
-- [ ] 1 — Docker Compose + Dockerfiles (postgres, redis, qdrant, api, web)
-- [ ] 2 — Postgres schema + SQLAlchemy models + Alembic migrations
-- [ ] 3 — FastAPI shell + session auth endpoints (register/login/logout/me)
-- [ ] 4 — Objects, pages, assets CRUD API + content-addressed storage
-- [ ] 5 — Next.js app shell + 3-panel layout + auth flow
-- [ ] 6 — Tiptap page editor with auto-save
-- [ ] 7 — Asset upload UI (drag-and-drop + gallery)
-- [ ] 8 — Integration test suite
+- [x] 0 — Monorepo scaffold (root configs, directory tree, doc stubs)
+- [x] 1 — Docker Compose + Dockerfiles (postgres, redis, qdrant, api, web)
+- [x] 2 — Postgres schema + SQLAlchemy models + Alembic migrations
+- [x] 3 — FastAPI shell + session auth endpoints (register/login/logout/me)
+- [x] 4 — Objects, pages, assets CRUD API + content-addressed storage
+- [x] 5 — Next.js app shell + 3-panel layout + auth flow
+- [x] 6 — Tiptap page editor with auto-save
+- [x] 7 — Asset upload UI (drag-and-drop + gallery)
+- [x] 8 — Integration test suite
 
 ---
 
