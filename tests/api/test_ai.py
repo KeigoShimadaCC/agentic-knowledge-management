@@ -216,6 +216,7 @@ async def test_ai_writes_agent_run_row(auth_client: AsyncClient, mock_openai: Ma
     from app.db.session import engine
     from app.models.agent_run import AgentRun
     from sqlalchemy import select
+    from sqlalchemy.ext.asyncio import AsyncSession
 
     page_data = await _make_page(auth_client)
     object_id = page_data["object"]["id"]
@@ -224,8 +225,8 @@ async def test_ai_writes_agent_run_row(auth_client: AsyncClient, mock_openai: Ma
     assert resp.status_code == 200
     run_id = resp.json()["agent_run_id"]
 
-    async with engine.connect() as conn:
-        result = await conn.execute(select(AgentRun).where(AgentRun.id == run_id))
+    async with AsyncSession(engine) as session:
+        result = await session.execute(select(AgentRun).where(AgentRun.id == run_id))
         row = result.scalar_one_or_none()
 
     assert row is not None
