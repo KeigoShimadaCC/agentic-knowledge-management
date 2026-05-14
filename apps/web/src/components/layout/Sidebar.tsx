@@ -2,13 +2,14 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { FileText, Files, Image, Trash2 } from "lucide-react";
+import { BookOpen, FileText, Files, Image, Trash2 } from "lucide-react";
 import { clsx } from "clsx";
 
 const navItems = [
   { href: "/app", label: "All Objects", icon: Files },
   { href: "/app/pages", label: "Pages", icon: FileText },
   { href: "/app/assets", label: "Assets", icon: Image },
+  { href: "/sources", label: "Sources", icon: BookOpen },
   { href: "/app/trash", label: "Trash", icon: Trash2 },
 ];
 

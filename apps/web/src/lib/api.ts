@@ -5,6 +5,8 @@ import type {
   PageCreateResponse,
   PageOut,
   PaginatedResponse,
+  SourceCreate,
+  SourceOut,
 } from "@/types";
 import { ApiError } from "@/types";
 
@@ -25,6 +27,8 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   }
   return res.json() as Promise<T>;
 }
+
+export const apiFetch = request;
 
 export async function getMe(): Promise<AuthResponse> {
   return request<AuthResponse>("/api/v1/auth/me");
@@ -108,3 +112,17 @@ export async function uploadAsset(file: File): Promise<AssetUploadResponse> {
   }
   return res.json() as Promise<AssetUploadResponse>;
 }
+
+export const listSources = (params?: { source_type?: string; ingestion_status?: string; q?: string }) =>
+  apiFetch<SourceOut[]>(
+    "/api/v1/sources" +
+      (params ? "?" + new URLSearchParams(params as Record<string, string>).toString() : "")
+  );
+
+export const createSource = (data: SourceCreate) =>
+  apiFetch<SourceOut>("/api/v1/sources", { method: "POST", body: JSON.stringify(data) });
+
+export const getSource = (id: string) => apiFetch<SourceOut>(`/api/v1/sources/${id}`);
+
+export const deleteSource = (id: string) =>
+  apiFetch<SourceOut>(`/api/v1/sources/${id}`, { method: "DELETE" });

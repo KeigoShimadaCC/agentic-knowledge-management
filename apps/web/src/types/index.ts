@@ -67,6 +67,41 @@ export interface AssetUploadResponse {
   asset: AssetOut;
 }
 
+export type SourceType = "pdf" | "image" | "video" | "audio" | "youtube" | "web" | "csv" | "file";
+export type IngestionStatus = "pending" | "running" | "ready" | "error";
+
+export interface SourceOut {
+  id: string;
+  user_id: string;
+  kind: string;
+  title: string;
+  description: string | null;
+  tags: string[];
+  is_pinned: boolean;
+  is_archived: boolean;
+  created_at: string;
+  updated_at: string;
+  deleted_at: string | null;
+  source_type: SourceType;
+  url: string | null;
+  asset_id: string | null;
+  ingestion_status: IngestionStatus;
+  extracted_text: string | null;
+  page_count: number | null;
+  thumbnail_path: string | null;
+  preview_data: Record<string, unknown> | null;
+  error_message: string | null;
+}
+
+export interface SourceCreate {
+  source_type: SourceType;
+  asset_id?: string;
+  url?: string;
+  title?: string;
+  description?: string;
+  tags?: string[];
+}
+
 export class ApiError extends Error {
   constructor(
     public readonly status: number,
