@@ -120,6 +120,26 @@ export interface EdgeOut {
   deleted_at: string | null;
 }
 
+export interface EdgeWithObjectsOut {
+  id: string;
+  kind: string;
+  weight: number;
+  source_id: string;
+  target_id: string;
+  source_object: { id: string; kind: string; title: string } | null;
+  target_object: { id: string; kind: string; title: string } | null;
+  created_at: string;
+}
+
+export interface RelatedObjectOut {
+  id: string;
+  kind: string;
+  title: string;
+  distance: number;
+  edge_kind: string;
+  direction: string;
+}
+
 export class ApiError extends Error {
   constructor(
     public readonly status: number,

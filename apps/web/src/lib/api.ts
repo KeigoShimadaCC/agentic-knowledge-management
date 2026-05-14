@@ -2,12 +2,14 @@ import type {
   AssetUploadResponse,
   AuthResponse,
   EdgeCreate,
+  EdgeWithObjectsOut,
   EdgeOut,
   ObjectOut,
   PageCreateResponse,
   PageOut,
   PaginatedResponse,
   HybridSearchResponse,
+  RelatedObjectOut,
   SourceCreate,
   SourceOut,
   SearchResponse,
@@ -168,4 +170,16 @@ export async function hybridSearch(
     method: "POST",
     body: JSON.stringify({ q, kind: opts?.kind ?? null, limit: opts?.limit ?? 10 }),
   });
+}
+
+export async function getObjectBacklinks(objectId: string): Promise<EdgeWithObjectsOut[]> {
+  return request<EdgeWithObjectsOut[]>(`/api/v1/objects/${objectId}/backlinks`);
+}
+
+export async function getObjectRelated(
+  objectId: string,
+  depth = 1
+): Promise<RelatedObjectOut[]> {
+  const params = new URLSearchParams({ depth: String(depth), limit: "15" });
+  return request<RelatedObjectOut[]>(`/api/v1/objects/${objectId}/related?${params}`);
 }

@@ -11,6 +11,9 @@ import { EditorContent } from "@tiptap/react";
 import { EditorToolbar } from "@/components/editor/EditorToolbar";
 import { CitationExtension } from "@/components/editor/extensions/CitationExtension";
 import { SourcePicker } from "@/components/editor/SourcePicker";
+import { GraphPanel } from "@/components/graph/GraphPanel";
+import { LinkToModal } from "@/components/graph/LinkToModal";
+import { ObjectPicker } from "@/components/graph/ObjectPicker";
 import { createEdge } from "@/lib/api";
 import { PageTitle } from "./PageTitle";
 import { useAutoSave } from "@/lib/hooks/useAutoSave";
@@ -46,6 +49,13 @@ export function PageView({ pageId, initialTitle, initialContent }: PageViewProps
   const [title, setTitle] = useState(initialTitle);
   const [wordCount, setWordCount] = useState(0);
   const [isSourcePickerOpen, setIsSourcePickerOpen] = useState(false);
+  const [isObjectPickerOpen, setIsObjectPickerOpen] = useState(false);
+  const [linkTarget, setLinkTarget] = useState<{
+    id: string;
+    kind: string;
+    title: string;
+  } | null>(null);
+  const [refreshKey, setRefreshKey] = useState(0);
   const contentRef = useRef<Record<string, unknown>>(initialContent);
   const textRef = useRef<string>("");
 
@@ -110,10 +120,19 @@ export function PageView({ pageId, initialTitle, initialContent }: PageViewProps
 
   return (
     <div className="flex flex-col h-full">
-      <EditorToolbar editor={editor} onCite={() => setIsSourcePickerOpen(true)} />
-      <div className="flex-1 overflow-y-auto p-8 max-w-3xl mx-auto w-full">
-        <PageTitle initialTitle={initialTitle} onTitleChange={handleTitleChange} />
-        <EditorContent editor={editor} />
+      <EditorToolbar
+        editor={editor}
+        onCite={() => setIsSourcePickerOpen(true)}
+        onLinkTo={() => setIsObjectPickerOpen(true)}
+      />
+      <div className="flex flex-1 overflow-hidden">
+        <div className="flex-1 overflow-y-auto p-8 max-w-3xl mx-auto w-full">
+          <PageTitle initialTitle={initialTitle} onTitleChange={handleTitleChange} />
+          <EditorContent editor={editor} />
+        </div>
+        <div className="w-72 border-l border-gray-800 overflow-y-auto flex-shrink-0">
+          <GraphPanel objectId={pageId} refreshKey={refreshKey} />
+        </div>
       </div>
       <div className="flex items-center justify-between px-8 py-2 border-t border-gray-800 text-xs text-gray-500">
         <span>{wordCount} words</span>
@@ -126,6 +145,26 @@ export function PageView({ pageId, initialTitle, initialContent }: PageViewProps
           editor?.chain().focus().insertCitation(id, sourceTitle).run();
         }}
       />
+      <ObjectPicker
+        isOpen={isObjectPickerOpen}
+        onClose={() => setIsObjectPickerOpen(false)}
+        excludeId={pageId}
+        onSelect={(id, kind, objectTitle) => {
+          setLinkTarget({ id, kind, title: objectTitle });
+        }}
+      />
+      {linkTarget ? (
+        <LinkToModal
+          isOpen={Boolean(linkTarget)}
+          onClose={() => setLinkTarget(null)}
+          sourceId={pageId}
+          targetId={linkTarget.id}
+          targetKind={linkTarget.kind}
+          targetTitle={linkTarget.title}
+          sourceTitle={title}
+          onLinked={() => setRefreshKey((current) => current + 1)}
+        />
+      ) : null}
     </div>
   );
 }
