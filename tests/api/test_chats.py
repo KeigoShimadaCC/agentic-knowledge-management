@@ -1,8 +1,15 @@
+import json
+import uuid
 from pathlib import Path
 
 import pytest
+from app.models.edge import Edge
+from app.models.object import KosObject
+from app.models.revision import ObjectRevision
+from app.services.agent_run_service import create_agent_run, finish_agent_run
 from app.services.chunk_service import chunk_object
 from httpx import AsyncClient
+from sqlalchemy import select
 
 FIXTURES = Path(__file__).resolve().parents[1] / "fixtures" / "chats"
 
@@ -29,6 +36,81 @@ async def _import_plain(auth_client: AsyncClient, title: str = "Plain chat") -> 
     )
     assert resp.status_code == 201
     return resp.json()["imported"][0]
+
+
+STRUCTURED_SUMMARY = {
+    "title": "Structured planning chat",
+    "summary": "The chat decides to ship a structured import flow.",
+    "date_range": {"start": None, "end": None},
+    "topics": ["structured import"],
+    "key_decisions": [
+        {
+            "decision": "Use explicit apply before creating objects.",
+            "rationale": "AI writes must be auditable.",
+            "turn_refs": [1],
+            "confidence": "high",
+        }
+    ],
+    "open_questions": [
+        {
+            "question": "Should concepts become objects?",
+            "turn_refs": [0],
+            "status": "open",
+            "confidence": "medium",
+        }
+    ],
+    "action_items": [
+        {
+            "task": "Add mocked AI tests",
+            "owner": "Keigo",
+            "due_at": None,
+            "turn_refs": [0],
+            "confidence": "high",
+        }
+    ],
+    "claims": [
+        {
+            "claim": "Keyword search works without embeddings.",
+            "type": "fact",
+            "turn_refs": [1],
+            "confidence": "high",
+        }
+    ],
+    "concepts": [
+        {"name": "KnowledgeOS", "type": "product", "turn_refs": [0], "confidence": "high"}
+    ],
+    "suggested_links": [],
+    "warnings": [],
+}
+
+
+def stub_structured_ai(monkeypatch: pytest.MonkeyPatch, payload: str | None = None) -> None:
+    async def fake_call_ai(
+        db,
+        *,
+        user_id,
+        agent_type,
+        messages,
+        model=None,
+        temperature=0.2,
+        input_context=None,
+    ):
+        run = await create_agent_run(
+            db,
+            user_id=user_id,
+            agent_type=agent_type,
+            input_payload={"messages": messages, "context": input_context or {}},
+            model=model,
+        )
+        await finish_agent_run(
+            db,
+            run,
+            status="success",
+            output={"text": payload or json.dumps(STRUCTURED_SUMMARY)},
+        )
+        return payload or json.dumps(STRUCTURED_SUMMARY), run
+
+    monkeypatch.setattr("app.services.chat_structured_service.call_ai", fake_call_ai)
 
 
 @pytest.mark.asyncio
@@ -208,5 +290,133 @@ async def test_cross_user_chat_access_returns_404(client: AsyncClient):
     )
 
     resp = await client.get(f"/api/v1/chats/{created['id']}")
+
+    assert resp.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_structured_summary_preview_requires_auth(client: AsyncClient):
+    resp = await client.post(f"/api/v1/chats/{uuid.uuid4()}/structured-summary")
+    assert resp.status_code == 401
+
+
+@pytest.mark.asyncio
+async def test_structured_summary_preview_returns_schema(
+    auth_client: AsyncClient, monkeypatch: pytest.MonkeyPatch
+):
+    stub_structured_ai(monkeypatch)
+    created = await _import_plain(auth_client)
+
+    resp = await auth_client.post(f"/api/v1/chats/{created['id']}/structured-summary")
+
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["status"] == "previewed"
+    assert data["structured_summary"]["claims"][0]["turn_refs"] == [1]
+
+
+@pytest.mark.asyncio
+async def test_structured_summary_ai_disabled_returns_clear_error(auth_client: AsyncClient):
+    created = await _import_plain(auth_client)
+
+    resp = await auth_client.post(f"/api/v1/chats/{created['id']}/structured-summary")
+
+    assert resp.status_code == 503
+    assert resp.json()["detail"] == "ai_disabled"
+
+
+@pytest.mark.asyncio
+async def test_structured_summary_malformed_ai_json_returns_502(
+    auth_client: AsyncClient, monkeypatch: pytest.MonkeyPatch
+):
+    stub_structured_ai(monkeypatch, payload="{not json")
+    created = await _import_plain(auth_client)
+
+    resp = await auth_client.post(f"/api/v1/chats/{created['id']}/structured-summary")
+
+    assert resp.status_code == 502
+
+
+@pytest.mark.asyncio
+async def test_apply_structured_summary_creates_claim_task_edges_and_revision(
+    auth_client: AsyncClient, monkeypatch: pytest.MonkeyPatch, stub_reindex: list[str]
+):
+    stub_structured_ai(monkeypatch)
+    created = await _import_plain(auth_client)
+    preview = await auth_client.post(f"/api/v1/chats/{created['id']}/structured-summary")
+    assert preview.status_code == 200
+
+    apply = await auth_client.post(
+        f"/api/v1/chats/{created['id']}/structured-summary/apply",
+        json={},
+    )
+
+    assert apply.status_code == 200
+    data = apply.json()
+    assert data["chat"]["structured_summary_status"] == "applied"
+    kinds = {obj["kind"] for obj in data["created_objects"]}
+    assert kinds == {"claim", "task"}
+    assert len(data["edges"]) == 2
+    assert created["id"] in stub_reindex
+
+    from app.db.session import AsyncSessionLocal
+
+    async with AsyncSessionLocal() as db:
+        objects = (
+            await db.execute(
+                select(KosObject).where(KosObject.kind.in_(["claim", "task"]))
+            )
+        ).scalars().all()
+        edges = (await db.execute(select(Edge))).scalars().all()
+        revisions = (
+            await db.execute(
+                select(ObjectRevision).where(ObjectRevision.object_id == created["id"])
+            )
+        ).scalars().all()
+
+    assert {obj.metadata_["turn_refs"][0] for obj in objects} == {0, 1}
+    assert {edge.kind for edge in edges} >= {"derived_from", "created_from"}
+    assert revisions
+
+
+@pytest.mark.asyncio
+async def test_duplicate_apply_reuses_extracted_objects(
+    auth_client: AsyncClient, monkeypatch: pytest.MonkeyPatch
+):
+    stub_structured_ai(monkeypatch)
+    created = await _import_plain(auth_client)
+    await auth_client.post(f"/api/v1/chats/{created['id']}/structured-summary")
+    first = await auth_client.post(
+        f"/api/v1/chats/{created['id']}/structured-summary/apply",
+        json={},
+    )
+    second = await auth_client.post(
+        f"/api/v1/chats/{created['id']}/structured-summary/apply",
+        json={},
+    )
+
+    assert first.status_code == 200
+    assert second.status_code == 200
+    assert len(second.json()["created_objects"]) == 0
+    assert len(second.json()["reused_objects"]) == 2
+
+
+@pytest.mark.asyncio
+async def test_user_cannot_summarize_another_users_chat(
+    client: AsyncClient, monkeypatch: pytest.MonkeyPatch
+):
+    stub_structured_ai(monkeypatch)
+    await client.post(
+        "/api/v1/auth/register",
+        json={"email": "one-summary@test.com", "password": "password123", "display_name": "One"},
+    )
+    created = await _import_plain(client)
+    await client.post("/api/v1/auth/logout")
+    await client.post(
+        "/api/v1/auth/register",
+        json={"email": "two-summary@test.com", "password": "password123", "display_name": "Two"},
+    )
+
+    resp = await client.post(f"/api/v1/chats/{created['id']}/structured-summary")
 
     assert resp.status_code == 404
