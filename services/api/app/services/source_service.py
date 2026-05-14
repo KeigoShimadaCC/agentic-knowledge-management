@@ -2,6 +2,7 @@ import asyncio
 import logging
 import uuid
 from datetime import datetime, timezone
+from pathlib import Path
 
 from fastapi import HTTPException
 from redis import Redis
@@ -16,6 +17,12 @@ from app.models.source import Source
 from app.schemas.source import SourceCreate, SourceUpdate
 
 logger = logging.getLogger(__name__)
+
+
+async def ensure_source_dir(source_id: str) -> Path:
+    path = settings.library_root / "sources" / source_id
+    path.mkdir(parents=True, exist_ok=True)
+    return path
 
 
 async def create_source(
