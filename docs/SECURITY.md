@@ -110,6 +110,7 @@ FastAPI accepts an `X-KOS-Internal-Token` header as an alternative to the sessio
 
 ## Backups
 
-- Daily local backup of Postgres dump + Qdrant storage + library assets
-- Weekly compressed backup
-- Manual one-click backup via `scripts/backup.sh`
+- Manual local backups are available through `bash scripts/backup.sh`.
+- The script writes to `~/KnowledgeOS/backups/<timestamp>/` and includes a custom-format Postgres dump plus a compressed copy of `~/KnowledgeOS/library/`.
+- Qdrant snapshot creation is best-effort because Qdrant is a rebuildable index, not canonical storage.
+- Restore Postgres and the library together. A database-only restore can leave object rows pointing at missing files; a file-only restore can leave orphaned originals with no object metadata.

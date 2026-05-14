@@ -54,6 +54,16 @@ The worker (`services/worker/kos_worker/`) runs as a separate process via `rq wo
 
 Postgres is the source of truth for identity, object metadata, page documents, asset records, graph edges, ingestion status, and agent run records. The filesystem is the source of truth for large original files and later extracted derivatives. Redis is transient coordination state and should not be treated as durable storage.
 
+## Backup and Restore Boundary
+
+The supported local backup entry point is `bash scripts/backup.sh`. It writes timestamped backups under `~/KnowledgeOS/backups/`:
+
+- `postgres.dump` from `pg_dump -Fc` against the Compose Postgres service.
+- `library.tar.gz`, a compressed copy of `~/KnowledgeOS/library/` excluding `tmp/`.
+- `qdrant-snapshot.json` when the local Qdrant collection can create a snapshot, or a skipped marker when Qdrant is unavailable.
+
+Postgres and the library directory are canonical. Redis, Qdrant, and future graph indexes are derived or transient state and can be rebuilt from canonical data.
+
 ## Phase 1 Data Flow
 
 For normal object and page actions:

@@ -199,6 +199,18 @@ Docker Compose publishes services on loopback-only host ports:
 
 Use `http://127.0.0.1:8001` for host-side clients talking to the dockerized API. Use `http://api:8000` only from inside the Docker network. If you run the API natively with `uvicorn --port 8000`, host-side clients should use `http://127.0.0.1:8000`.
 
+### Backup & Restore
+
+Create a local backup with:
+
+```bash
+bash scripts/backup.sh
+```
+
+Backups are written to `~/KnowledgeOS/backups/<timestamp>/` and include a custom-format `pg_dump`, a compressed library tarball, and a best-effort Qdrant snapshot metadata file. Postgres plus `~/KnowledgeOS/library/` are canonical; Qdrant is a rebuildable search index.
+
+To restore manually, stop the app, restore `postgres.dump` into a clean Postgres database with `pg_restore`, unpack `library.tar.gz` back under `~/KnowledgeOS/`, then rebuild/reindex derived search data as needed. Do not rely on Qdrant snapshots as the only backup of user data.
+
 ---
 
 ## File Layout
@@ -230,7 +242,7 @@ Use `http://127.0.0.1:8001` for host-side clients talking to the dockerized API.
 │   └── prompts/           Reserved (currently empty placeholder)
 │
 ├── infra/                 Docker Compose, Dockerfiles, .env.example
-├── scripts/               setup.sh, run_tests.sh
+├── scripts/               setup.sh, run_tests.sh, backup.sh
 ├── tests/api/             Integration tests (pytest + httpx ASGI)
 ├── tests/unit/            Pure unit tests (parsers, URL safety)
 ├── docs/                  Architecture, data model, API, MCP, ingestion, security
