@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { getObjectBacklinks } from "@/lib/api";
+import { objectRoute } from "@/lib/objectRouting";
 import type { EdgeWithObjectsOut } from "@/types";
 
 interface BacklinksPanelProps {
@@ -80,7 +81,7 @@ export function BacklinksPanel({ objectId }: BacklinksPanelProps) {
           <button
             type="button"
             key={edge.id}
-            onClick={() => router.push(source.kind === "source" ? `/sources/${source.id}` : `/pages/${source.id}`)}
+            onClick={() => router.push(objectRoute(source.kind, source.id))}
             className="block w-full px-3 py-3 text-left hover:bg-gray-900"
           >
             <div className="truncate text-sm text-gray-100">{source.title}</div>

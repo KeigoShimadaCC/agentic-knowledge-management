@@ -1,6 +1,7 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { AppShell } from "@/components/layout/AppShell";
+import { WorkspaceLiteProvider } from "@/components/workspace/WorkspaceLiteProvider";
 
 async function getCurrentUser() {
   const apiUrl = process.env.API_URL ?? "http://localhost:8000";
@@ -27,5 +28,9 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const user = await getCurrentUser();
   if (!user) redirect("/login");
 
-  return <AppShell>{children}</AppShell>;
+  return (
+    <WorkspaceLiteProvider>
+      <AppShell>{children}</AppShell>
+    </WorkspaceLiteProvider>
+  );
 }

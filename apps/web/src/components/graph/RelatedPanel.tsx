@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { getObjectRelated } from "@/lib/api";
+import { objectRoute } from "@/lib/objectRouting";
 import type { RelatedObjectOut } from "@/types";
 
 interface RelatedPanelProps {
@@ -76,7 +77,7 @@ export function RelatedPanel({ objectId }: RelatedPanelProps) {
         <button
           type="button"
           key={`${object.id}-${object.direction}-${object.edge_kind}`}
-          onClick={() => router.push(object.kind === "source" ? `/sources/${object.id}` : `/pages/${object.id}`)}
+          onClick={() => router.push(objectRoute(object.kind, object.id))}
           className="block w-full px-3 py-3 text-left hover:bg-gray-900"
         >
           <div className="flex items-center gap-2">

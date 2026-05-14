@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSearch } from "@/lib/hooks/useSearch";
 import type { SearchMode } from "@/types";
+import { objectRoute } from "@/lib/objectRouting";
 import { SearchResultCard } from "./SearchResultCard";
 
 const MODES: { label: string; value: SearchMode }[] = [
@@ -11,12 +12,6 @@ const MODES: { label: string; value: SearchMode }[] = [
   { label: "Semantic", value: "semantic" },
   { label: "Hybrid", value: "hybrid" },
 ];
-
-function resultUrl(result: { id: string; kind: string }): string {
-  if (result.kind === "page") return `/pages/${result.id}`;
-  if (result.kind === "source") return `/sources/${result.id}`;
-  return `/assets/${result.id}`;
-}
 
 interface SearchModalProps {
   isOpen: boolean;
@@ -57,7 +52,7 @@ export function SearchModal({ isOpen, onClose }: SearchModalProps) {
       }
       if (e.key === "Enter" && results[selectedIdx]) {
         onClose();
-        router.push(resultUrl(results[selectedIdx]));
+        router.push(objectRoute(results[selectedIdx].kind, results[selectedIdx].id));
       }
     }
     document.addEventListener("keydown", onKey);
@@ -138,7 +133,7 @@ export function SearchModal({ isOpen, onClose }: SearchModalProps) {
                 isSelected={idx === selectedIdx}
                 onSelect={() => {
                   onClose();
-                  router.push(resultUrl(result));
+                  router.push(objectRoute(result.kind, result.id));
                 }}
               />
             ))}
