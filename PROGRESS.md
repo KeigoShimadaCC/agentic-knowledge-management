@@ -66,6 +66,22 @@ See [`project-phases/PHASE-3-SEARCH.md`](project-phases/PHASE-3-SEARCH.md) for t
 
 ---
 
+## Hardening Track — Search Quality + Multilingual Retrieval 🚧 In Progress
+
+**Goal:** Strengthen retrieval quality for multilingual content (Japanese focus), harden security of search snippets, and increase observability and debug visibility.
+
+See [`project-phases/HARDENING-SEARCH-QUALITY-MULTILINGUAL.md`](project-phases/HARDENING-SEARCH-QUALITY-MULTILINGUAL.md) for the full subtask spec.
+
+- [x] **Subtask 0** — Audit and finalize plan: add plan to `project-phases/`, update `PROGRESS.md`
+- [ ] **Subtask 1** — Multilingual keyword fallback: support Japanese/mixed-language via `ILIKE` fallback + `pg_trgm`
+- [ ] **Subtask 2** — Search snippet sanitization: prevent XSS in highlighted snippets
+- [ ] **Subtask 3** — Search eval fixture expansion: add Japanese and mixed-language cases to `search_eval_cases.json`
+- [ ] **Subtask 4** — Search debug visibility: display ranking scores in UI (optional/dev-mode)
+- [ ] **Subtask 5** — Index/reindex observability: add index status endpoint and document reindex commands
+- [ ] **Subtask 6** — Documentation and final validation: update API/Architecture/Security docs
+
+---
+
 ## Phase 4 — Graph Lite ✅ Complete
 
 **Goal:** Give the knowledge base a graph backbone using the existing Postgres `edges` table. Surface typed links and backlinks in the UI without requiring Kùzu yet.
@@ -92,9 +108,9 @@ See [`project-phases/PHASE-3-SEARCH.md`](project-phases/PHASE-3-SEARCH.md) for t
 
 ---
 
-## Phase 8A — Workspace Lite ⬜ In Progress
+## Phase 8A — Workspace Lite ✅ Complete
 
-**Goal:** Let the user open a second object beside their current view without navigating away. Frontend-only split pane (no DB schema changes). Runs in parallel with Phase 5 and Phase 6 on branch `phase8a-workspace-lite`.
+**Goal:** Let the user open a second object beside their current view without navigating away. Frontend-only split pane (no DB schema changes). Ran in parallel with Phase 5 and Phase 6 on branch `phase8a-workspace-lite`.
 
 See [`project-phases/PHASE-8A-WORKSPACE-LITE.md`](project-phases/PHASE-8A-WORKSPACE-LITE.md) for the full subtask spec.
 
@@ -148,6 +164,26 @@ See [`project-phases/PHASE-6A-CHAT-IMPORT-LITE.md`](project-phases/PHASE-6A-CHAT
 - [ ] **Subtask 1** — LLM summarizer: decisions, open questions, action items, claims, concepts, projects
 - [ ] **Subtask 2** — Object extraction: Claim, Task, concept → edges from chat
 - [ ] **Subtask 3** — Tests + docs: fixture exports; update `docs/INGESTION.md`
+
+---
+
+## Phase 6B — Structured Chat Import ⬜ In Progress
+
+**Goal:** Turn imported chats into structured, linked, reusable knowledge through explicit AI-backed summary generation and apply flow.
+
+See [`project-phases/PHASE-6B-STRUCTURED-CHAT-IMPORT.md`](project-phases/PHASE-6B-STRUCTURED-CHAT-IMPORT.md) for the full subtask spec.
+
+**Audit note:** The repo has Phase 6A complete, but Phase 5 is only partially present. Phase 6B includes the minimal AI client, revision service, and generic Claim/Task object support needed for structured chat import; it does not implement the full Phase 5 AI Assistant/Inbox scope.
+
+- [x] **Subtask 0** — Audit + Phase 6B plan artifact
+- [ ] **Subtask 1** — Minimal AI/revision/claim-task prerequisites
+- [ ] **Subtask 2** — Structured summary data model
+- [ ] **Subtask 3** — Structured summary schema and prompt
+- [ ] **Subtask 4** — Structured summary preview API
+- [ ] **Subtask 5** — Apply structured summary and extracted objects
+- [ ] **Subtask 6** — Search/index integration
+- [ ] **Subtask 7** — Chat detail UI
+- [ ] **Subtask 8** — Tests and docs
 
 ---
 
@@ -205,11 +241,12 @@ See [`project-phases/PHASE-6A-CHAT-IMPORT-LITE.md`](project-phases/PHASE-6A-CHAT
 | 8A | Workspace Lite | ✅ Complete | 7 / 7 subtasks |
 | 5 | AI Assistant + Inbox/Triage | ⬜ Planned | 0 / 12 subtasks |
 | 6A | Chat Import Lite | ✅ Complete | 8 / 8 subtasks |
+| 6B | Structured Chat Import | ⬜ In Progress | 1 / 9 subtasks |
 | 7 | MCP Server (staged) | ⬜ Planned | 0 / 6 subtasks |
 | 8 | Multi-Pane Workspaces | ⬜ Planned | 0 / 8 subtasks |
 | 9 | Career & Project Memory | ⬜ Planned | 0 / 8 subtasks |
 
-**Total:** 48 / 82 subtasks complete
+**Total:** 49 / 91 subtasks complete
 
 **Key cross-cutting concepts to track:**
 - Inbox/Triage (Phase 5): AI-classified staging area for unprocessed items
@@ -220,3 +257,4 @@ See [`project-phases/PHASE-6A-CHAT-IMPORT-LITE.md`](project-phases/PHASE-6A-CHAT
 **Current repo state notes (2026-05-14):**
 - Phase 3 search is complete, including keyword, vector, and hybrid API behavior, search UI, integration tests, and API/architecture documentation.
 - Phase 6A Chat Import Lite is complete: chat object model/API/parser/storage/search/UI and test coverage are in place. Chat migration is `0005_add_chats.py` because an existing local `0004_object_revisions.py` migration is present in the workspace.
+- Phase 6B Structured Chat Import is active. The repo audit found Phase 5 incomplete, so Phase 6B includes only the minimal AI/revision/Claim/Task prerequisites needed for chat structure extraction.
