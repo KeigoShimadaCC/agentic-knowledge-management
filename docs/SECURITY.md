@@ -78,6 +78,36 @@ Design decisions:
 
 See `docs/REVISION_HISTORY.md` for the full design.
 
+## MCP Internal Token Auth (Phase 7A)
+
+FastAPI accepts an `X-KOS-Internal-Token` header as an alternative to the session cookie for local MCP access.
+
+**How it works:**
+
+1. `MCP_INTERNAL_TOKEN` is set in `infra/.env` (gitignored, never committed).
+2. FastAPI `get_current_user` in `core/deps.py` checks the header before the cookie.
+3. Match is verified with `secrets.compare_digest` (timing-safe).
+4. On match: loads the first non-deleted user (single-user local appliance).
+5. If token config is empty: header is silently ignored; no authentication bypass.
+
+**Security properties:**
+- Token is never logged, returned in API responses, or exposed through MCP tools.
+- Empty token = feature disabled (safe default — no header value can match an empty secret).
+- Timing-safe comparison prevents oracle attacks.
+- User ownership filtering is preserved: all objects queries still filter by `user_id`.
+
+**Limitation:** Multi-user instances are not supported through MCP in Phase 7A. The token grants access as the first active user. Phase 7B will address per-user MCP auth if needed.
+
+## MCP Server Safety (Phase 7A)
+
+- **Disabled by default** (`MCP_ENABLED=false`). Server exits immediately if not enabled.
+- **stdio transport only** — no HTTP server, no new open port.
+- **Tool allowlist** (`MCP_ALLOWED_TOOLS`) enforced at startup. Tools not in the list are not registered.
+- **No write tools** registered in Phase 7A regardless of config flags.
+- **No shell execution** — no tools that run commands or access the filesystem arbitrarily.
+- **Secret redaction** — `redact_dict()` applied to every tool response. Keys: `api_key`, `openai_api_key`, `session_secret`, `mcp_internal_token`, `token`, `token_hash`, `password`, `password_hash`, `secret`.
+- **`answer_from_kb`** — registered as a disabled stub. It calls the Phase 5 AI endpoint when that becomes available; until then it returns a clear error.
+
 ## Backups
 
 - Daily local backup of Postgres dump + Qdrant storage + library assets

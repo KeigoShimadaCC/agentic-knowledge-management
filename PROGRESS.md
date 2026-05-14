@@ -1,6 +1,6 @@
 # KnowledgeOS — Progress Tracker
 
-> Last updated: 2026-05-14
+> Last updated: 2026-05-14 (Phase 7A MCP complete)
 
 ---
 
@@ -185,22 +185,24 @@ See [`project-phases/PHASE-6B-STRUCTURED-CHAT-IMPORT.md`](project-phases/PHASE-6
 
 ---
 
-## Phase 7A — MCP Read/Search + Safety Foundation ⬜ In Progress
+## Phase 7A — MCP Read/Search + Safety Foundation ✅ Complete
 
-**Goal:** Safe local-only stdio MCP server with read/search tools. No write tools. No shell. No arbitrary filesystem access. `answer_from_kb` deferred until Phase 5 AI endpoint is built.
+**Goal:** Safe local-only stdio MCP server with read/search tools. No write tools. No shell. No arbitrary filesystem access. `answer_from_kb` registered as disabled stub.
+
+**Commits:** 4 commits · 24 tests passing (19 MCP package + 5 FastAPI token auth)
 
 See [`project-phases/PHASE-7A-MCP.md`](project-phases/PHASE-7A-MCP.md) for the full subtask spec.
 
 - [x] **Subtask 0** — Audit + plan files: create phase doc, update PROGRESS.md
-- [ ] **Subtask 1** — MCP config + safety foundation: `McpSettings`, `redact_dict`, `pyproject.toml`, `.env.example`
-- [ ] **Subtask 2** — FastAPI internal token auth: `config.py` + `deps.py` + `test_mcp_auth.py`
-- [ ] **Subtask 3** — MCP API client: `client.py` (httpx, 6 methods)
-- [ ] **Subtask 4** — MCP server scaffold: `server.py` + `tools.py` skeleton + tool registry
-- [ ] **Subtask 5** — Search tools: `search_objects`, `hybrid_search` (with 503 fallback)
-- [ ] **Subtask 6** — Object/page/source tools: `get_object`, `get_page`, `get_source`
-- [ ] **Subtask 7** — Graph tool + `answer_from_kb` stub: `get_related_objects`, disabled stub
-- [ ] **Subtask 8** — Tests: `test_config.py`, `test_tools.py`, `test_mcp_auth.py`
-- [ ] **Subtask 9** — Docs: `MCP_TOOLS.md`, `SECURITY.md`, `AGENT_GUIDE.md`, `README.md`
+- [x] **Subtask 1** — MCP config + safety foundation: `McpSettings`, `redact_dict`, `pyproject.toml`, `.env.example`
+- [x] **Subtask 2** — FastAPI internal token auth: `config.py` + `deps.py` + 5 `test_mcp_auth.py` tests
+- [x] **Subtask 3** — MCP API client: `client.py` (httpx, 6 methods, depth/limit caps)
+- [x] **Subtask 4** — MCP server scaffold: `server.py` + `tools.py` + tool registry + `list_tools`/`call_tool` handlers
+- [x] **Subtask 5** — Search tools: `search_objects`, `hybrid_search` (with 503 → keyword fallback)
+- [x] **Subtask 6** — Object/page/source tools: `get_object`, `get_page` (50k truncation), `get_source` (configurable text truncation)
+- [x] **Subtask 7** — Graph tool + `answer_from_kb` stub: `get_related_objects` (depth capped at 2), disabled stub with clear error
+- [x] **Subtask 8** — Tests: `test_config.py` (6), `test_tools.py` (13), `test_mcp_auth.py` (5) — all passing
+- [x] **Subtask 9** — Docs: `MCP_TOOLS.md` (full rewrite), `SECURITY.md` (MCP token + safety section), `AGENT_GUIDE.md` (MCP usage patterns)
 
 ---
 
@@ -257,12 +259,12 @@ See [`project-phases/PHASE-7A-MCP.md`](project-phases/PHASE-7A-MCP.md) for the f
 | 5 | AI Assistant + Inbox/Triage | ✅ Complete | 9 / 9 subtasks |
 | 6A | Chat Import Lite | ✅ Complete | 8 / 8 subtasks |
 | 6B | Structured Chat Import | ✅ Complete | 9 / 9 subtasks |
-| 7A | MCP Read/Search | ⬜ In Progress | 1 / 10 subtasks |
+| 7A | MCP Read/Search | ✅ Complete | 10 / 10 subtasks |
 | 7B | MCP Write Tools | ⬜ Planned | 0 / 4 subtasks |
 | 8 | Multi-Pane Workspaces | ⬜ Planned | 0 / 8 subtasks |
 | 9 | Career & Project Memory | ⬜ Planned | 0 / 8 subtasks |
 
-**Total:** 67 / 96 subtasks complete
+**Total:** 76 / 96 subtasks complete
 
 **Key cross-cutting concepts to track:**
 - Inbox/Triage (Phase 5): AI-classified staging area for unprocessed items

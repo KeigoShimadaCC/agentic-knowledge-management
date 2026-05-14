@@ -38,9 +38,51 @@ User-Agent: KnowledgeOS-Agent/Codex
 
 Agents that perform multi-step tasks should also create or update audit records when that API surface is available. Until then, the `User-Agent` header and normal server logs are the minimum audit trail.
 
+## MCP Server (Phase 7A — Recommended for AI Agents)
+
+The MCP server is the preferred interface for AI agents (Claude Desktop, Claude Code, Cursor). It runs as a local stdio subprocess and provides typed, safe read/search tools.
+
+### Quick start
+
+See `docs/MCP_TOOLS.md` for full setup instructions. In brief:
+
+1. Generate a random token and add to `infra/.env`: `MCP_INTERNAL_TOKEN=<token>`
+2. Set `MCP_ENABLED=true`, `MCP_INTERNAL_TOKEN=<same-token>` in the MCP server env.
+3. Run: `uv run --project services/mcp kos-mcp`
+4. Register in your MCP client config (Claude Desktop, etc.)
+
+### Available tools
+
+| Tool | Purpose |
+|---|---|
+| `search_objects` | Keyword search — works offline, no embeddings needed |
+| `hybrid_search` | Keyword + semantic search; falls back to keyword-only |
+| `get_object` | Metadata for any object by ID |
+| `get_page` | Page title + plain-text content (≤50k chars) |
+| `get_source` | Source metadata + extracted text |
+| `get_related_objects` | Graph traversal, depth 1–2 |
+
+### Usage patterns
+
+- **Discovery first**: always run `search_objects` or `hybrid_search` to find relevant objects before fetching full content.
+- **Follow up with get_***: search returns compact summaries with IDs; call `get_page` or `get_source` for full content.
+- **Graph traversal**: use `get_related_objects` at `depth: 1` before `depth: 2` to avoid over-fetching.
+- **Write tools are not available in Phase 7A.** Do not attempt to create or modify objects through MCP. Use the REST API directly (see below) or wait for Phase 7B.
+
+### What MCP tools will never do
+
+- Execute shell commands
+- Access files outside `~/KnowledgeOS`
+- Return `api_key`, `password`, session secrets, or token hashes
+- Modify any data (Phase 7A is read-only)
+
+---
+
 ## Authentication
 
 KnowledgeOS uses an httponly `kos_session` cookie. Browser-based agents inherit the browser session. HTTP clients must log in through `POST /api/v1/auth/login` or register through `POST /api/v1/auth/register`, then preserve the returned cookie for subsequent requests.
+
+For the MCP server, use the `X-KOS-Internal-Token` header instead of a cookie. See `docs/SECURITY.md` for the token auth design.
 
 Never ask the user for raw database credentials when the API can perform the task.
 
