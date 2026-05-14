@@ -948,3 +948,49 @@ Response:
 ```
 
 Status codes: `200`, `401`, `422`.
+
+---
+
+## AI Endpoints
+
+All AI endpoints require authentication and degrade gracefully — they return `503 Service Unavailable` when `OPENAI_API_KEY` is not configured. Every AI call that writes data also creates an `agent_runs` row and an `object_revisions` row (for existing object mutations).
+
+### POST /api/v1/ai/summarize
+
+Summarize a page or source. Writes the result to `metadata_["ai_summary"]` and creates an `object_revisions` record.
+
+**Request**: `{ "object_id": "uuid", "force": false }` — set `force: true` to re-summarize even when a cached summary exists.
+
+**Response**: `{ "summary": "...", "agent_run_id": "uuid", "cached": false }`
+
+Status codes: `200`, `401`, `404`, `422`, `503`.
+
+### POST /api/v1/ai/extract-claims
+
+Extract factual claims from content, create `claim` objects + `mentions` edges.
+
+**Request**: `{ "object_id": "uuid" }` **Response**: `{ "items": [{"id": "uuid", "title": "..."}], "agent_run_id": "uuid" }`
+
+### POST /api/v1/ai/extract-tasks
+
+Same as extract-claims but creates `task` objects.
+
+### POST /api/v1/ai/suggest-links
+
+Return ranked link suggestions (read-only — user must call `POST /edges` to confirm).
+
+**Request**: `{ "object_id": "uuid", "limit": 5 }` **Response**: `{ "suggestions": [{target_id, target_title, target_kind, reason, confidence}], "agent_run_id": "uuid" }`
+
+### POST /api/v1/ai/answer
+
+Answer a question grounded in the KB. **Request**: `{ "q": "...", "kind": null, "limit": 8 }` **Response**: `{ "answer": "...", "citations": [...], "agent_run_id": "uuid", "context_count": 4 }`
+
+### POST /api/v1/ai/triage
+
+Analyze an inbox item and suggest tags/title/summary (read-only).
+
+**Request**: `{ "object_id": "uuid" }` **Response**: `{ "suggested_tags": [...], "suggested_title": "...", "summary": "...", "agent_run_id": "uuid" }`
+
+### GET /api/v1/ai/inbox
+
+Objects from last 30 days with no tags and no description. **Query**: `limit` (default 20), `offset` (default 0). Returns `PaginatedResponse<ObjectOut>`.

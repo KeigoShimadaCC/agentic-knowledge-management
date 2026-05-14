@@ -10,6 +10,8 @@ os.environ["TEST_MODE"] = "1"  # tells session.py to use NullPool (no cross-loop
 os.environ.setdefault("REDIS_URL", "redis://localhost:6379/0")
 os.environ.setdefault("SESSION_SECRET", "test-secret-key-for-tests-only")
 os.environ.setdefault("LIBRARY_ROOT", "/tmp/kos-test-library")
+# Provide a dummy key so settings.openai_api_key is non-empty; individual AI tests mock the client
+os.environ.setdefault("OPENAI_API_KEY", "sk-test-placeholder")
 
 from app.db.base import Base  # noqa: E402
 from app.db.session import engine  # noqa: E402

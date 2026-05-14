@@ -1,4 +1,5 @@
 import type {
+  AnswerResponse,
   AssetUploadResponse,
   AuthResponse,
   ChatImportResponse,
@@ -8,6 +9,7 @@ import type {
   EdgeCreate,
   EdgeWithObjectsOut,
   EdgeOut,
+  ExtractResponse,
   ObjectOut,
   PageCreateResponse,
   PageOut,
@@ -20,6 +22,9 @@ import type {
   StructuredChatSummary,
   StructuredSummaryApplyResponse,
   StructuredSummaryPreviewResponse,
+  SuggestLinksResponse,
+  SummarizeResponse,
+  TriageResponse,
 } from "@/types";
 import { ApiError } from "@/types";
 
@@ -305,4 +310,71 @@ export async function getObjectRelated(
 ): Promise<RelatedObjectOut[]> {
   const params = new URLSearchParams({ depth: String(depth), limit: "15" });
   return request<RelatedObjectOut[]>(`/api/v1/objects/${objectId}/related?${params}`);
+}
+
+// ── AI feature functions ──────────────────────────────────────────────────────
+
+export async function aiSummarize(objectId: string, force = false): Promise<SummarizeResponse> {
+  return request<SummarizeResponse>("/api/v1/ai/summarize", {
+    method: "POST",
+    body: JSON.stringify({ object_id: objectId, force }),
+  });
+}
+
+export async function aiExtractClaims(objectId: string): Promise<ExtractResponse> {
+  return request<ExtractResponse>("/api/v1/ai/extract-claims", {
+    method: "POST",
+    body: JSON.stringify({ object_id: objectId }),
+  });
+}
+
+export async function aiExtractTasks(objectId: string): Promise<ExtractResponse> {
+  return request<ExtractResponse>("/api/v1/ai/extract-tasks", {
+    method: "POST",
+    body: JSON.stringify({ object_id: objectId }),
+  });
+}
+
+export async function aiSuggestLinks(
+  objectId: string,
+  limit = 5
+): Promise<SuggestLinksResponse> {
+  return request<SuggestLinksResponse>("/api/v1/ai/suggest-links", {
+    method: "POST",
+    body: JSON.stringify({ object_id: objectId, limit }),
+  });
+}
+
+export async function aiAnswer(q: string, kind?: string): Promise<AnswerResponse> {
+  return request<AnswerResponse>("/api/v1/ai/answer", {
+    method: "POST",
+    body: JSON.stringify({ q, kind: kind ?? null }),
+  });
+}
+
+export async function aiTriage(objectId: string): Promise<TriageResponse> {
+  return request<TriageResponse>("/api/v1/ai/triage", {
+    method: "POST",
+    body: JSON.stringify({ object_id: objectId }),
+  });
+}
+
+export async function getInbox(
+  params: { limit?: number; offset?: number } = {}
+): Promise<PaginatedResponse<ObjectOut>> {
+  const qs = new URLSearchParams();
+  if (params.limit) qs.set("limit", String(params.limit));
+  if (params.offset !== undefined) qs.set("offset", String(params.offset));
+  const query = qs.toString();
+  return request<PaginatedResponse<ObjectOut>>(`/api/v1/ai/inbox${query ? `?${query}` : ""}`);
+}
+
+export async function updateObject(
+  id: string,
+  data: { title?: string; description?: string; tags?: string[] }
+): Promise<ObjectOut> {
+  return request<ObjectOut>(`/api/v1/objects/${id}`, {
+    method: "PATCH",
+    body: JSON.stringify(data),
+  });
 }

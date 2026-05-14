@@ -7,6 +7,7 @@ import {
   FileText,
   Files,
   Image,
+  Inbox,
   LogOut,
   MessageSquareText,
   Trash2,
@@ -23,6 +24,7 @@ const navItems = [
   { href: "/app/assets", label: "Assets", icon: Image },
   { href: "/sources", label: "Sources", icon: BookOpen },
   { href: "/app/chats", label: "Chats", icon: MessageSquareText },
+  { href: "/inbox", label: "Inbox", icon: Inbox },
   { href: "/app/trash", label: "Trash", icon: Trash2 },
 ];
 

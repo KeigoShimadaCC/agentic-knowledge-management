@@ -317,3 +317,55 @@ export interface HybridSearchResponse {
   mode: string;
   embeddings_used: boolean;
 }
+
+// ── AI feature types ──────────────────────────────────────────────────────────
+
+export interface SummarizeResponse {
+  summary: string;
+  agent_run_id: string;
+  cached: boolean;
+}
+
+export interface ExtractedItem {
+  id: string;
+  title: string;
+}
+
+export interface ExtractResponse {
+  items: ExtractedItem[];
+  agent_run_id: string;
+}
+
+export interface LinkSuggestion {
+  target_id: string;
+  target_title: string;
+  target_kind: string;
+  reason: string;
+  confidence: number;
+}
+
+export interface SuggestLinksResponse {
+  suggestions: LinkSuggestion[];
+  agent_run_id: string;
+}
+
+export interface AiCitation {
+  object_id: string;
+  title: string;
+  kind: string;
+  snippet: string | null;
+}
+
+export interface AnswerResponse {
+  answer: string;
+  citations: AiCitation[];
+  agent_run_id: string;
+  context_count: number;
+}
+
+export interface TriageResponse {
+  suggested_tags: string[];
+  suggested_title: string | null;
+  summary: string;
+  agent_run_id: string;
+}

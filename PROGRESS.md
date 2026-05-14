@@ -124,24 +124,22 @@ See [`project-phases/PHASE-8A-WORKSPACE-LITE.md`](project-phases/PHASE-8A-WORKSP
 
 ---
 
-## Phase 5 — AI Assistant + Inbox/Triage ⬜ Planned
+## Phase 5 — AI Assistant + Inbox/Triage ✅ Complete
 
-**Goal:** Embed AI directly into the editing and research workflow. Prerequisite: `object_revisions` table in place before AI can write back to pages (see `docs/REVISION_HISTORY.md`).
+**Goal:** Embed AI directly into the editing and research workflow. Every AI write creates an `agent_runs` row + `object_revisions` row; features degrade gracefully when `OPENAI_API_KEY` is absent.
 
-**Prerequisite:** OpenAI API key set in `infra/.env`.
+See [`project-phases/PHASE-5-AI-ASSISTANT.md`](project-phases/PHASE-5-AI-ASSISTANT.md) for the full subtask spec.
 
-- [ ] **Subtask 1** — OpenAI client setup: typed wrapper, configurable model, cost tracking to `agent_runs`, retries with exponential backoff
-- [ ] **Subtask 2** — AI sidebar component: collapsible right panel, chat-style UI, scoped to current page/selected text/workspace; "AI" badge on agent-generated content
-- [ ] **Subtask 3** — Summarize page: `POST /ai/summarize` → LLM summary stored back on page; one-click in toolbar
-- [ ] **Subtask 4** — Summarize source: same for PDF/web/YouTube; displays in source detail panel
-- [ ] **Subtask 5** — Extract claims: `POST /ai/extract-claims` → creates `Claim` objects linked via `derived_from` edge
-- [ ] **Subtask 6** — Extract tasks + entities: action items → Task objects; people/orgs/concepts mentioned
-- [ ] **Subtask 7** — Suggest links: `POST /ai/suggest-links` → search KB, propose edges with explanation
-- [ ] **Subtask 8** — KB Q&A with citations: `POST /ai/answer` — hybrid retrieval → context pack → LLM answer with `[source_id, chunk_id]` citations
-- [ ] **Subtask 9** — Inbox/Triage: `POST /ai/triage-inbox` → LLM classifies and routes unprocessed items in `library/inbox/`; inbox view in sidebar
-- [ ] **Subtask 10** — `object_revisions` table: implement as prerequisite to AI page writes; link to `agent_runs`; rollback API
-- [ ] **Subtask 11** — All AI writes create `agent_runs` rows; UI shows AI-generated badge
-- [ ] **Subtask 12** — Tests + docs: mock OpenAI in tests; update `docs/AGENT_GUIDE.md`, `docs/REVISION_HISTORY.md`
+- [x] **Subtask 0** — Migration 0004: `object_revisions` table + `ai_generated` column on objects; `openai_chat_model`/`openai_max_tokens` config; plan saved to `project-phases/`
+- [x] **Subtask 1** — AI client module + router scaffold: `app/ai/client.py` (`call_ai()` wrapper auto-creates `AgentRun` rows), `app/ai/prompts.py` (all prompt templates), `app/services/revision_service.py` (`create_revision()`), `app/schemas/ai.py` (all request/response schemas), `app/api/v1/ai.py` (router registered)
+- [x] **Subtask 2** — Summarize endpoint: `POST /api/v1/ai/summarize` reads page/source content, generates summary, writes to `metadata_["ai_summary"]`, creates `object_revisions` record; cache + force-refresh supported
+- [x] **Subtask 3** — Extract claims + tasks: `POST /api/v1/ai/extract-claims` and `/extract-tasks` create typed child objects + `mentions` edges; JSON parse errors degrade gracefully
+- [x] **Subtask 4** — Suggest links: `POST /api/v1/ai/suggest-links` uses keyword search + LLM ranking; read-only (no auto-write)
+- [x] **Subtask 5** — KB Q&A: `POST /api/v1/ai/answer` uses hybrid search + LLM; returns citations parsed from `Sources: [uuid]` pattern
+- [x] **Subtask 6** — Inbox API + triage: `GET /api/v1/ai/inbox` (last 30 days, no tags/description); `POST /api/v1/ai/triage` (read-only tag/title/summary suggestions)
+- [x] **Subtask 7** — AI Sidebar UI: `AiPanel` component in `GraphPanel` (new "AI" tab alongside Backlinks/Related); Summarize, Extract Claims/Tasks, Suggest Links (with Create Link button), Ask KB with citations
+- [x] **Subtask 8** — Inbox UI: `/inbox` page + `InboxView` + `TriageModal` (toggle tags, edit title, apply via `PATCH /objects/{id}`); Inbox nav link in Sidebar
+- [x] **Subtask 9** — Tests + docs: `tests/api/test_ai.py` (14 tests with mocked OpenAI); `docs/API.md` updated with all AI endpoints
 
 ---
 
@@ -256,7 +254,7 @@ See [`project-phases/PHASE-7A-MCP.md`](project-phases/PHASE-7A-MCP.md) for the f
 | 3 | Search | ✅ Complete | 10 / 10 subtasks |
 | 4 | Graph Lite | ✅ Complete | 6 / 6 subtasks |
 | 8A | Workspace Lite | ✅ Complete | 7 / 7 subtasks |
-| 5 | AI Assistant + Inbox/Triage | ⬜ Planned | 0 / 12 subtasks |
+| 5 | AI Assistant + Inbox/Triage | ✅ Complete | 9 / 9 subtasks |
 | 6A | Chat Import Lite | ✅ Complete | 8 / 8 subtasks |
 | 6B | Structured Chat Import | ✅ Complete | 9 / 9 subtasks |
 | 7A | MCP Read/Search | ⬜ In Progress | 1 / 10 subtasks |
@@ -264,7 +262,7 @@ See [`project-phases/PHASE-7A-MCP.md`](project-phases/PHASE-7A-MCP.md) for the f
 | 8 | Multi-Pane Workspaces | ⬜ Planned | 0 / 8 subtasks |
 | 9 | Career & Project Memory | ⬜ Planned | 0 / 8 subtasks |
 
-**Total:** 58 / 99 subtasks complete
+**Total:** 67 / 96 subtasks complete
 
 **Key cross-cutting concepts to track:**
 - Inbox/Triage (Phase 5): AI-classified staging area for unprocessed items
