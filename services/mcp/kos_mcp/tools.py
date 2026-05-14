@@ -196,14 +196,30 @@ def register_tools(server: Server, client: KosApiClient, settings: McpSettings) 
             Tool(
                 name="answer_from_kb",
                 description=(
-                    "[UNAVAILABLE] KB Q&A with citations. Requires Phase 5 AI endpoint "
-                    "which is not yet implemented."
+                    "Search the knowledge base and answer a question with citations. "
+                    "Uses hybrid search + LLM reasoning over matching pages, sources, and chats. "
+                    "Returns answer text, citation object IDs, and context count. "
+                    "Read-only. Requires OPENAI_API_KEY on the server; returns an error object "
+                    "if AI is disabled."
                 ),
                 inputSchema={
                     "type": "object",
                     "properties": {
-                        "question": {"type": "string"},
-                        "limit": {"type": "integer", "default": 10},
+                        "question": {
+                            "type": "string",
+                            "description": "The question to answer from the knowledge base",
+                        },
+                        "kind": {
+                            "type": "string",
+                            "description": "Restrict search to one object kind: page, source, chat",
+                        },
+                        "limit": {
+                            "type": "integer",
+                            "default": 10,
+                            "minimum": 1,
+                            "maximum": 20,
+                            "description": "Max number of KB chunks to retrieve as context",
+                        },
                     },
                     "required": ["question"],
                 },
@@ -246,10 +262,7 @@ async def _dispatch(name: str, args: dict, client: KosApiClient) -> object:
     if name == "get_related_objects":
         return await _get_related_objects(client, **args)
     if name == "answer_from_kb":
-        raise RuntimeError(
-            "answer_from_kb is not available: Phase 5 AI assistant endpoint has not been "
-            "implemented yet."
-        )
+        return await _answer_from_kb(client, **args)
     raise ValueError(f"Unknown tool: {name}")
 
 
@@ -407,6 +420,31 @@ async def _get_source(
         result["extracted_text"] = text[:max_chars]
         result["text_truncated"] = len(text) > max_chars
     return result
+
+
+async def _answer_from_kb(
+    client: KosApiClient,
+    question: str,
+    kind: str | None = None,
+    limit: int = 10,
+) -> dict:
+    try:
+        data = await client.answer_from_kb(q=question, kind=kind, limit=int(limit))
+    except httpx.HTTPStatusError as exc:
+        if exc.response.status_code == 503:
+            return {
+                "error": "ai_disabled",
+                "message": "Server has no OPENAI_API_KEY configured.",
+            }
+        raise
+    return redact_dict(
+        {
+            "answer": data.get("answer"),
+            "citations": data.get("citations"),
+            "context_count": data.get("context_count"),
+            "agent_run_id": data.get("agent_run_id"),
+        }
+    )
 
 
 async def _get_related_objects(

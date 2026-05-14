@@ -176,9 +176,22 @@ Traverse the knowledge graph from a given object.
 
 ---
 
-### `answer_from_kb` (disabled stub)
+### `answer_from_kb`
 
-**Status: UNAVAILABLE** — requires the Phase 5 AI endpoint (`POST /api/v1/ai/answer`), which is currently not wired to MCP. Calling this tool returns an error.
+Search the knowledge base and answer a question with citations, using hybrid retrieval + LLM reasoning.
+
+**Input:**
+| Field | Type | Required | Default |
+|---|---|---|---|
+| `question` | string | yes | — |
+| `kind` | string | no | all kinds |
+| `limit` | integer | no | 10 (max 20) |
+
+**Output (AI enabled):** `{answer: string, citations: string[], context_count: int, agent_run_id: string}`
+
+**Output (AI disabled):** `{error: "ai_disabled", message: "Server has no OPENAI_API_KEY configured."}`
+
+Delegates to `POST /api/v1/ai/answer`. Requires `OPENAI_API_KEY` on the API server. Returns a structured error object (not an exception) when AI is unavailable. Read-only — no writes, no Phase 7B scope.
 
 ---
 
