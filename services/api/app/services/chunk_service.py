@@ -9,8 +9,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.chat import Chat
 from app.models.chunk import Chunk
+from app.models.interview_story_record import InterviewStoryRecord
 from app.models.object import KosObject
 from app.models.page import Page
+from app.models.resume_bullet_set import ResumeBulletSet
 from app.models.source import Source
 from app.search.chunker import chunk_text
 from app.services.chat_structured_service import structured_summary_search_text
@@ -78,6 +80,35 @@ async def _extract_text(db: AsyncSession, obj: KosObject) -> str:
             chat.content_text,
             structured_summary_search_text(chat.structured_summary),
         )
+
+    if obj.kind == "resume_bullet_set":
+        result = await db.execute(select(ResumeBulletSet).where(ResumeBulletSet.id == obj.id))
+        bullet_set = result.scalar_one_or_none()
+        if bullet_set is None:
+            return _join_text(obj.title, obj.description)
+        bullets = bullet_set.bullets or []
+        bullet_text = "\n".join(
+            str(bullet.get("text", "")).strip()
+            for bullet in bullets
+            if isinstance(bullet, dict) and str(bullet.get("text", "")).strip()
+        )
+        return _join_text(obj.title, obj.description, bullet_text)
+
+    if obj.kind == "interview_story":
+        result = await db.execute(
+            select(InterviewStoryRecord).where(InterviewStoryRecord.id == obj.id)
+        )
+        story_record = result.scalar_one_or_none()
+        if story_record is None:
+            return _join_text(obj.title, obj.description)
+        story = story_record.story or {}
+        story_text = _join_text(
+            str(story.get("situation", "")),
+            str(story.get("task", "")),
+            str(story.get("action", "")),
+            str(story.get("result", "")),
+        )
+        return _join_text(obj.title, obj.description, story_text)
 
     return _join_text(obj.title, obj.description)
 

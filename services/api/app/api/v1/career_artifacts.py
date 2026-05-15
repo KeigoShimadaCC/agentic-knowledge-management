@@ -19,7 +19,7 @@ from app.schemas.career_artifacts import (
     SaveInterviewStoryRequest,
     SaveResumeBulletSetRequest,
 )
-from app.services import career_artifact_service
+from app.services import career_artifact_service, reindex_service
 
 router = APIRouter(tags=["career-artifacts"])
 
@@ -81,6 +81,7 @@ async def save_resume_bullet_set_endpoint(
         agent_id=agent_id_from_request(request),
     )
     await db.commit()
+    reindex_service.enqueue_reindex_object(obj.id)
     await db.refresh(obj)
     await db.refresh(row)
     return _build_resume_bullet_set_out(obj, row)
@@ -162,6 +163,7 @@ async def save_interview_story_endpoint(
         agent_id=agent_id_from_request(request),
     )
     await db.commit()
+    reindex_service.enqueue_reindex_object(obj.id)
     await db.refresh(obj)
     await db.refresh(row)
     return _build_interview_story_out(obj, row)
