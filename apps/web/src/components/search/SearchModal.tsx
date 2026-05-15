@@ -66,7 +66,7 @@ export function SearchModal({ isOpen, onClose }: SearchModalProps) {
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center px-4 pt-20">
       <div className="absolute inset-0 bg-black/60" onClick={onClose} />
-      <div className="relative w-full max-w-xl overflow-hidden rounded-xl border border-gray-700 bg-gray-950 shadow-2xl">
+      <div data-testid="search-modal" className="relative w-full max-w-xl overflow-hidden rounded-xl border border-gray-700 bg-gray-950 shadow-2xl">
         <div className="flex border-b border-gray-800">
           {MODES.map(({ label, value }) => (
             <button
@@ -98,6 +98,7 @@ export function SearchModal({ isOpen, onClose }: SearchModalProps) {
           </svg>
           <input
             ref={inputRef}
+            data-testid="search-input"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search knowledge base..."

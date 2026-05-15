@@ -57,7 +57,7 @@ export function TriageModal({ object, onClose, onApplied }: TriageModalProps) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+    <div data-testid="triage-modal" className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
       <div className="w-full max-w-lg rounded-lg border border-gray-700 bg-gray-900 shadow-xl">
         <div className="border-b border-gray-800 px-5 py-4">
           <h2 className="text-sm font-medium text-gray-100">

@@ -74,7 +74,7 @@ export function AiPanel({ objectId, onEdgeCreated }: AiPanelProps) {
   }
 
   return (
-    <div className="space-y-4 p-3">
+    <div data-testid="ai-panel" className="space-y-4 p-3">
       {/* Summarize */}
       <section>
         <div className="flex items-center justify-between">

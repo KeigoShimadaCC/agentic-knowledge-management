@@ -39,7 +39,7 @@ export function WorkspaceSidePane() {
   const { id, kind, title } = sidePaneObject;
 
   return (
-    <aside className="hidden md:flex w-96 shrink-0 flex-col border-l border-gray-800 bg-gray-950 transition-all duration-200">
+    <aside data-testid="side-pane" className="hidden md:flex w-96 shrink-0 flex-col border-l border-gray-800 bg-gray-950 transition-all duration-200">
       <div className="flex items-center gap-2 border-b border-gray-800 px-3 py-2">
         <KindBadge kind={kind} />
         <span className="min-w-0 flex-1 truncate text-sm font-medium text-gray-100">{title}</span>
