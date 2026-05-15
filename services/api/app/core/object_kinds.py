@@ -9,6 +9,8 @@ VALID_OBJECT_KINDS = (
     "claim",
     "task",
     "project",
+    "resume_bullet_set",
+    "interview_story",
 )
 
 

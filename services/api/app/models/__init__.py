@@ -4,9 +4,11 @@ from app.models.chat import Chat
 from app.models.chunk import Chunk
 from app.models.edge import Edge
 from app.models.ingestion_job import IngestionJob
+from app.models.interview_story_record import InterviewStoryRecord
 from app.models.object import KosObject
 from app.models.page import Page
 from app.models.project import Project
+from app.models.resume_bullet_set import ResumeBulletSet
 from app.models.revision import ObjectRevision
 from app.models.session import Session
 from app.models.source import Source
@@ -20,10 +22,12 @@ __all__ = [
     "Chunk",
     "Edge",
     "IngestionJob",
+    "InterviewStoryRecord",
     "KosObject",
     "ObjectRevision",
     "Page",
     "Project",
+    "ResumeBulletSet",
     "Session",
     "Source",
     "User",
