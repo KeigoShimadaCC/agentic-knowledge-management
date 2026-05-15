@@ -1,6 +1,6 @@
 # KnowledgeOS — Progress Tracker
 
-> Last updated: 2026-05-15 (Phase 7C Wave 1 Stabilization complete; Phase 9B career AI generators complete; PHASE-ENHANCE-03 UX Polish all 6 PRs complete and merged to main; PHASE-ENHANCE-02 testing infra complete; Phase 9A backend complete)
+> Last updated: 2026-05-16 (Phase 9D Career MCP Tools complete; Phase 9 fully done — 9A+9B+9C+9D all shipped)
 
 ---
 
@@ -277,18 +277,30 @@ See [`project-phases/PHASE-7B-MCP-WRITE.md`](project-phases/PHASE-7B-MCP-WRITE.m
 
 ---
 
-## Phase 9 — Career & Project Memory 🚧 (9A+9B+9C done; 9D MCP pending)
+## Phase 9 — Career & Project Memory ✅ Complete (9A+9B+9C+9D all done)
 
 **Goal:** Make KnowledgeOS a personal career memory system — structured project records, evidence-linked resume bullets, and STAR interview stories generated from real project data.
 
-- [ ] **Subtask 1** — Project schema + UI: `projects` table (period, role, problem, actions, metrics, skills, artifacts); Project object create/edit form
-- [ ] **Subtask 2** — Project extraction assistant: `POST /ai/create-project-memory` — LLM reads a set of pages/chats/sources scoped to a project and populates the project schema
-- [ ] **Subtask 3** — Evidence linking: attach pages, sources, claims, and chat summaries to a project as `belongs_to_project` edges; evidence panel in project view
-- [ ] **Subtask 4** — Resume bullet generator: `POST /ai/generate-resume-bullets` — input: project_id + target role + emphasis; output: 3 bullet variants with evidence citations and confidence flags
-- [ ] **Subtask 5** — Interview story generator: STAR format story generator from project record; exportable as Markdown
-- [ ] **Subtask 6** — Career memory dashboard: timeline view of projects; filter by skill/role/period; evidence completeness indicator per project
-- [ ] **Subtask 7** — Export: generate Markdown / PDF resume section from selected projects + bullets
-- [ ] **Subtask 8** — Tests + docs: project extraction tests; bullet generation tests with mocked OpenAI; `docs/AGENT_GUIDE.md` updated with career module
+- [x] **Subtask 1** — Project schema + UI: `projects` table + full CRUD REST + evidence-linked frontend dashboard
+- [x] **Subtask 2** — Project extraction assistant: `POST /ai/extract-project` (LLM-powered); `extract_project` MCP tool
+- [x] **Subtask 3** — Evidence linking: `belongs_to_project` edges, EvidencePanel UI, `link_to_project` / `unlink_from_project` MCP tools
+- [x] **Subtask 4** — Resume bullet generator: `POST /ai/generate-resume-bullets`; persistence as `resume_bullet_set` objects; `generate_and_save_resume_bullets` MCP tool
+- [x] **Subtask 5** — Interview story generator: STAR format via `POST /ai/generate-interview-story`; persistence as `interview_story` objects; Markdown export; `generate_and_save_interview_story` MCP tool
+- [x] **Subtask 6** — Career memory dashboard: `/app/projects` timeline list, filters, completeness badge
+- [x] **Subtask 7** — Export: Markdown, PDF (jspdf), copy-to-clipboard in UI
+- [x] **Subtask 8** — Tests + docs: 14 backend API tests, 21 MCP tests, 7 frontend Vitest files, 1 Playwright spec; `docs/MCP_TOOLS.md`, `docs/AGENT_GUIDE.md`, `docs/SECURITY.md` updated
+
+---
+
+## Phase 9D — Career MCP Tools ✅ Complete
+
+**Branch:** `phase-9d-career-mcp` (worktree: `/Users/keigoshimada/Documents/akm-phase-9d`)
+
+- [x] **9D-1 + 9D-2 — 15 MCP tools** — 7 read (get_project, list_projects, get_resume_bullet_set, list_resume_bullet_sets, get_interview_story, list_interview_stories, get_project_evidence) + 8 write (create_project, update_project, archive_project, link_to_project, unlink_from_project, extract_project, generate_and_save_resume_bullets, generate_and_save_interview_story)
+- [x] **9D-3 — Tests** — 21 new tests in `test_project_tools.py`; 35 total in updated `test_tools.py` + `test_config.py`; 56/56 passing
+- [x] **9D-4 — Docs** — `docs/MCP_TOOLS.md` career section, `docs/SECURITY.md` career subsection, `docs/AGENT_GUIDE.md` career MCP flow, `PROGRESS.md` Phase 9 complete
+
+**Verification:** `uvx ruff check services/mcp` → clean; `pytest services/mcp/tests/ -v` → 56 passed, 0 failed.
 
 ---
 
@@ -449,8 +461,9 @@ See [`project-phases/PHASE-8C-MULTI-PANE-WORKSPACES.md`](project-phases/PHASE-8C
 | Hardening | Search Quality + Multilingual | ✅ Complete | 6 / 7 subtasks (Subtask 1 pg_trgm deferred) |
 | 7B | MCP Write Tools | ✅ Complete | 13 / 13 subtasks |
 | 8C | Multi-Pane Workspaces | ✅ Complete | 7 / 7 subtasks |
-| 9 | Career & Project Memory | 🚧 (9A+9B+9C done; 9D MCP pending) | 7 / 8 subtasks |
+| 9 | Career & Project Memory | ✅ Complete (9A+9B+9C+9D) | 8 / 8 subtasks |
 | 9C | Career Memory Frontend | ✅ Complete | 20 / 20 subtasks |
+| 9D | Career MCP Tools | ✅ Complete | 4 / 4 subtasks |
 | Enhance-03 | UX/UI Polish | ✅ Complete | 6 / 6 PRs |
 
 **Total:** 109 / 123 subtasks complete

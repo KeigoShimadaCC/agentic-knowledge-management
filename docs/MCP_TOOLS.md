@@ -372,3 +372,48 @@ When either limit is exceeded the tool returns an error text and no database wri
 5. Use `get_related_objects` with `depth: 1` before going to `depth: 2`.
 
 See `docs/AGENT_GUIDE.md` for detailed usage patterns.
+
+---
+
+## Career / Project Tools (Phase 9D)
+
+Career tools expose the Phase 9 project memory system to agents. Read tools are always available; write tools require `MCP_ALLOW_WRITE_TOOLS=true`.
+
+### Read tools
+
+| Tool | Description |
+|---|---|
+| `get_project` | Fetch a project by UUID. Returns title, role, org, period, status, skills, STAR narrative fields, metrics. |
+| `list_projects` | List projects. Optional filters: `status` (active/paused/completed/archived), `skill` (case-insensitive), `limit`, `offset`. |
+| `get_resume_bullet_set` | Fetch a saved resume bullet set. Returns bullets with confidence, evidence links, metrics cited. |
+| `list_resume_bullet_sets` | List saved bullet sets for a project. |
+| `get_interview_story` | Fetch a saved STAR interview story. Returns full situation/task/action/result structure. |
+| `list_interview_stories` | List saved stories for a project. Optional filter: `question_type`. |
+| `get_project_evidence` | List objects linked to a project via `belongs_to_project` edges. |
+
+### Write tools (gated by `MCP_ALLOW_WRITE_TOOLS=true`)
+
+| Tool | Description |
+|---|---|
+| `create_project` | Create a new project. Required: `title`. Optional: role, org, period dates, STAR fields, metrics, skills, status, tags. |
+| `update_project` | Update any field of an existing project. Required: `project_id`. |
+| `archive_project` | Archive a project (`is_archived=true`). Reversible. Optional: `reason`. |
+| `link_to_project` | Create a `belongs_to_project` edge from an evidence object to a project. Idempotent. |
+| `unlink_from_project` | Delete a `belongs_to_project` edge by edge UUID. |
+| `extract_project` | Use AI to extract a project from a source/page/chat and create it. Returns `project_id`. 503 if AI disabled. |
+| `generate_and_save_resume_bullets` | Generate bullets via AI and save as a `resume_bullet_set` object. Returns the saved set + bullets. 503 → error dict (no save occurs). |
+| `generate_and_save_interview_story` | Generate a STAR story via AI and save as an `interview_story` object. Returns the saved story. 503 → error dict. |
+
+### Rate limits
+
+Career write tools share the same sliding-window rate limit as all write tools (60/min, 600/hour per agent identity). The `generate_and_save_*` tools count as one write against the limiter even though they make two API calls internally.
+
+### AI-disabled degradation
+
+When `OPENAI_API_KEY` is not configured on the server, `extract_project`, `generate_and_save_resume_bullets`, and `generate_and_save_interview_story` return:
+
+```json
+{"error": "ai_disabled", "message": "Server has no OPENAI_API_KEY configured."}
+```
+
+All other career tools (CRUD, link/unlink, list/get) work regardless of AI availability.

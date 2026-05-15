@@ -353,6 +353,74 @@ Evidence should be linked with `belongs_to_project` edges from pages, sources, c
 
 Workspace persistence belongs to Phase 8 proper. The provider is isolated in `components/workspace/` so its internals can be swapped without breaking consumers.
 
+---
+
+## Career Module (Phase 9)
+
+KnowledgeOS's Phase 9 adds a personal career memory system. Projects, resume bullet sets, and STAR interview stories are first-class objects that agents can create, search, link, and generate via MCP.
+
+### Key object kinds
+
+| Kind | What it stores |
+|---|---|
+| `project` | A career project: role, org, period, STAR narrative (problem/actions/results), metrics, skills |
+| `resume_bullet_set` | A set of AI-generated resume bullets tied to a project and target role |
+| `interview_story` | A STAR-format interview story (behavioral/technical/leadership) |
+
+### Evidence linking
+
+Any page, source, or chat can be linked to a project as evidence via a `belongs_to_project` edge:
+
+- **MCP**: `link_to_project(object_id, project_id)` / `unlink_from_project(edge_id)`
+- **UI**: Evidence tab on the project detail page → "Link evidence"
+
+### End-to-end agent flow via MCP
+
+```python
+# 1. Find a relevant source in the KB
+results = hybrid_search("platform migration 2023")
+source_id = results["results"][0]["id"]
+
+# 2. Extract a project from it
+extracted = extract_project(source_id=source_id)
+project_id = extracted["project_id"]
+
+# 3. Add more evidence
+page_id = hybrid_search("platform architecture RFC")["results"][0]["id"]
+link_to_project(object_id=page_id, project_id=project_id)
+
+# 4. Generate and save resume bullets for a target role
+bullets = generate_and_save_resume_bullets(
+    project_id=project_id,
+    target_role="Staff Engineer",
+    emphasis="scale and reliability",
+    count=3,
+)
+print(bullets["bullets"])  # [{text, confidence, evidence_object_ids, metrics_cited}, ...]
+
+# 5. Generate and save a STAR story
+story = generate_and_save_interview_story(
+    project_id=project_id,
+    question_type="behavioral",
+    target_role="Staff Engineer",
+    max_words=300,
+)
+print(story["story"])  # {situation, task, action, result, evidence_object_ids}
+
+# 6. List saved bullet sets later
+sets = list_resume_bullet_sets(project_id=project_id)
+```
+
+### AI-disabled degradation
+
+`extract_project`, `generate_and_save_resume_bullets`, and `generate_and_save_interview_story` require `OPENAI_API_KEY` on the server. When unavailable they return `{"error": "ai_disabled", ...}`. All CRUD tools (create_project, update_project, link_to_project, etc.) work offline.
+
+### Rate limits
+
+Write tools share the 60/min, 600/hour sliding-window limit. `generate_and_save_*` tools count as one write even though they make two API calls.
+
+---
+
 ## Scope Boundaries
 
 Agents may work with:

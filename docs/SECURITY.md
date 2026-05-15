@@ -126,6 +126,17 @@ FastAPI accepts an `X-KOS-Internal-Token` header as an alternative to the sessio
 6. **URL safety** — `ingest_url` rejects `file://`, `localhost`, loopback IPs (`127.0.0.0/8`), and link-local ranges before calling the API.
 7. **Optimistic locking** — `update_page` accepts an optional `expected_version`; returns 409 Conflict if the page was modified between read and write.
 
+### Career Tools (Phase 9D)
+
+Career write tools (`create_project`, `update_project`, `archive_project`, `link_to_project`, `unlink_from_project`, `extract_project`, `generate_and_save_resume_bullets`, `generate_and_save_interview_story`) share all seven invariants above.
+
+Additional notes specific to career tools:
+
+- **No new secrets** — career tools use the same `X-KOS-Internal-Token` auth. No extra credentials are introduced.
+- **AI generation + save atomicity** — `generate_and_save_*` tools call the AI endpoint then save only if generation succeeds. A 503 from the AI endpoint is caught client-side and returned as an error dict; no audit row is written for the failed generation.
+- **Edge idempotency** — `link_to_project` calls `POST /api/v1/edges` which is idempotent on `(source_id, target_id, kind)`. Repeated links to the same project produce one edge row.
+- **Project mutations** — `create_project` and `update_project` call `POST/PATCH /api/v1/projects`. Phase 9A's project service does not yet write `object_revisions` rows (planned follow-up). Revision history for pages and sources is unaffected.
+
 ## Search Output Encoding (XSS Mitigation)
 
 The keyword and hybrid search endpoints return snippets as a structured `{text, highlights}` object — not raw HTML. `ts_headline` output is parsed with sentinel characters (`\x01` / `\x02`) server-side; the resulting plain text and character ranges are delivered as JSON. The frontend renders highlighted segments via React text nodes (not `dangerouslySetInnerHTML`), so user-supplied `<script>` or other HTML in page content cannot execute in the browser. Regression tests verify this with a `<script>` payload in page content.
