@@ -19,7 +19,15 @@ const localStorageMock = (() => {
   };
 })();
 
-vi.stubGlobal("localStorage", localStorageMock);
+Object.defineProperty(globalThis, "localStorage", {
+  value: localStorageMock,
+  configurable: true,
+});
+
+Object.defineProperty(window, "localStorage", {
+  value: localStorageMock,
+  configurable: true,
+});
 
 Range.prototype.getBoundingClientRect = vi.fn(() => ({
   x: 0,
