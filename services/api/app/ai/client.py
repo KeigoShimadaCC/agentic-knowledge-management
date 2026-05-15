@@ -24,17 +24,22 @@ async def call_ai(
     model: str | None = None,
     temperature: float = 0.2,
     input_context: dict[str, Any] | None = None,
+    response_format: dict[str, Any] | None = None,
 ) -> tuple[str, AgentRun]:
     """Call the configured chat model and persist an agent_runs audit row."""
     if not settings.openai_api_key:
         raise HTTPException(status_code=503, detail="ai_disabled")
 
     selected_model = model or settings.openai_chat_model
+    run_context = {"context": input_context or {}, "temperature": temperature}
+    if response_format is not None:
+        run_context["response_format"] = response_format
+
     run = await create_agent_run(
         db,
         user_id=user_id,
         agent_type=agent_type,
-        input_payload={"context": input_context or {}, "temperature": temperature},
+        input_payload=run_context,
         model=selected_model,
     )
 
@@ -55,12 +60,16 @@ async def call_ai(
         import openai
 
         client = openai.AsyncOpenAI(api_key=settings.openai_api_key)
-        response = await client.chat.completions.create(
-            model=selected_model,
-            messages=messages,
-            temperature=temperature,
-            max_tokens=settings.openai_max_tokens,
-        )
+        request_kwargs: dict[str, Any] = {
+            "model": selected_model,
+            "messages": messages,
+            "temperature": temperature,
+            "max_tokens": settings.openai_max_tokens,
+        }
+        if response_format is not None:
+            request_kwargs["response_format"] = response_format
+
+        response = await client.chat.completions.create(**request_kwargs)
         text = response.choices[0].message.content or ""
         usage = getattr(response, "usage", None)
         input_tokens = getattr(usage, "prompt_tokens", None) if usage else None

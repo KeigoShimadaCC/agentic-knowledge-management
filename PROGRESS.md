@@ -1,6 +1,10 @@
 # KnowledgeOS — Progress Tracker
 
+<<<<<<< HEAD
+> Last updated: 2026-05-15 (Phase 9B career AI generators complete on branch `phase-9b`; PHASE-ENHANCE-03 UX Polish all 6 PRs complete and merged to main; PHASE-ENHANCE-02 testing infra complete; Phase 9A backend complete)
+=======
 > Last updated: 2026-05-15 (Phase 8B workspaces backend complete and validated; PHASE-ENHANCE-03 UX Polish all 6 PRs complete and merged to main; PHASE-ENHANCE-02 testing infra complete; Phase 9A backend complete)
+>>>>>>> origin/main
 
 ---
 
@@ -304,6 +308,25 @@ See [`project-phases/PHASE-7B-MCP-WRITE.md`](project-phases/PHASE-7B-MCP-WRITE.m
 - [ ] **Follow-up (9B+)** — MCP project tools (after 7B audited writes), resume/interview generators, frontend; optional retrofit of project mutations to `audited_write_service` once Phase 7B merges
 
 **Verification:** `cd tests && PYTHONPATH=../services/api uv run --project ../services/api --extra dev pytest api/ -q` → 135 passed; `pytest unit/` → 16 passed; `cd services/api && uv run ruff check . && uv run ruff format --check .` clean.
+
+---
+
+## Phase 9B — Career AI Generators ✅ Complete
+
+**Goal:** Backend-only AI generators for evidence-linked resume bullets and STAR interview stories from existing project records. Spec: [`project-phases/PHASE-9B-CAREER-AI-GENERATORS.md`](project-phases/PHASE-9B-CAREER-AI-GENERATORS.md).
+
+**Branch:** `phase-9b` (worktree: `/Users/keigoshimada/Documents/phase-9b`)
+
+- [x] **Subtask 0** — Audit + plan file already present; branch/worktree created; PROGRESS tracking started
+- [x] **Subtask 1** — Pydantic request/response schemas in `schemas/career_ai.py`
+- [x] **Subtask 2** — Prompt templates in `career_ai_prompts.py` with prompt version `9b.1`
+- [x] **Subtask 3** — Evidence helper and resume bullet generator service
+- [x] **Subtask 4** — Interview STAR story generator service
+- [x] **Subtask 5** — Thin `/api/v1/ai/generate-*` endpoint handlers
+- [x] **Subtask 6** — Integration tests covering happy paths, validation, ownership, soft-delete, AI-disabled, malformed JSON, and evidence caps
+- [x] **Subtask 7** — API docs and final PROGRESS completion update
+
+**Verification:** `cd tests && UV_CACHE_DIR=/private/tmp/uv-cache-phase9b PYTHONPATH=../services/api uv run --project ../services/api --extra dev pytest api/test_career_ai.py -v` → 13 passed; isolated regression DB `knowledgeos_phase9b_test` with `pytest api/ unit/ -q` → 164 passed, 1 existing Qdrant version warning; `cd services/api && UV_CACHE_DIR=/private/tmp/uv-cache-phase9b uv run ruff check . && uv run ruff format --check .` clean; `pnpm typecheck` and `pnpm lint` clean.
 
 ---
 
