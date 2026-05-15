@@ -1,6 +1,6 @@
 # KnowledgeOS — Progress Tracker
 
-> Last updated: 2026-05-15 (PHASE-FIX-01 all gaps resolved; PHASE-FIX-02 cleanup merged to main)
+> Last updated: 2026-05-15 (Phase 9A career memory backend on branch `phase-9a-career-memory-backend`)
 
 ---
 
@@ -246,6 +246,21 @@ See [`project-phases/PHASE-7A-MCP.md`](project-phases/PHASE-7A-MCP.md) for the f
 
 ---
 
+## Phase 9A — Career Memory Backend Foundation ✅ Complete
+
+**Goal:** Backend-only foundation for career/project memory: `project` object kind, `projects` table (Alembic `0007`), REST CRUD under `/api/v1/projects`, and `POST /api/v1/ai/extract-project` with mocked-OpenAI integration tests. Spec: [`project-phases/PHASE-9A-CAREER-MEMORY-BACKEND.md`](project-phases/PHASE-9A-CAREER-MEMORY-BACKEND.md).
+
+- [x] **Schema + kind** — `VALID_OBJECT_KINDS` includes `project`; `projects` table mirrors chat/page extension pattern; `Project` ORM model
+- [x] **Pydantic + service** — `schemas/project.py` (CRUD + extract request/response), `project_service.py` (CRUD, soft delete, extract with `agent_runs` audit)
+- [x] **REST** — `api/v1/projects.py` + router registration; restore via existing `POST /api/v1/objects/{id}/restore`
+- [x] **AI** — Thin `extract-project` route in `api/v1/ai.py`; JSON-mode extraction; 503 when `OPENAI_API_KEY` unset; 502 + persisted failed `agent_run` on malformed JSON
+- [x] **Tests** — `tests/api/test_projects.py` (12 cases), five new cases appended to `tests/api/test_ai.py`
+- [ ] **Follow-up (9B+)** — MCP project tools (after 7B audited writes), resume/interview generators, frontend; optional retrofit of project mutations to `audited_write_service` once Phase 7B merges
+
+**Verification:** `cd tests && PYTHONPATH=../services/api uv run --project ../services/api --extra dev pytest api/ -q` → 135 passed; `pytest unit/` → 16 passed; `cd services/api && uv run ruff check . && uv run ruff format --check .` clean.
+
+---
+
 ## Summary
 
 | Phase | Name | Status | Progress |
@@ -262,9 +277,9 @@ See [`project-phases/PHASE-7A-MCP.md`](project-phases/PHASE-7A-MCP.md) for the f
 | Hardening | Search Quality + Multilingual | 🚧 Partial | 2 / 7 subtasks |
 | 7B | MCP Write Tools | ⬜ Planned | 0 / 4 subtasks |
 | 8 | Multi-Pane Workspaces | ⬜ Planned | 0 / 8 subtasks |
-| 9 | Career & Project Memory | ⬜ Planned | 0 / 8 subtasks |
+| 9 | Career & Project Memory | 🚧 In progress (9A backend shipped) | 1 / 8 (9A scope) |
 
-**Total:** 78 / 103 subtasks complete (76 phase subtasks + 2 hardening subtasks of 7)
+**Total:** 79 / 103 subtasks complete (77 phase subtasks + 2 hardening subtasks of 7)
 
 **Key cross-cutting concepts to track:**
 - Inbox/Triage (Phase 5): AI-classified staging area for unprocessed items
@@ -295,8 +310,8 @@ See [`project-phases/PHASE-7A-MCP.md`](project-phases/PHASE-7A-MCP.md) for the f
 
 *Verified complete and matching the phase plans:*
 - Phase 1 Foundation, Phase 2 Sources, Phase 3 Search (incl. multilingual ILIKE fallback), Phase 4 Graph Lite, Phase 5 AI Assistant + Inbox, Phase 6A Chat Import, Phase 6B Structured Chat Import, Phase 7A MCP Read/Search, and Phase 8A Workspace Lite are all implemented and exercised by tests.
-- Test counts (2026-05-15): 112 API integration tests across `tests/api/`, 16 unit tests in `tests/unit/`, 19 MCP package tests in `services/mcp/tests/`.
-- Alembic migrations 0001–0006 all present and consistent.
+- Test counts (2026-05-15): **135** API integration tests across `tests/api/`, 16 unit tests in `tests/unit/`, 19 MCP package tests in `services/mcp/tests/`.
+- Alembic migrations 0001–**0007** present (`0007` adds `projects`).
 
 *Phase deviations / known gaps surfaced during this audit:*
 - **Phase 5 inbox endpoint path**: ✅ resolved — `PHASE-5-AI-ASSISTANT.md` updated to `GET /api/v1/ai/inbox` (was `/api/v1/objects/inbox`). Frontend and code were already correct.
