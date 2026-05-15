@@ -135,7 +135,7 @@ See [`project-phases/PHASE-8B-WORKSPACES-BACKEND.md`](project-phases/PHASE-8B-WO
 - [x] **Subtask 0** — Audit + Phase 8B plan review + progress tracker start
 - [x] **Subtask 1** — `workspaces` Alembic migration, ORM model, and model export
 - [x] **Subtask 2** — Pydantic workspace schemas with layout validation
-- [ ] **Subtask 3** — Workspace service layer with CRUD, soft delete, restore, and last-used tracking
+- [x] **Subtask 3** — Workspace service layer with CRUD, soft delete, restore, and last-used tracking
 - [ ] **Subtask 4** — Authenticated workspace REST endpoints wired into API router
 - [ ] **Subtask 5** — Workspace CRUD, validation, ownership, and restore integration tests
 - [ ] **Subtask 6** — API/data model/architecture docs and final validation
