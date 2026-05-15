@@ -200,14 +200,8 @@ async def archive_object_endpoint(
 
     agent_id = agent_id_from_request(request)
 
-    async def _do_archive(
-        db: AsyncSession,
-        *,
-        object_id: uuid.UUID,
-        user_id: uuid.UUID,
-        reason: str | None,
-    ) -> KosObject:
-        obj = await object_service.get_object_or_404(db, object_id, user_id)
+    async def _do_archive(db: AsyncSession) -> KosObject:
+        obj = await object_service.get_object_or_404(db, object_id, user.id)
         obj.is_archived = True
         obj.updated_at = datetime.now(timezone.utc)
         await db.flush()
@@ -223,6 +217,7 @@ async def archive_object_endpoint(
         fn=_do_archive,
         mutating_object_id=object_id,
     )
+    await db.commit()
     await db.refresh(obj)
     return ObjectOut.model_validate(obj)
 
@@ -256,21 +251,16 @@ async def restore_revision_endpoint(
 
     agent_id = agent_id_from_request(request)
 
-    async def _do_restore(
-        db: AsyncSession,
-        *,
-        object_id: uuid.UUID,
-        user_id: uuid.UUID,
-        snapshot: dict,
-    ) -> KosObject:
+    async def _do_restore(db: AsyncSession) -> KosObject:
         obj_result = await db.execute(
-            select(KosObject).where(KosObject.id == object_id, KosObject.user_id == user_id)
+            select(KosObject).where(KosObject.id == object_id, KosObject.user_id == user.id)
         )
         obj = obj_result.scalar_one_or_none()
         if not obj:
             raise HTTPException(status_code=404, detail="Object not found")
 
-        obj_snap = snapshot.get("object", {})
+        snap = revision.before_snapshot
+        obj_snap = snap.get("object", {})
         for field in ("title", "description", "tags", "is_pinned", "is_archived", "ai_generated"):
             if field in obj_snap:
                 setattr(obj, field, obj_snap[field])
@@ -279,7 +269,7 @@ async def restore_revision_endpoint(
         obj.updated_at = datetime.now(timezone.utc)
         await db.flush()
 
-        page_snap = snapshot.get("page")
+        page_snap = snap.get("page")
         if page_snap:
             page_result = await db.execute(select(Page).where(Page.id == object_id))
             page = page_result.scalar_one_or_none()
@@ -299,14 +289,10 @@ async def restore_revision_endpoint(
         user_id=user.id,
         agent_id=agent_id,
         tool_name="restore_revision",
-        args={
-            "object_id": str(object_id),
-            "user_id": str(user.id),
-            "rev_id": str(rev_id),
-            "snapshot": revision.before_snapshot,
-        },
+        args={"object_id": str(object_id), "rev_id": str(rev_id)},
         fn=_do_restore,
         mutating_object_id=object_id,
     )
+    await db.commit()
     await db.refresh(obj)
     return ObjectOut.model_validate(obj)

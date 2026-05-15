@@ -13,6 +13,7 @@ class PageUpdate(BaseModel):
     title: str | None = None
     content_json: dict | None = None
     content_text: str | None = None
+    expected_version: int | None = None
 
 
 class PageOut(BaseModel):

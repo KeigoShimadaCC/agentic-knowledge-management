@@ -35,7 +35,7 @@ async def audited_write(
     agent_id: str,
     tool_name: str,
     args: dict[str, Any],
-    fn: Callable[..., Awaitable[Any]],
+    fn: Callable[["AsyncSession"], Awaitable[Any]],
     mutating_object_id: uuid.UUID | None = None,
 ) -> Any:
     """Run *fn* inside a single transaction with full audit + revision logging.
@@ -54,44 +54,47 @@ async def audited_write(
     # Rate-limit check (no DB side-effects on rejection)
     await check_and_increment(agent_id, redis)
 
-    async with db.begin():
-        run = await agent_run_service.create_agent_run(
-            db,
-            user_id=user_id,
-            agent_type=agent_id,
-            input_payload=args,
+    # Work within the existing autobegun transaction on the session.
+    # The session is opened by get_db; get_current_user autobegins it.
+    # Do NOT call db.begin() here — that would raise InvalidRequestError.
+    # The endpoint is responsible for calling await db.commit() on success.
+    run = await agent_run_service.create_agent_run(
+        db,
+        user_id=user_id,
+        agent_type=agent_id,
+        input_payload=args,
+    )
+
+    before_snapshot: dict[str, Any] = {}
+    if mutating_object_id is not None:
+        before_snapshot = await revision_service.snapshot_object_state(
+            db, mutating_object_id
         )
 
-        before_snapshot: dict[str, Any] = {}
+    try:
+        result = await fn(db)
+
         if mutating_object_id is not None:
-            before_snapshot = await revision_service.snapshot_object_state(
+            after_snapshot = await revision_service.snapshot_object_state(
                 db, mutating_object_id
             )
+            await revision_service.create_revision(
+                db,
+                object_id=mutating_object_id,
+                user_id=user_id,
+                before_snapshot=before_snapshot,
+                after_snapshot=after_snapshot,
+                changed_by="agent",
+                agent_run_id=run.id,
+            )
 
-        try:
-            result = await fn(db, **args)
+        output = _summarise(result)
+        await agent_run_service.complete(db, run, output=output)
+        return result
 
-            if mutating_object_id is not None:
-                after_snapshot = await revision_service.snapshot_object_state(
-                    db, mutating_object_id
-                )
-                await revision_service.create_revision(
-                    db,
-                    object_id=mutating_object_id,
-                    user_id=user_id,
-                    before_snapshot=before_snapshot,
-                    after_snapshot=after_snapshot,
-                    changed_by="agent",
-                    agent_run_id=run.id,
-                )
-
-            output = _summarise(result)
-            await agent_run_service.complete(db, run, output=output)
-            return result
-
-        except Exception as exc:
-            await agent_run_service.fail(db, run, error=str(exc))
-            raise  # transaction rolls back
+    except Exception as exc:
+        await agent_run_service.fail(db, run, error=str(exc))
+        raise
 
 
 def _summarise(result: Any) -> dict[str, Any]:
