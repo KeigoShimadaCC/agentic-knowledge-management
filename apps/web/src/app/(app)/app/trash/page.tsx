@@ -30,7 +30,7 @@ export default function TrashPage() {
   const [bulkRestoring, setBulkRestoring] = useState(false);
   const selection = useListSelection();
 
-  const items = objects ?? [];
+  const items = useMemo(() => objects ?? [], [objects]);
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase();

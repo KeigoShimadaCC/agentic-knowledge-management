@@ -12,6 +12,9 @@ interface SaveStatusChipProps {
 export function SaveStatusChip({ status, className }: SaveStatusChipProps) {
   return (
     <span
+      role="status"
+      aria-live="polite"
+      aria-label={`Save status: ${status}`}
       className={cn(
         "inline-flex items-center gap-1.5 text-xs",
         status === "saved" && "text-fg-subtle",

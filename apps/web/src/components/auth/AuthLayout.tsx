@@ -17,7 +17,7 @@ export function AuthLayout({ children, title, subtitle }: AuthLayoutProps) {
         </div>
         <div>
           <blockquote className="text-lg leading-relaxed text-fg-muted">
-            "Your second brain — local, private, and AI-ready."
+            &ldquo;Your second brain — local, private, and AI-ready.&rdquo;
           </blockquote>
           <p className="mt-4 text-sm text-fg-subtle">All data stays on your machine. Always.</p>
         </div>

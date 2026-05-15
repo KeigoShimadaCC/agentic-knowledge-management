@@ -32,6 +32,7 @@ function ToolbarButton({
         onClick();
       }}
       title={title}
+      aria-label={title}
       className={cn(
         "flex h-7 w-7 items-center justify-center rounded text-sm transition-colors",
         active ? "bg-gray-600 text-white" : "text-gray-300 hover:bg-gray-700 hover:text-white"

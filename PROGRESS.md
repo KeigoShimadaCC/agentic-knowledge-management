@@ -1,6 +1,6 @@
 # KnowledgeOS — Progress Tracker
 
-> Last updated: 2026-05-15 (PHASE-FIX-01 all gaps resolved; PHASE-FIX-02 cleanup merged to main)
+> Last updated: 2026-05-15 (PHASE-ENHANCE-03 UX Polish all 6 PRs complete; branch phase-enhance-03-ux-polish)
 
 ---
 
@@ -243,6 +243,66 @@ See [`project-phases/PHASE-7A-MCP.md`](project-phases/PHASE-7A-MCP.md) for the f
 - [ ] **Subtask 6** — Career memory dashboard: timeline view of projects; filter by skill/role/period; evidence completeness indicator per project
 - [ ] **Subtask 7** — Export: generate Markdown / PDF resume section from selected projects + bullets
 - [ ] **Subtask 8** — Tests + docs: project extraction tests; bullet generation tests with mocked OpenAI; `docs/AGENT_GUIDE.md` updated with career module
+
+---
+
+## PHASE-ENHANCE-03 — UX Polish ✅ Complete
+
+**Branch:** `phase-enhance-03-ux-polish`  
+**Goal:** Elevate the UI from functional to polished — design system tokens, accessible primitives, command palette, list UX, auth pages, theme toggle, and a11y baseline.  
+**Non-breakage contract:** 9 contractual file paths keep public APIs intact. Feature flags default to off.
+
+- [x] **UX-T1 — Design system foundation** (commit `8f3e...`)
+  - `styles/tokens.css` CSS custom properties (surface, text, brand, semantic, radius, duration)
+  - `tailwind.config.ts` updated to bridge tokens via `rgb(var(--token) / <alpha-value>)`
+  - Radix UI primitives + CVA + sonner + cmdk + next-themes installed
+  - `lib/cn.ts` utility
+  - Primitive components: Button, IconButton, Input, Textarea, Select, Checkbox, Switch, Dialog, Toast, Badge
+
+- [x] **UX-T2 — AppShell, Sidebar collapse, Toast system** (commit `ee8364e`)
+  - `SaveStatusChip`, `MobileNav` components created
+  - Sidebar collapse/expand with `⌘\` shortcut and `useSidebarState` hook
+  - `useShortcut` hook
+  - Toast notifications wired in AiPanel, TriageModal, AssetUploader, CreateSourceModal, TrashPage, ChatsPage
+  - AppShell flag-gates `SearchCommand` vs `SearchModal` via `NEXT_PUBLIC_UX_SEARCH_V2`
+  - `error.tsx`, `loading.tsx`, `not-found.tsx` created
+
+- [x] **UX-T3 — Search palette V2, editor extensions** (commit `845e7b3`)
+  - `SearchCommand` (cmdk-based palette with recent searches + kind filters)
+  - `SearchFilters`, `RecentSearches` components
+  - `SlashMenuExtension` (window event bus approach, no @tiptap/pm dependency)
+  - `SlashMenu` (9 commands: H1/H2/H3/Para/Quote/Code/TaskList/Divider/Table)
+  - `BubbleMenu` (Bold/Italic/Strike/Code/Link toolbar)
+  - `CalloutExtension` Tiptap node
+  - PageView updated with V2 editor flag-gate (`NEXT_PUBLIC_UX_EDITOR_V2`)
+
+- [x] **UX-T4 — List page UX** (commit `ce258d7`)
+  - `ListPage`, `ListToolbar`, `BulkActionBar` layout components
+  - `useListSelection`, `useListKeyNav` hooks
+  - All 6 list pages migrated: AllObjects, Pages, Assets, Sources, Chats, Trash
+  - Bulk delete/restore with parallelism cap of 4
+  - `deleteObject` API function added
+
+- [x] **UX-T5 — Auth pages, theme toggle** (commit `e5a39a6`)
+  - `ThemeProvider`, `ThemeToggle` (Sun/Moon, mounted guard)
+  - `Logo` SVG brand component
+  - `AuthLayout` (two-panel: branding left, form right)
+  - Login/register pages wrapped in AuthLayout
+  - `/forgot-password` stub page
+  - `suppressHydrationWarning` + `defaultTheme="dark"` + `enableSystem=false`
+  - ThemeToggle added to sidebar footer
+
+- [x] **UX-T6 — Accessibility baseline, shortcut overlay, docs** (commit TBD)
+  - `lib/shortcuts/registry.ts` — 16 shortcuts across 4 areas
+  - `ShortcutOverlay` dialog (triggered by `?` key)
+  - AppShell wired: `?` key toggles overlay; `<main id="main-content">` landmark
+  - Skip-link in `(app)/layout.tsx`
+  - `aria-label` on all icon-only buttons; `role="status"` + `aria-live` on SaveStatusChip
+  - `aria-pressed` + `role="group"` on SearchFilters
+  - `aria-label` on ListToolbar filter/sort inputs; BubbleMenu ToolbarButton
+  - AuthLayout quote escaped (no unescaped entities); TrashPage items useMemo fix
+  - `docs/A11Y.md`, `docs/UX_GUIDE.md`, `docs/SHORTCUTS.md` created
+  - README.md Keyboard Shortcuts section added
 
 ---
 

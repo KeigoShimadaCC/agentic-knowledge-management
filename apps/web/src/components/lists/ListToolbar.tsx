@@ -36,6 +36,7 @@ export function ListToolbar({
           value={search}
           onChange={(e) => onSearch(e.target.value)}
           placeholder={searchPlaceholder}
+          aria-label="Filter items"
           className="h-8 w-full rounded-md border border-gray-700 bg-gray-900 pl-8 pr-3 text-sm text-gray-200 placeholder:text-gray-600 focus:border-gray-500 focus:outline-none"
         />
       </div>
@@ -43,6 +44,7 @@ export function ListToolbar({
       <select
         value={sort}
         onChange={(e) => onSort(e.target.value as SortKey)}
+        aria-label="Sort order"
         className="h-8 rounded-md border border-gray-700 bg-gray-900 px-2 text-xs text-gray-400 focus:border-gray-500 focus:outline-none"
       >
         <option value="newest">Newest</option>

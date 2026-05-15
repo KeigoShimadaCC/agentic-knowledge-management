@@ -18,12 +18,13 @@ interface SearchFiltersProps {
 
 export function SearchFilters({ activeKind, onChange, className }: SearchFiltersProps) {
   return (
-    <div className={cn("flex gap-1.5 px-3 py-2", className)}>
+    <div role="group" aria-label="Filter by type" className={cn("flex gap-1.5 px-3 py-2", className)}>
       {KINDS.map(({ value, label }) => (
         <button
           key={value}
           type="button"
           onClick={() => onChange(value)}
+          aria-pressed={activeKind === value}
           className={cn(
             "rounded-full px-2.5 py-0.5 text-xs font-medium transition-colors",
             activeKind === value
