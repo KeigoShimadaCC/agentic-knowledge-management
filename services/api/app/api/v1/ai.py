@@ -22,10 +22,16 @@ from app.schemas.ai import (
     TriageRequest,
     TriageResponse,
 )
+from app.schemas.career_ai import (
+    GenerateInterviewStoryRequest,
+    GenerateInterviewStoryResponse,
+    GenerateResumeBulletsRequest,
+    GenerateResumeBulletsResponse,
+)
 from app.schemas.common import PaginatedResponse
 from app.schemas.object import ObjectOut
 from app.schemas.project import ExtractProjectRequest, ExtractProjectResponse
-from app.services import ai_service, project_service
+from app.services import ai_service, career_ai_service, project_service
 
 router = APIRouter(prefix="/ai", tags=["ai"])
 
@@ -124,5 +130,27 @@ async def extract_project_endpoint(
     db: AsyncSession = Depends(get_db),
 ) -> ExtractProjectResponse:
     result = await project_service.extract_project(db, user_id=user.id, payload=body)
+    await db.commit()
+    return result
+
+
+@router.post("/generate-resume-bullets", response_model=GenerateResumeBulletsResponse)
+async def generate_resume_bullets_endpoint(
+    body: GenerateResumeBulletsRequest,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> GenerateResumeBulletsResponse:
+    result = await career_ai_service.generate_resume_bullets(db, user_id=user.id, payload=body)
+    await db.commit()
+    return result
+
+
+@router.post("/generate-interview-story", response_model=GenerateInterviewStoryResponse)
+async def generate_interview_story_endpoint(
+    body: GenerateInterviewStoryRequest,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> GenerateInterviewStoryResponse:
+    result = await career_ai_service.generate_interview_story(db, user_id=user.id, payload=body)
     await db.commit()
     return result
