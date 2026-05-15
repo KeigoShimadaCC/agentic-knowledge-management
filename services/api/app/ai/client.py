@@ -11,6 +11,9 @@ from app.config import settings
 from app.models.agent_run import AgentRun
 from app.services.agent_run_service import create_agent_run, finish_agent_run
 
+OPENAI_TEST_STUB_KEY = "sk-test-stub"
+OPENAI_TEST_STUB_SUMMARY = "Canned E2E summary."
+
 
 async def call_ai(
     db: AsyncSession,
@@ -36,6 +39,19 @@ async def call_ai(
     )
 
     try:
+        if settings.openai_api_key == OPENAI_TEST_STUB_KEY:
+            text = OPENAI_TEST_STUB_SUMMARY
+            await finish_agent_run(
+                db,
+                run,
+                status="success",
+                output={"text": text},
+                input_tokens=10,
+                output_tokens=8,
+                cost_usd=Decimal("0"),
+            )
+            return text, run
+
         import openai
 
         client = openai.AsyncOpenAI(api_key=settings.openai_api_key)

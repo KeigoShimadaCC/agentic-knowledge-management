@@ -1,10 +1,10 @@
-"""Unit tests for the PDF extractor — fully mocked, no real PDF file needed."""
+"""Unit tests for the PDF extractor."""
 
 from __future__ import annotations
 
 from unittest.mock import MagicMock, patch
 
-from helpers import make_asset, make_db, make_source
+from helpers import make_asset, make_db, make_source, write_asset_file
 
 
 def _run(source, db, tmp_path, monkeypatch):
@@ -21,7 +21,7 @@ def _mock_reader(pages_text: list[str], has_image: bool = False) -> MagicMock:
         page.extract_text.return_value = text
         if i == 0 and has_image:
             img_data = MagicMock()
-            img_data.data = b"\x89PNG\r\n\x1a\n"  # PNG magic bytes placeholder
+            img_data.data = b"\x89PNG\r\n\x1a\n"
             page.images = [img_data]
         else:
             page.images = []
@@ -35,7 +35,7 @@ def test_pdf_extracts_text_and_page_count(tmp_path, monkeypatch):
     sid = "src-pdf-1"
     aid = "asset-pdf-1"
     pdf_file = tmp_path / "test.pdf"
-    pdf_file.write_bytes(b"%PDF-1.4\n%%EOF")  # dummy bytes — pypdf is mocked
+    pdf_file.write_bytes(b"%PDF-1.4\n%%EOF")
 
     source = make_source(sid, asset_id=aid)
     asset = make_asset("test.pdf")
@@ -52,12 +52,41 @@ def test_pdf_extracts_text_and_page_count(tmp_path, monkeypatch):
     assert "Page two content." in result["extracted_text"]
 
 
+def test_pdf_extracts_reportlab_fixture(sample_pdf_reportlab, tmp_path, monkeypatch):
+    storage_path = "assets/ab/reportlab.pdf"
+    write_asset_file(tmp_path, storage_path, sample_pdf_reportlab.read_bytes())
+
+    source = make_source("src-pdf-reportlab", asset_id="asset-reportlab")
+    asset = make_asset(storage_path)
+    db = make_db(asset)
+
+    result = _run(source, db, tmp_path, monkeypatch)
+
+    assert result["ingestion_status"] == "ready"
+    assert result["page_count"] == 2
+    assert "Page one text here." in result["extracted_text"]
+    assert "Page two content." in result["extracted_text"]
+
+
+def test_pdf_handles_corrupt_file_gracefully(corrupt_pdf, tmp_path, monkeypatch):
+    storage_path = "assets/ab/corrupt.pdf"
+    write_asset_file(tmp_path, storage_path, corrupt_pdf.read_bytes())
+
+    source = make_source("src-pdf-corrupt", asset_id="asset-corrupt")
+    asset = make_asset(storage_path)
+    db = make_db(asset)
+
+    result = _run(source, db, tmp_path, monkeypatch)
+
+    assert result["ingestion_status"] == "error"
+    assert result["error_message"]
+
+
 def test_pdf_handles_empty_pages(tmp_path, monkeypatch):
-    sid = "src-pdf-2"
     pdf_file = tmp_path / "empty.pdf"
     pdf_file.write_bytes(b"%PDF-1.4\n%%EOF")
 
-    source = make_source(sid, asset_id="aid-2")
+    source = make_source("src-pdf-2", asset_id="aid-2")
     asset = make_asset("empty.pdf")
     db = make_db(asset)
 
@@ -80,7 +109,7 @@ def test_pdf_returns_error_when_no_asset_id(tmp_path, monkeypatch):
 
 def test_pdf_returns_error_when_asset_missing(tmp_path, monkeypatch):
     source = make_source("src-pdf-3", asset_id="gone")
-    db = make_db(None)  # db.get returns None
+    db = make_db(None)
     result = _run(source, db, tmp_path, monkeypatch)
     assert result["ingestion_status"] == "error"
 

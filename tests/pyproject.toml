@@ -23,6 +23,12 @@ build-backend = "hatchling.build"
 # See dummy_pkg/README.md; this placeholder lets Hatchling build the tests workspace.
 packages = ["dummy_pkg"]
 
+[dependency-groups]
+dev = [
+    "reportlab>=4.0",
+    "respx>=0.21",
+]
+
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 testpaths = ["api", "unit", "worker"]

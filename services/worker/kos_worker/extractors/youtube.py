@@ -32,7 +32,10 @@ def extract(source, db) -> dict:
     except UnsafeUrlError as exc:
         return {"ingestion_status": "error", "error_message": str(exc)}
 
-    result: dict = {"ingestion_status": "ready"}
+    result: dict = {
+        "ingestion_status": "ready",
+        "preview_data": {"transcript_available": False},
+    }
 
     headers = {
         "User-Agent": "KnowledgeOS/1.0 (personal knowledge base; not a crawler)",
@@ -45,12 +48,14 @@ def extract(source, db) -> dict:
         resp = safe_http_get(oembed_url, headers=headers, timeout=10.0, max_body_bytes=256 * 1024)
         if resp.status_code == 200:
             oembed = json.loads(resp.content.decode(errors="replace"))
-            result["preview_data"] = {
-                "title": oembed.get("title"),
-                "author_name": oembed.get("author_name"),
-                "thumbnail_url": oembed.get("thumbnail_url"),
-                "oembed": oembed,
-            }
+            result["preview_data"].update(
+                {
+                    "title": oembed.get("title"),
+                    "author_name": oembed.get("author_name"),
+                    "thumbnail_url": oembed.get("thumbnail_url"),
+                    "oembed": oembed,
+                }
+            )
             thumb_url = oembed.get("thumbnail_url")
             if thumb_url:
                 try:
@@ -85,8 +90,10 @@ def extract(source, db) -> dict:
             try:
                 segments = YouTubeTranscriptApi.get_transcript(video_id, languages=["en", "ja"])
                 result["extracted_text"] = " ".join(seg["text"] for seg in segments)
+                result["preview_data"]["transcript_available"] = True
             except (TranscriptsDisabled, NoTranscriptFound) as e:
                 logger.info("No transcript available for %s: %s", video_id, e)
+                result["preview_data"]["transcript_available"] = False
     except Exception as e:
         logger.warning("Transcript fetch failed: %s", e)
 

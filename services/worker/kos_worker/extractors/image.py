@@ -21,9 +21,9 @@ def extract(source, db) -> dict:
         return {"ingestion_status": "error", "error_message": msg}
 
     try:
-        from PIL import Image
+        from PIL import Image, ImageOps
 
-        img = Image.open(str(asset_path))
+        img = ImageOps.exif_transpose(Image.open(str(asset_path)))
         width, height = img.size
 
         # Generate thumbnail

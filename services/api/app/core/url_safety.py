@@ -131,6 +131,7 @@ class SafeHttpResult:
     status_code: int
     content: bytes
     final_url: str
+    content_type: str = ""
 
 
 def _drain_response_body(response: httpx.Response, limit: int = 65536) -> None:
@@ -178,6 +179,12 @@ def safe_http_get(
                     continue
 
                 body = _read_body_limited(response, max_body_bytes)
-                return SafeHttpResult(status_code=status, content=body, final_url=current)
+                content_type = response.headers.get("content-type", "")
+                return SafeHttpResult(
+                    status_code=status,
+                    content=body,
+                    final_url=current,
+                    content_type=content_type,
+                )
 
     raise UnsafeUrlError("Too many redirects")

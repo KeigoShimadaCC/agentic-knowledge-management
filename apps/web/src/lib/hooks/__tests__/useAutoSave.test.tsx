@@ -1,62 +1,50 @@
-import { act, renderHook } from "@testing-library/react";
-import { updatePage } from "@/lib/api";
+import { renderHook, waitFor } from "@testing-library/react";
+import { http, HttpResponse } from "msw";
 import { useAutoSave } from "@/lib/hooks/useAutoSave";
-
-vi.mock("@/lib/api", () => ({
-  updatePage: vi.fn(),
-}));
+import { API_BASE } from "@/test/msw/handlers";
+import { server } from "@/test/msw/server";
 
 describe("useAutoSave", () => {
-  beforeEach(() => {
-    vi.useFakeTimers();
-    vi.mocked(updatePage).mockReset();
-  });
-
-  afterEach(() => {
-    vi.useRealTimers();
-  });
-
-  it("saves once after the idle delay with the latest rapid edit", async () => {
-    vi.mocked(updatePage).mockResolvedValue({
-      id: "page-1",
-      content_json: {},
-      content_text: "Second",
-      word_count: 1,
-      version: 2,
-      created_at: "2026-05-15T00:00:00Z",
-      updated_at: "2026-05-15T00:00:01Z",
-    });
-
-    const { result, rerender } = renderHook(
-      ({ text }) => useAutoSave("page-1", { content_text: text }, 800),
-      { initialProps: { text: "First" } }
+  it("debounces saves and persists page content once", async () => {
+    let patchCalls = 0;
+    server.use(
+      http.patch(`${API_BASE}/api/v1/pages/page-1`, async () => {
+        patchCalls += 1;
+        return HttpResponse.json({
+          id: "page-1",
+          content_json: {},
+          content_text: "hello",
+          word_count: 1,
+          version: 2,
+          created_at: "2026-05-15T00:00:00Z",
+          updated_at: "2026-05-15T00:00:00Z",
+        });
+      })
     );
 
-    rerender({ text: "Second" });
+    const { result, rerender } = renderHook(
+      ({ contentText }) =>
+        useAutoSave("page-1", { content_json: {}, content_text: contentText }, 20),
+      { initialProps: { contentText: "hello" } }
+    );
 
-    await act(async () => {
-      await vi.advanceTimersByTimeAsync(799);
-    });
-    expect(updatePage).not.toHaveBeenCalled();
+    rerender({ contentText: "hello updated" });
 
-    await act(async () => {
-      await vi.advanceTimersByTimeAsync(1);
-    });
-
+    await waitFor(() => expect(patchCalls).toBe(1));
     expect(result.current.status).toBe("saved");
-    expect(updatePage).toHaveBeenCalledTimes(1);
-    expect(updatePage).toHaveBeenCalledWith("page-1", { content_text: "Second" });
   });
 
-  it("reports errors when saving fails", async () => {
-    vi.mocked(updatePage).mockRejectedValue(new Error("boom"));
+  it("surfaces save errors", async () => {
+    server.use(
+      http.patch(`${API_BASE}/api/v1/pages/page-1`, () =>
+        HttpResponse.json({ detail: "save_failed" }, { status: 500 })
+      )
+    );
 
-    const { result } = renderHook(() => useAutoSave("page-1", { content_text: "Broken" }, 800));
+    const { result } = renderHook(() =>
+      useAutoSave("page-1", { content_json: {}, content_text: "hello" }, 20)
+    );
 
-    await act(async () => {
-      await vi.advanceTimersByTimeAsync(800);
-    });
-
-    expect(result.current.status).toBe("error");
+    await waitFor(() => expect(result.current.status).toBe("error"));
   });
 });

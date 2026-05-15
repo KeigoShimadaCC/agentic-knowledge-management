@@ -43,6 +43,13 @@ def extract(source, db) -> dict:
                 "error_message": f"HTTP {page.status_code} fetching {source.url}",
             }
 
+        content_type = (page.content_type or "").lower()
+        if content_type and "text/html" not in content_type and "application/xhtml+xml" not in content_type:
+            return {
+                "ingestion_status": "error",
+                "error_message": f"Unsupported content-type: {content_type}",
+            }
+
         html = page.content.decode(errors="replace")
 
         soup = BeautifulSoup(html, "html.parser")

@@ -1,50 +1,25 @@
 import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { http, HttpResponse } from "msw";
 import { GraphPanel } from "@/components/graph/GraphPanel";
-import { getObjectBacklinks, getObjectRelated } from "@/lib/api";
+import { API_BASE } from "@/test/msw/handlers";
+import { sampleBacklinks, sampleRelated } from "@/test/msw/fixtures";
+import { server } from "@/test/msw/server";
 import { renderWithProviders } from "@/test/render";
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: vi.fn() }),
 }));
 
-vi.mock("@/lib/api", async () => {
-  const actual = await vi.importActual<typeof import("@/lib/api")>("@/lib/api");
-  return {
-    ...actual,
-    getObjectBacklinks: vi.fn(),
-    getObjectRelated: vi.fn(),
-  };
-});
-
 describe("GraphPanel", () => {
-  beforeEach(() => {
-    vi.mocked(getObjectBacklinks).mockResolvedValue([
-      {
-        id: "edge-1",
-        kind: "links_to",
-        weight: 1,
-        source_id: "page-2",
-        target_id: "page-1",
-        source_object: { id: "page-2", kind: "page", title: "Source Page" },
-        target_object: { id: "page-1", kind: "page", title: "Target Page" },
-        created_at: "2026-05-15T00:00:00Z",
-      },
-    ]);
-    vi.mocked(getObjectRelated).mockResolvedValue([
-      {
-        id: "source-1",
-        kind: "source",
-        title: "Related Source",
-        distance: 1,
-        edge_kind: "cites",
-        direction: "outgoing",
-      },
-    ]);
-  });
-
   it("renders backlinks and switches to related and AI tabs", async () => {
     const user = userEvent.setup();
+    server.use(
+      http.get(`${API_BASE}/api/v1/objects/page-1/backlinks`, () =>
+        HttpResponse.json(sampleBacklinks)
+      ),
+      http.get(`${API_BASE}/api/v1/objects/page-1/related`, () => HttpResponse.json(sampleRelated))
+    );
 
     renderWithProviders(<GraphPanel objectId="page-1" refreshKey={0} />);
 
@@ -58,7 +33,10 @@ describe("GraphPanel", () => {
   });
 
   it("renders the backlinks empty state", async () => {
-    vi.mocked(getObjectBacklinks).mockResolvedValue([]);
+    server.use(
+      http.get(`${API_BASE}/api/v1/objects/page-1/backlinks`, () => HttpResponse.json([])),
+      http.get(`${API_BASE}/api/v1/objects/page-1/related`, () => HttpResponse.json([]))
+    );
 
     renderWithProviders(<GraphPanel objectId="page-1" refreshKey={0} />);
 
