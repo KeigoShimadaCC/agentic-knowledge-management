@@ -1,6 +1,6 @@
 # KnowledgeOS — Progress Tracker
 
-> Last updated: 2026-05-15 (PHASE-FIX-03: routing unified, docs aligned, repo hygiene)
+> Last updated: 2026-05-15 (PHASE-FIX-01: all 7 gap tasks resolved)
 
 ---
 
@@ -74,11 +74,11 @@ See [`project-phases/HARDENING-SEARCH-QUALITY-MULTILINGUAL.md`](project-phases/H
 
 - [x] **Subtask 0** — Audit and finalize plan: added to `project-phases/`, PROGRESS updated
 - [x] **Subtask 1** — Multilingual keyword fallback: `ILIKE` fallback over title + text in `search_service.py` (commits `8bfc61d`, `f42287f`). No `pg_trgm` migration yet, so the fallback runs without a trigram GIN index.
-- [ ] **Subtask 2** — Search snippet sanitization: backend still ships raw `<mark>` snippets via Postgres `ts_headline`; `SearchResultCard.tsx` still calls `dangerouslySetInnerHTML` with no sanitizer. **XSS risk if a user pastes script tags into a page or extracted source text.**
-- [ ] **Subtask 3** — Search eval fixture expansion: `tests/fixtures/search_eval_cases.json` still has no Japanese or mixed-language cases.
-- [ ] **Subtask 4** — Search debug visibility: backend `HybridRequest.debug: bool = False` plumbed through `schemas/search.py`, but `SearchModal.tsx` does not expose a debug toggle or render scores.
-- [ ] **Subtask 5** — Index/reindex observability: no `GET /api/v1/objects/{id}/index-status` endpoint; no doc on `reindex_object` / `reindex_all_objects` worker jobs.
-- [ ] **Subtask 6** — Documentation and final validation: not yet rolled into `docs/API.md` / `docs/SECURITY.md` / `docs/ARCHITECTURE.md`.
+- [x] **Subtask 2** — Search snippet sanitization: `ts_headline` now uses sentinel chars (`\x01`/`\x02`); `_parse_snippet()` returns `SearchSnippet{text, highlights}`; `SearchResultCard.tsx` renders with `<mark>` React nodes (no `dangerouslySetInnerHTML`). XSS regression tests added.
+- [x] **Subtask 3** — Search eval fixture expansion: 4 Japanese/mixed-language cases added to `tests/fixtures/search_eval_cases.json`; parametric test `test_jp_mixed_search_does_not_crash` added.
+- [x] **Subtask 4** — Search debug visibility: `SearchModal.tsx` now has a "Show scores" toggle (localStorage-persisted); `SearchResultCard.tsx` renders `score`, `keyword_score`, `vector_score` when debug is on; `useSearch` and `hybridSearch` forward `debug` flag.
+- [x] **Subtask 5** — Index/reindex observability: `GET /api/v1/objects/{id}/index-status` endpoint added (returns total_chunks, embedded_count, status, last_embedded_at). Documented in `docs/API.md` and `docs/INGESTION.md`. `scripts/reindex.py` CLI added.
+- [x] **Subtask 6** — Documentation and final validation: `docs/API.md` updated (snippet shape, debug param, index-status endpoint); `docs/SECURITY.md` updated (XSS mitigation section, answer_from_kb wire-up note); `docs/INGESTION.md` updated (reindex CLI).
 
 ---
 
@@ -284,7 +284,7 @@ See [`project-phases/PHASE-7A-MCP.md`](project-phases/PHASE-7A-MCP.md) for the f
 - **Phase 7A `answer_from_kb` stub is obsolete**: ✅ resolved — wired to `POST /api/v1/ai/answer` with 503 fallback; MCP_TOOLS.md updated; 20 MCP tests passing.
 - **Phase 2 docker-compose gap**: ✅ resolved — added `kos-worker` service to `infra/docker-compose.yml` using new `infra/Dockerfile.worker`. `docker compose up -d` now starts the RQ worker automatically.
 - **Phase 2 worker tests missing**: ✅ resolved — `tests/worker/` created with 18 unit tests covering PDF, image, CSV, web, and YouTube extractors. Run with `PYTHONPATH=services/api:services/worker uv run pytest tests/worker/ -v`.
-- **Hardening track**: Subtask 2 (snippet sanitization) resolved; JP fixtures, debug UI, and index-status endpoint still open (F5).
+- **Hardening track**: ✅ All 6 subtasks resolved (F5). Subtask 2 (XSS), Subtask 3 (JP fixtures), Subtask 4 (debug toggle), Subtask 5 (index-status), Subtask 6 (docs) all complete on branch `phase-fix-01`.
 
 *Frontend routing oddities:* ✅ Resolved in PHASE-FIX-03 (branch `phase-fix-01`).
 - All routes unified under `/app/...` prefix (F16, F17).

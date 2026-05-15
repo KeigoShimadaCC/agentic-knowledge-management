@@ -70,5 +70,33 @@
     "filter_kind": "source",
     "modes": ["keyword"],
     "notes": "With kind=source filter, only source results should appear."
+  },
+  {
+    "id": "jp-pure-kanji",
+    "query": "量子コンピュータ 情報処理",
+    "expected_kinds": ["page"],
+    "modes": ["keyword", "hybrid"],
+    "notes": "Pure Japanese kanji/katakana query — must return 200 and not crash the FTS layer."
+  },
+  {
+    "id": "jp-mixed-en-ja",
+    "query": "machine learning 機械学習 モデル",
+    "expected_kinds": ["page"],
+    "modes": ["keyword", "hybrid"],
+    "notes": "Mixed English and Japanese — tests that the API handles multi-script tokens gracefully."
+  },
+  {
+    "id": "jp-hiragana-phrase",
+    "query": "ちしきかんり システム",
+    "expected_kinds": ["page"],
+    "modes": ["keyword"],
+    "notes": "Hiragana query (knowledge management system) — verifies hiragana tokens don't cause SQL errors."
+  },
+  {
+    "id": "jp-katakana-loanword",
+    "query": "ナレッジベース データ",
+    "expected_kinds": ["page", "source"],
+    "modes": ["keyword", "hybrid"],
+    "notes": "Katakana loanwords (knowledge base, data) mixed with partial English similarity — smoke test for CJK input."
   }
 ]
