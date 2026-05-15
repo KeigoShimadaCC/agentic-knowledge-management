@@ -399,6 +399,22 @@ See [`project-phases/PHASE-7C-STABILIZATION.md`](project-phases/PHASE-7C-STABILI
 
 ---
 
+## Phase 8C — Multi-Pane Workspaces 🚧 In Progress
+
+**Goal:** Resizable multi-pane layout, save/restore workspaces, cross-pane drag-to-quote, pane linking, workspace-scoped AI, workspace-scoped search.
+
+See [`project-phases/PHASE-8C-MULTI-PANE-WORKSPACES.md`](project-phases/PHASE-8C-MULTI-PANE-WORKSPACES.md).
+
+- [ ] **Subtask 1** — Pane layout engine (2–4 resizable panes, react-resizable-panels)
+- [ ] **Subtask 3** — Save/restore workspace UI (connects Phase 8B API)
+- [ ] **Subtask 4** — Drag text between panes (quote block + cites edge)
+- [ ] **Subtask 5** — Link pane to pane (typed edge creation)
+- [ ] **Subtask 6** — AI scoped to workspace (context picker in AiPanel)
+- [ ] **Subtask 7** — Workspace-scoped search (object_ids filter)
+- [ ] **Subtask 8** — Tests + docs
+
+---
+
 ## Summary
 
 | Phase | Name | Status | Progress |
@@ -415,7 +431,7 @@ See [`project-phases/PHASE-7C-STABILIZATION.md`](project-phases/PHASE-7C-STABILI
 | 7C | Wave 1 Stabilization | ✅ Complete | 3 / 3 tracks |
 | Hardening | Search Quality + Multilingual | ✅ Complete | 6 / 7 subtasks (Subtask 1 pg_trgm deferred) |
 | 7B | MCP Write Tools | ✅ Complete | 13 / 13 subtasks |
-| 8 | Multi-Pane Workspaces | ⬜ Planned | 0 / 8 subtasks |
+| 8C | Multi-Pane Workspaces | 🚧 In Progress | 0 / 7 subtasks |
 | 9 | Career & Project Memory | 🚧 In progress (9A+9B backend shipped) | 2 / 8 subtasks |
 | Enhance-03 | UX/UI Polish | ✅ Complete | 6 / 6 PRs |
 
