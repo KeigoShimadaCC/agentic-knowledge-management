@@ -4,10 +4,11 @@ import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Plus, Sparkles } from "lucide-react";
 
-import { createProject, deleteProject } from "@/lib/api";
+import { deleteProject } from "@/lib/api";
 import { BulkActionBar } from "@/components/lists/BulkActionBar";
 import { ListPage } from "@/components/lists/ListPage";
 import { ListToolbar, type SortKey } from "@/components/lists/ListToolbar";
+import { ProjectForm } from "@/components/projects/ProjectForm";
 import { ProjectCard } from "@/components/projects/ProjectCard";
 import { toast } from "@/components/ui/Toast";
 import { useListKeyNav } from "@/lib/hooks/useListKeyNav";
@@ -66,9 +67,7 @@ export default function ProjectsPage() {
   const [sort, setSort] = useState<ProjectSort>("period-desc");
   const [statusFilter, setStatusFilter] = useState<ProjectStatus | "">("");
   const [skillFilter, setSkillFilter] = useState("");
-  const [creating, setCreating] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
-  const [title, setTitle] = useState("");
   const [bulkDeleting, setBulkDeleting] = useState(false);
   const selection = useListSelection();
 
@@ -83,26 +82,6 @@ export default function ProjectsPage() {
     );
     return sortProjects(matched, sort);
   }, [projects, search, skillFilter, sort]);
-
-  async function handleCreate() {
-    if (!title.trim()) {
-      toast.error("Title is required");
-      return;
-    }
-    setCreating(true);
-    try {
-      const project = await createProject({ title: title.trim() });
-      await mutate();
-      setCreateOpen(false);
-      setTitle("");
-      router.push(`/app/projects/${project.id}`);
-    } catch (err) {
-      const message = err instanceof Error ? err.message : "Could not create project";
-      toast.error("Could not create project", { description: message });
-    } finally {
-      setCreating(false);
-    }
-  }
 
   async function handleBulkDelete() {
     setBulkDeleting(true);
@@ -228,37 +207,14 @@ export default function ProjectsPage() {
       </ListPage>
 
       {createOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
-          <div className="w-full max-w-md rounded-lg border border-gray-800 bg-gray-950 p-5 shadow-xl">
-            <h2 className="text-base font-semibold text-white">New project</h2>
-            <label className="mt-4 block text-sm text-gray-300">
-              Title
-              <input
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                className="mt-1 h-9 w-full rounded-md border border-gray-700 bg-gray-900 px-3 text-sm text-white focus:border-gray-500 focus:outline-none"
-                autoFocus
-              />
-            </label>
-            <div className="mt-5 flex justify-end gap-2">
-              <button
-                type="button"
-                onClick={() => setCreateOpen(false)}
-                className="rounded-md border border-gray-700 px-3 py-2 text-sm text-gray-300 hover:bg-gray-800"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={() => void handleCreate()}
-                disabled={creating}
-                className="rounded-md bg-white px-3 py-2 text-sm font-medium text-gray-950 disabled:opacity-60"
-              >
-                {creating ? "Saving..." : "Save"}
-              </button>
-            </div>
-          </div>
-        </div>
+        <ProjectForm
+          mode="create"
+          onClose={() => setCreateOpen(false)}
+          onSuccess={(project) => {
+            void mutate();
+            router.push(`/app/projects/${project.id}`);
+          }}
+        />
       )}
 
       <BulkActionBar
