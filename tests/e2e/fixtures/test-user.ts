@@ -3,6 +3,7 @@ import { request, type APIRequestContext, type BrowserContext } from "@playwrigh
 const apiURL = process.env.E2E_API_URL ?? "http://127.0.0.1:8001";
 
 export interface TestUser {
+  id: string;
   email: string;
   password: string;
   displayName: string;
@@ -27,6 +28,7 @@ export async function createTestUser(): Promise<TestUser> {
   if (!response.ok()) {
     throw new Error(`Failed to register test user: ${response.status()} ${await response.text()}`);
   }
+  const body = (await response.json()) as { user: { id: string } };
   const cookie = sessionCookieValue(response.headers()["set-cookie"] ?? null);
   await bootstrap.dispose();
 
@@ -35,7 +37,7 @@ export async function createTestUser(): Promise<TestUser> {
     extraHTTPHeaders: { Cookie: `kos_session=${cookie}` },
   });
 
-  return { email, password, displayName, cookie, api };
+  return { id: body.user.id, email, password, displayName, cookie, api };
 }
 
 export async function addUserCookie(context: BrowserContext, cookie: string) {
