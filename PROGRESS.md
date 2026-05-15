@@ -280,6 +280,8 @@ See [`project-phases/PHASE-7A-MCP.md`](project-phases/PHASE-7A-MCP.md) for the f
 - Verification: `pnpm -F @kos/web test:run` passed with 5 files / 17 tests in ~1.5s; `pnpm -F @kos/web test:coverage` passed with 84.53% line coverage over the configured T1 targets; `pnpm -F @kos/web typecheck` and `pnpm -F @kos/web lint` passed.
 - T2 checkpoint complete on stacked branch `phase-enhance-02-t2-web-components`: added 10 component tests across SearchModal, GraphPanel, AiPanel, TriageModal, Workspace Lite, PageEditor/Tiptap, and AssetUploader, bringing the frontend suite to 12 files / 27 tests.
 - T2 verification: `pnpm -F @kos/web test:run` passed in ~2.1s; `pnpm -F @kos/web test:coverage` passed with the T1 target coverage unchanged at 84.53% lines; `pnpm -F @kos/web typecheck` and `pnpm -F @kos/web lint` passed.
+- T3 reconciliation complete on stacked branch `phase-enhance-02-t3-worker-reconcile`: confirmed the existing `tests/worker/` extractor suite already covers 18 worker tests, added local `kos-api`/`kos-worker` dependencies to the tests project, and included `worker` in pytest discovery.
+- T3 verification: `cd tests && uv run pytest worker/ -v` passed with 18 tests in ~2.3s.
 
 *Phase Fix 02 cleanup completed on branch `phase-fix-02-forgotten-undocumented`:*
 - Completed F8-F10: `infra/.env.example` has one `MCP_INTERNAL_TOKEN`, host-side MCP defaults point to `http://127.0.0.1:8001`, local published ports are documented, and host-side Postgres examples/tests use `127.0.0.1:5433`.
