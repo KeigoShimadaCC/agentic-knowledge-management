@@ -8,6 +8,7 @@ import { deleteProject } from "@/lib/api";
 import { BulkActionBar } from "@/components/lists/BulkActionBar";
 import { ListPage } from "@/components/lists/ListPage";
 import { ListToolbar, type SortKey } from "@/components/lists/ListToolbar";
+import { ExtractProjectModal } from "@/components/projects/ExtractProjectModal";
 import { ProjectForm } from "@/components/projects/ProjectForm";
 import { ProjectCard } from "@/components/projects/ProjectCard";
 import { toast } from "@/components/ui/Toast";
@@ -68,6 +69,7 @@ export default function ProjectsPage() {
   const [statusFilter, setStatusFilter] = useState<ProjectStatus | "">("");
   const [skillFilter, setSkillFilter] = useState("");
   const [createOpen, setCreateOpen] = useState(false);
+  const [extractOpen, setExtractOpen] = useState(false);
   const [bulkDeleting, setBulkDeleting] = useState(false);
   const selection = useListSelection();
 
@@ -128,7 +130,7 @@ export default function ProjectsPage() {
           <>
             <button
               type="button"
-              onClick={() => toast.message("Project extraction will be available from this page.")}
+              onClick={() => setExtractOpen(true)}
               className="inline-flex h-9 items-center gap-2 rounded-md border border-gray-700 px-3 text-sm text-gray-200 transition-colors hover:bg-gray-800"
             >
               <Sparkles size={16} />
@@ -216,6 +218,8 @@ export default function ProjectsPage() {
           }}
         />
       )}
+
+      <ExtractProjectModal isOpen={extractOpen} onClose={() => setExtractOpen(false)} />
 
       <BulkActionBar
         count={selection.size}
