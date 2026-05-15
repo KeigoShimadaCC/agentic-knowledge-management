@@ -9,6 +9,14 @@ READ_TOOLS: list[str] = [
     "get_source",
     "get_related_objects",
     "answer_from_kb",
+    # Career / Project read tools (Phase 9D)
+    "get_project",
+    "list_projects",
+    "get_resume_bullet_set",
+    "list_resume_bullet_sets",
+    "get_interview_story",
+    "list_interview_stories",
+    "get_project_evidence",
 ]
 
 WRITE_TOOLS: list[str] = [
@@ -18,6 +26,15 @@ WRITE_TOOLS: list[str] = [
     "archive_object",
     "ingest_url",
     "ingest_file",
+    # Career / Project write tools (Phase 9D)
+    "create_project",
+    "update_project",
+    "archive_project",
+    "link_to_project",
+    "unlink_from_project",
+    "extract_project",
+    "generate_and_save_resume_bullets",
+    "generate_and_save_interview_story",
 ]
 
 WRITE_TOOL_NAMES: frozenset[str] = frozenset(WRITE_TOOLS)

@@ -1,10 +1,9 @@
 from __future__ import annotations
 
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import MagicMock
 
 import httpx
 import pytest
-
 from kos_mcp.client import KosApiClient
 from kos_mcp.config import McpSettings
 from kos_mcp.redaction import redact_dict
@@ -12,7 +11,6 @@ from kos_mcp.tools import (
     _PAGE_TEXT_LIMIT,
     _SOURCE_TEXT_DEFAULT_LIMIT,
     _answer_from_kb,
-    _archive_object,
     _create_edge,
     _create_page,
     _get_object,
@@ -22,12 +20,10 @@ from kos_mcp.tools import (
     _hybrid_search,
     _ingest_file,
     _ingest_url,
-    _update_page,
     _search_objects,
     _validate_url_safe,
     register_tools,
 )
-
 
 # ── search_objects ──────────────────────────────────────────────────────────
 
@@ -295,8 +291,8 @@ def test_redact_dict_strips_known_secrets() -> None:
 # ── Write tool gating ────────────────────────────────────────────────────────
 
 @pytest.mark.asyncio
-async def test_list_tools_returns_7_when_flag_off(mock_client: KosApiClient) -> None:
-    """With mcp_allow_write_tools=False, list_tools returns only the 7 read tools."""
+async def test_list_tools_returns_14_when_flag_off(mock_client: KosApiClient) -> None:
+    """With mcp_allow_write_tools=False, list_tools returns only the 14 read tools."""
     import mcp.types
     from mcp.server import Server
     srv = Server("test")
@@ -307,15 +303,17 @@ async def test_list_tools_returns_7_when_flag_off(mock_client: KosApiClient) -> 
     req = mcp.types.ListToolsRequest(method="tools/list")
     server_result = await handler(req)
     tools = server_result.root.tools
-    assert len(tools) == 7
+    assert len(tools) == 14  # 7 original + 7 career read tools (Phase 9D)
     tool_names = {t.name for t in tools}
     assert "create_page" not in tool_names
     assert "search_objects" in tool_names
+    assert "get_project" in tool_names
+    assert "list_projects" in tool_names
 
 
 @pytest.mark.asyncio
-async def test_list_tools_returns_13_when_flag_on(mock_client: KosApiClient) -> None:
-    """With mcp_allow_write_tools=True, list_tools returns 13 tools (7 read + 6 write)."""
+async def test_list_tools_returns_28_when_flag_on(mock_client: KosApiClient) -> None:
+    """With mcp_allow_write_tools=True, list_tools returns 28 tools (14 read + 14 write)."""
     import mcp.types
     from mcp.server import Server
     srv = Server("test")
@@ -326,10 +324,12 @@ async def test_list_tools_returns_13_when_flag_on(mock_client: KosApiClient) -> 
     req = mcp.types.ListToolsRequest(method="tools/list")
     server_result = await handler(req)
     tools = server_result.root.tools
-    assert len(tools) == 13
+    assert len(tools) == 28  # 14 read + 14 write (Phase 9D adds 7+8 career tools)
     tool_names = {t.name for t in tools}
     assert "create_page" in tool_names
     assert "search_objects" in tool_names
+    assert "create_project" in tool_names
+    assert "generate_and_save_resume_bullets" in tool_names
 
 
 @pytest.mark.asyncio

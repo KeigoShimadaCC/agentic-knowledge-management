@@ -207,6 +207,228 @@ class KosApiClient:
 
         return upload_data.get("source", upload_data)
 
+    # --- Career / Project methods (Phase 9D) ---
+
+    async def get_project(self, project_id: str) -> dict:
+        r = await self._client.get(f"/api/v1/projects/{project_id}")
+        r.raise_for_status()
+        return r.json()
+
+    async def list_projects(
+        self,
+        limit: int = 20,
+        offset: int = 0,
+        status: str | None = None,
+        skill: str | None = None,
+    ) -> dict:
+        params: dict = {"limit": limit, "offset": offset}
+        if status:
+            params["status"] = status
+        if skill:
+            params["skill"] = skill
+        r = await self._client.get("/api/v1/projects", params=params)
+        r.raise_for_status()
+        return r.json()
+
+    async def create_project(
+        self,
+        title: str,
+        description: str | None = None,
+        period_start: str | None = None,
+        period_end: str | None = None,
+        role: str | None = None,
+        organization: str | None = None,
+        problem: str | None = None,
+        actions: str | None = None,
+        results: str | None = None,
+        metrics: dict | None = None,
+        skills: list[str] | None = None,
+        status: str | None = None,
+        tags: list[str] | None = None,
+    ) -> dict:
+        body: dict = {"title": title}
+        for key, val in {
+            "description": description,
+            "period_start": period_start,
+            "period_end": period_end,
+            "role": role,
+            "organization": organization,
+            "problem": problem,
+            "actions": actions,
+            "results": results,
+            "metrics": metrics,
+            "skills": skills,
+            "status": status,
+            "tags": tags,
+        }.items():
+            if val is not None:
+                body[key] = val
+        r = await self._client.post("/api/v1/projects", json=body)
+        r.raise_for_status()
+        return r.json()
+
+    async def update_project(
+        self,
+        project_id: str,
+        title: str | None = None,
+        description: str | None = None,
+        period_start: str | None = None,
+        period_end: str | None = None,
+        role: str | None = None,
+        organization: str | None = None,
+        problem: str | None = None,
+        actions: str | None = None,
+        results: str | None = None,
+        metrics: dict | None = None,
+        skills: list[str] | None = None,
+        status: str | None = None,
+        tags: list[str] | None = None,
+    ) -> dict:
+        body: dict = {}
+        for key, val in {
+            "title": title,
+            "description": description,
+            "period_start": period_start,
+            "period_end": period_end,
+            "role": role,
+            "organization": organization,
+            "problem": problem,
+            "actions": actions,
+            "results": results,
+            "metrics": metrics,
+            "skills": skills,
+            "status": status,
+            "tags": tags,
+        }.items():
+            if val is not None:
+                body[key] = val
+        r = await self._client.patch(f"/api/v1/projects/{project_id}", json=body)
+        r.raise_for_status()
+        return r.json()
+
+    async def get_resume_bullet_set(self, bullet_set_id: str) -> dict:
+        r = await self._client.get(f"/api/v1/resume-bullet-sets/{bullet_set_id}")
+        r.raise_for_status()
+        return r.json()
+
+    async def list_resume_bullet_sets(
+        self,
+        project_id: str,
+        limit: int = 20,
+        offset: int = 0,
+    ) -> dict:
+        params: dict = {"limit": limit, "offset": offset}
+        r = await self._client.get(
+            f"/api/v1/projects/{project_id}/resume-bullet-sets", params=params
+        )
+        r.raise_for_status()
+        return r.json()
+
+    async def save_resume_bullet_set(self, project_id: str, payload: dict) -> dict:
+        r = await self._client.post(
+            f"/api/v1/projects/{project_id}/resume-bullet-sets", json=payload
+        )
+        r.raise_for_status()
+        return r.json()
+
+    async def get_interview_story(self, story_id: str) -> dict:
+        r = await self._client.get(f"/api/v1/interview-stories/{story_id}")
+        r.raise_for_status()
+        return r.json()
+
+    async def list_interview_stories(
+        self,
+        project_id: str,
+        question_type: str | None = None,
+        limit: int = 20,
+        offset: int = 0,
+    ) -> dict:
+        params: dict = {"limit": limit, "offset": offset}
+        if question_type:
+            params["question_type"] = question_type
+        r = await self._client.get(
+            f"/api/v1/projects/{project_id}/interview-stories", params=params
+        )
+        r.raise_for_status()
+        return r.json()
+
+    async def save_interview_story(self, project_id: str, payload: dict) -> dict:
+        r = await self._client.post(
+            f"/api/v1/projects/{project_id}/interview-stories", json=payload
+        )
+        r.raise_for_status()
+        return r.json()
+
+    async def get_project_evidence(self, project_id: str, limit: int = 50) -> list[dict]:
+        params: dict = {
+            "direction": "incoming",
+            "edge_types": ["belongs_to_project"],
+            "limit": min(limit, 50),
+        }
+        r = await self._client.get(
+            f"/api/v1/objects/{project_id}/related", params=params
+        )
+        r.raise_for_status()
+        return r.json()
+
+    async def delete_edge(self, edge_id: str) -> dict:
+        r = await self._client.delete(f"/api/v1/edges/{edge_id}")
+        r.raise_for_status()
+        return r.json() if r.content else {}
+
+    async def extract_project(
+        self,
+        source_id: str,
+        create: bool = True,
+        period_hint: list[str | None] | None = None,
+    ) -> dict:
+        body: dict = {"source_id": source_id, "create": create}
+        if period_hint is not None:
+            body["period_hint"] = period_hint
+        r = await self._client.post("/api/v1/ai/extract-project", json=body)
+        r.raise_for_status()
+        return r.json()
+
+    async def generate_resume_bullets(
+        self,
+        project_id: str,
+        target_role: str | None = None,
+        emphasis: str | None = None,
+        count: int = 3,
+        max_evidence_objects: int | None = None,
+    ) -> dict:
+        body: dict = {"project_id": project_id, "count": count}
+        if target_role:
+            body["target_role"] = target_role
+        if emphasis:
+            body["emphasis"] = emphasis
+        if max_evidence_objects is not None:
+            body["max_evidence_objects"] = max_evidence_objects
+        r = await self._client.post("/api/v1/ai/generate-resume-bullets", json=body)
+        r.raise_for_status()
+        return r.json()
+
+    async def generate_interview_story(
+        self,
+        project_id: str,
+        question_type: str = "behavioral",
+        target_role: str | None = None,
+        max_words: int = 300,
+        max_evidence_objects: int | None = None,
+    ) -> dict:
+        body: dict = {
+            "project_id": project_id,
+            "question_type": question_type,
+            "max_words": max_words,
+        }
+        if target_role:
+            body["target_role"] = target_role
+        if max_evidence_objects is not None:
+            body["max_evidence_objects"] = max_evidence_objects
+        r = await self._client.post("/api/v1/ai/generate-interview-story", json=body)
+        r.raise_for_status()
+        return r.json()
+
     async def aclose(self) -> None:
         await self._client.aclose()
 
