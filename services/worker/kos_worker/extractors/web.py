@@ -44,7 +44,11 @@ def extract(source, db) -> dict:
             }
 
         content_type = (page.content_type or "").lower()
-        if content_type and "text/html" not in content_type and "application/xhtml+xml" not in content_type:
+        if (
+            content_type
+            and "text/html" not in content_type
+            and "application/xhtml+xml" not in content_type
+        ):
             return {
                 "ingestion_status": "error",
                 "error_message": f"Unsupported content-type: {content_type}",
