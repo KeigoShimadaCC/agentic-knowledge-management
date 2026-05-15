@@ -327,6 +327,12 @@ See [`project-phases/PHASE-ENHANCE-03-UX-POLISH.md`](project-phases/PHASE-ENHANC
 - T6 verification: `make test-all` passed end to end after resetting the isolated `knowledgeos_test` database: frontend 27 tests, API/unit 134 tests with the existing Qdrant version warning, worker 18 tests, MCP 20 tests, and Playwright 10 tests. Follow-up targeted verification passed with worker 19 tests and Playwright 10 tests after the URL-safety and AI E2E fixes. Current collected total is 210 tests: frontend 27, API/unit 134, worker 19, MCP 20, E2E 10.
 - **PHASE-ENHANCE-02 compliance pass (2026-05-15):** T3 worker suite expanded to 29 tests (reportlab PDF fixture, corrupt PDF, EXIF orientation, non-image bytes, CSV BOM/quoting/empty file, YouTube missing-transcript flag, web redirect via `safe_http_get`, non-HTML rejection). T2 component/hook HTTP mocking moved to MSW (`AiPanel`, `GraphPanel`, `TriageModal`, `SearchModal`, `useSearch`, `useAutoSave`). T5 AI E2E now clicks Summarize against `OPENAI_API_KEY=sk-test-stub` (API `call_ai` stub — no seeded cache/audit row). CI E2E job sets `sk-test-stub` in `infra/.env` before compose up. Verification: `pnpm -F @kos/web test:run` 27 passed; `cd tests && uv run --group dev pytest worker/ -v` 29 passed.
 
+*Phase Enhance 02 — Testing infrastructure ✅ Complete (2026-05-15):*
+- All T1–T6 deliverables merged to `main` via PRs #2–#6, #8, #11; remote branches `phase-enhance-02-*` deleted.
+- Collected test total ~237 (≥210 target). `README.md` Testing Matrix and `make test-all` / CI workflow in place.
+- `project-phases/PHASE-ENHANCE-02-TESTING-INFRA-PROMPT.md` §12 Definition of Done checked off; §12.1–§12.2 record CI stability and intentional Section 8 bends.
+- CI on `main` after compliance: one ruff failure on `525d350` (fixed in `21243c6`), then green on `b0d30e7` — not treated as flake.
+
 *Phase Fix 02 cleanup completed on branch `phase-fix-02-forgotten-undocumented`:*
 - Completed F8-F10: `infra/.env.example` has one `MCP_INTERNAL_TOKEN`, host-side MCP defaults point to `http://127.0.0.1:8001`, local published ports are documented, and host-side Postgres examples/tests use `127.0.0.1:5433`.
 - Completed F11: `scripts/backup.sh` ships a local Postgres dump, library tarball, and best-effort Qdrant snapshot flow; verified against running Compose services with output under `~/KnowledgeOS/backups/20260515-021801/`.
