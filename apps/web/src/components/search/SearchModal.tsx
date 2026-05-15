@@ -21,7 +21,7 @@ interface SearchModalProps {
 
 export function SearchModal({ isOpen, onClose }: SearchModalProps) {
   const router = useRouter();
-  const { results, isLoading, error, query, setQuery, mode, setMode } = useSearch();
+  const { results, isLoading, error, query, setQuery, mode, setMode, debug, setDebug } = useSearch();
   const { openSidePane } = useWorkspaceLite();
   const [selectedIdx, setSelectedIdx] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -133,6 +133,7 @@ export function SearchModal({ isOpen, onClose }: SearchModalProps) {
                 key={result.id}
                 result={result}
                 isSelected={idx === selectedIdx}
+                showDebug={debug}
                 onSelect={() => {
                   onClose();
                   router.push(objectRoute(result.kind, result.id));
@@ -149,14 +150,23 @@ export function SearchModal({ isOpen, onClose }: SearchModalProps) {
             </p>
           )}
         </div>
-        {results.length > 0 && (
-          <div className="flex justify-between border-t border-gray-800 px-4 py-2 text-xs text-gray-600">
-            <span>
-              {results.length} result{results.length !== 1 ? "s" : ""}
-            </span>
+        <div className="flex justify-between border-t border-gray-800 px-4 py-2 text-xs text-gray-600">
+          <span>
+            {results.length > 0
+              ? `${results.length} result${results.length !== 1 ? "s" : ""}`
+              : ""}
+          </span>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setDebug(!debug)}
+              className={`transition-colors ${debug ? "text-yellow-400" : "hover:text-gray-400"}`}
+              title="Toggle score debug view"
+            >
+              {debug ? "Hide scores" : "Show scores"}
+            </button>
             <span>↑↓ navigate · Enter open</span>
           </div>
-        )}
+        </div>
       </div>
     </div>
   );

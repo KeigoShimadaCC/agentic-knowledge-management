@@ -1,7 +1,7 @@
 "use client";
 
 import { Columns2 } from "lucide-react";
-import type { SearchResult, SearchSnippet } from "@/types";
+import type { HybridSearchResult, SearchResult, SearchSnippet } from "@/types";
 import type { SidePaneObject } from "@/components/workspace/WorkspaceLiteProvider";
 
 const KIND_COLORS: Record<string, string> = {
@@ -34,11 +34,13 @@ function SnippetView({ snippet }: { snippet: SearchSnippet }) {
 interface SearchResultCardProps {
   result: SearchResult;
   isSelected: boolean;
+  showDebug?: boolean;
   onSelect: () => void;
   onOpenInPane?: (obj: SidePaneObject) => void;
 }
 
-export function SearchResultCard({ result, isSelected, onSelect, onOpenInPane }: SearchResultCardProps) {
+export function SearchResultCard({ result, isSelected, showDebug, onSelect, onOpenInPane }: SearchResultCardProps) {
+  const hybrid = result as HybridSearchResult;
   const kindColor = KIND_COLORS[result.kind] ?? "bg-gray-700 text-gray-300";
 
   return (
@@ -74,6 +76,17 @@ export function SearchResultCard({ result, isSelected, onSelect, onOpenInPane }:
                 #{tag}
               </span>
             ))}
+          </div>
+        )}
+        {showDebug && (
+          <div className="mt-1 flex gap-3 font-mono text-[10px] text-yellow-600">
+            <span>score: {result.score.toFixed(4)}</span>
+            {hybrid.keyword_score !== undefined && (
+              <span>kw: {hybrid.keyword_score.toFixed(4)}</span>
+            )}
+            {hybrid.vector_score !== undefined && (
+              <span>vec: {hybrid.vector_score.toFixed(4)}</span>
+            )}
           </div>
         )}
       </button>
