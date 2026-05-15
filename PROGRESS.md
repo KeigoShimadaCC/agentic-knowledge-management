@@ -1,10 +1,6 @@
 # KnowledgeOS — Progress Tracker
 
-<<<<<<< HEAD
-> Last updated: 2026-05-15 (Phase 9B career AI generators complete on branch `phase-9b`; PHASE-ENHANCE-03 UX Polish all 6 PRs complete and merged to main; PHASE-ENHANCE-02 testing infra complete; Phase 9A backend complete)
-=======
-> Last updated: 2026-05-15 (Phase 8B workspaces backend complete and validated; PHASE-ENHANCE-03 UX Polish all 6 PRs complete and merged to main; PHASE-ENHANCE-02 testing infra complete; Phase 9A backend complete)
->>>>>>> origin/main
+> Last updated: 2026-05-15 (Phase 7C Wave 1 Stabilization complete; Phase 9B career AI generators complete; PHASE-ENHANCE-03 UX Polish all 6 PRs complete and merged to main; PHASE-ENHANCE-02 testing infra complete; Phase 9A backend complete)
 
 ---
 
@@ -391,6 +387,18 @@ See [`project-phases/PHASE-7B-MCP-WRITE.md`](project-phases/PHASE-7B-MCP-WRITE.m
 
 ---
 
+## Phase 7C — Wave 1 Stabilization ✅ Complete
+
+**Goal:** Stabilize MCP read access, local Docker ingestion, and web routing/navigation before starting MCP write tools.
+
+See [`project-phases/PHASE-7C-STABILIZATION.md`](project-phases/PHASE-7C-STABILIZATION.md) for the full spec.
+
+- [x] **Track A — MCP read tools:** local stdio server (`services/mcp/`), internal-token auth (`X-KOS-Internal-Token`), allowlist enforced at startup, 7 read-only tools (`search_objects`, `hybrid_search`, `get_object`, `get_page`, `get_source`, `get_related_objects`, `answer_from_kb`), write tools gated by `MCP_ALLOW_WRITE_TOOLS`, 40+ tests passing, `MCP_TOOLS.md` / `SECURITY.md` / `AGENT_GUIDE.md` accurate.
+- [x] **Track B — Local ops:** `infra/docker-compose.yml` starts all 6 services including `kos-worker`; `Dockerfile.worker` with correct `PYTHONPATH`; `.env.example` has exactly one `MCP_INTERNAL_TOKEN`; `MCP_API_BASE_URL=http://127.0.0.1:8001`; README ports cheat sheet present (Web:3000, API:8001, Postgres:5433, Redis:6379, Qdrant:6333/6334).
+- [x] **Track C — Web routing:** all routes unified under `/app/...` (`/app/pages`, `/app/sources`, `/app/assets`, `/app/chats`, `/app/inbox`, `/app/trash`); `Sidebar.tsx` all 7 links correct; `objectRouting.ts` returns correct `/app/...` paths; Trash view at `/app/trash` with restore; Workspace Lite `openSidePane` wired throughout.
+
+---
+
 ## Summary
 
 | Phase | Name | Status | Progress |
@@ -404,13 +412,14 @@ See [`project-phases/PHASE-7B-MCP-WRITE.md`](project-phases/PHASE-7B-MCP-WRITE.m
 | 6A | Chat Import Lite | ✅ Complete | 8 / 8 subtasks |
 | 6B | Structured Chat Import | ✅ Complete | 9 / 9 subtasks |
 | 7A | MCP Read/Search | ✅ Complete | 10 / 10 subtasks |
-| Hardening | Search Quality + Multilingual | 🚧 Partial | 2 / 7 subtasks |
+| 7C | Wave 1 Stabilization | ✅ Complete | 3 / 3 tracks |
+| Hardening | Search Quality + Multilingual | ✅ Complete | 6 / 7 subtasks (Subtask 1 pg_trgm deferred) |
 | 7B | MCP Write Tools | ✅ Complete | 13 / 13 subtasks |
 | 8 | Multi-Pane Workspaces | ⬜ Planned | 0 / 8 subtasks |
-| 9 | Career & Project Memory | 🚧 In progress (9A backend shipped) | 1 / 8 (9A scope) |
-| Enhance-03 | UX/UI Polish | 🚧 In Progress | 1 / 6 PRs (UX-T1 shipped) |
+| 9 | Career & Project Memory | 🚧 In progress (9A+9B backend shipped) | 2 / 8 subtasks |
+| Enhance-03 | UX/UI Polish | ✅ Complete | 6 / 6 PRs |
 
-**Total:** 79 / 103 subtasks complete (77 phase subtasks + 2 hardening subtasks of 7)
+**Total:** 82 / 103 subtasks complete
 
 **Key cross-cutting concepts to track:**
 - Inbox/Triage (Phase 5): AI-classified staging area for unprocessed items
