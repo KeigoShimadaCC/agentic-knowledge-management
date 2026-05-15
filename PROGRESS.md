@@ -291,7 +291,7 @@ See [`project-phases/PHASE-7A-MCP.md`](project-phases/PHASE-7A-MCP.md) for the f
 - Frontend: `pnpm lint`, `pnpm typecheck`, and `pnpm build` passed.
 - Backend/API: `uv run --project services/api --extra dev ruff check services/api` passed; `PYTHONPATH=../services/api uv run --project ../services/api --extra dev pytest api/ unit/ -v` passed with 128 tests and one Qdrant client/server version warning.
 - MCP: `uv run --project services/mcp --extra dev pytest services/mcp/tests/ -v` passed with 19 tests.
-- Branch state before final push: local branch is ahead of `main`; push pending until the final `PROGRESS.md` commit is created.
+- Branch state: pushed to `origin/phase-fix-02-forgotten-undocumented`.
 
 *Verified complete and matching the phase plans:*
 - Phase 1 Foundation, Phase 2 Sources, Phase 3 Search (incl. multilingual ILIKE fallback), Phase 4 Graph Lite, Phase 5 AI Assistant + Inbox, Phase 6A Chat Import, Phase 6B Structured Chat Import, Phase 7A MCP Read/Search, and Phase 8A Workspace Lite are all implemented and exercised by tests.
