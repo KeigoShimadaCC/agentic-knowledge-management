@@ -1,6 +1,12 @@
 "use client";
 
-import { createContext, useContext, useState, useCallback, type ReactNode } from "react";
+import {
+  createContext,
+  useContext,
+  useState,
+  useCallback,
+  type ReactNode,
+} from "react";
 
 export interface SidePaneObject {
   id: string;
@@ -8,33 +14,127 @@ export interface SidePaneObject {
   title: string;
 }
 
-interface WorkspaceLiteContextValue {
+export interface PaneState {
+  id: string;
+  objectId: string | null;
+  objectKind: string | null;
+  title: string;
+  mode: "read" | "edit";
+  sizePct: number;
+}
+
+export type WorkspaceSplit = "horizontal" | "vertical";
+
+export interface WorkspaceCtx {
+  panes: PaneState[];
+  activePaneId: string;
+  split: WorkspaceSplit;
+  openInPane: (paneId: string, obj: SidePaneObject) => void;
+  addPane: () => void;
+  removePane: (paneId: string) => void;
+  setActivePaneId: (id: string) => void;
+  setSplit: (dir: WorkspaceSplit) => void;
+  savedWorkspaceId: string | null;
+  setSavedWorkspaceId: (id: string | null) => void;
+  // Backward-compat aliases
   sidePaneObject: SidePaneObject | null;
   openSidePane: (obj: SidePaneObject) => void;
   closeSidePane: () => void;
 }
 
-const WorkspaceLiteContext = createContext<WorkspaceLiteContextValue | null>(null);
+const WorkspaceLiteContext = createContext<WorkspaceCtx | null>(null);
+
+const MAIN_PANE_ID = "main";
+let _counter = 0;
+function newPaneId() { return `pane-${++_counter}`; }
+
+function makeMain(): PaneState {
+  return { id: MAIN_PANE_ID, objectId: null, objectKind: null, title: "", mode: "read", sizePct: 100 };
+}
 
 export function WorkspaceLiteProvider({ children }: { children: ReactNode }) {
-  const [sidePaneObject, setSidePaneObject] = useState<SidePaneObject | null>(null);
+  const [panes, setPanes] = useState<PaneState[]>([makeMain()]);
+  const [activePaneId, setActivePaneId] = useState<string>(MAIN_PANE_ID);
+  const [split, setSplit] = useState<WorkspaceSplit>("horizontal");
+  const [savedWorkspaceId, setSavedWorkspaceId] = useState<string | null>(null);
+
+  const openInPane = useCallback((paneId: string, obj: SidePaneObject) => {
+    setPanes((prev) =>
+      prev.map((p) =>
+        p.id === paneId ? { ...p, objectId: obj.id, objectKind: obj.kind, title: obj.title } : p
+      )
+    );
+    setActivePaneId(paneId);
+  }, []);
+
+  const addPane = useCallback(() => {
+    setPanes((prev) => {
+      if (prev.length >= 4) return prev;
+      const count = prev.length + 1;
+      const newSize = Math.floor(100 / count);
+      const rem = 100 - newSize * count;
+      return [
+        ...prev.map((p, i): PaneState => ({ ...p, sizePct: newSize + (i === 0 ? rem : 0) })),
+        { id: newPaneId(), objectId: null, objectKind: null, title: "", mode: "read" as const, sizePct: newSize },
+      ];
+    });
+  }, []);
+
+  const removePane = useCallback((paneId: string) => {
+    if (paneId === MAIN_PANE_ID) return;
+    setPanes((prev) => {
+      const filtered = prev.filter((p) => p.id !== paneId);
+      if (filtered.length === 1) return [{ ...filtered[0]!, sizePct: 100 }];
+      const total = filtered.reduce((s, p) => s + p.sizePct, 0);
+      return filtered.map((p): PaneState => ({ ...p, sizePct: Math.round((p.sizePct / total) * 100) }));
+    });
+    setActivePaneId((cur) => (cur === paneId ? MAIN_PANE_ID : cur));
+  }, []);
+
+  // ── Backward-compat aliases ────────────────────────────────────────────────
+  const p1 = panes[1];
+  const sidePaneObject: SidePaneObject | null =
+    p1 && p1.objectId
+      ? { id: p1.objectId, kind: p1.objectKind!, title: p1.title }
+      : null;
 
   const openSidePane = useCallback((obj: SidePaneObject) => {
-    setSidePaneObject(obj);
+    setPanes((prev) => {
+      if (prev.length === 1) {
+        const sid = newPaneId();
+        setTimeout(() => setActivePaneId(sid), 0);
+        return [
+          { ...prev[0]!, sizePct: 60 },
+          { id: sid, objectId: obj.id, objectKind: obj.kind, title: obj.title, mode: "read", sizePct: 40 },
+        ];
+      }
+      setTimeout(() => setActivePaneId(prev[1]?.id ?? MAIN_PANE_ID), 0);
+      return prev.map((p, i): PaneState =>
+        i === 1 ? { ...p, objectId: obj.id, objectKind: obj.kind, title: obj.title } : p
+      );
+    });
   }, []);
 
   const closeSidePane = useCallback(() => {
-    setSidePaneObject(null);
+    setPanes((prev) => [{ ...prev[0]!, sizePct: 100 }]);
+    setActivePaneId(MAIN_PANE_ID);
   }, []);
 
   return (
-    <WorkspaceLiteContext.Provider value={{ sidePaneObject, openSidePane, closeSidePane }}>
+    <WorkspaceLiteContext.Provider
+      value={{
+        panes, activePaneId, split,
+        openInPane, addPane, removePane, setActivePaneId, setSplit,
+        savedWorkspaceId, setSavedWorkspaceId,
+        sidePaneObject, openSidePane, closeSidePane,
+      }}
+    >
       {children}
     </WorkspaceLiteContext.Provider>
   );
 }
 
-export function useWorkspaceLite(): WorkspaceLiteContextValue {
+export function useWorkspaceLite(): WorkspaceCtx {
   const ctx = useContext(WorkspaceLiteContext);
   if (!ctx) throw new Error("useWorkspaceLite must be used inside WorkspaceLiteProvider");
   return ctx;

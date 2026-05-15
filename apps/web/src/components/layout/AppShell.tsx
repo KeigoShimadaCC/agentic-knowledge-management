@@ -1,10 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
+import { Group as PanelGroup, Panel, Separator as PanelResizeHandle } from "react-resizable-panels";
 import { SearchModal } from "@/components/search/SearchModal";
 import { SearchCommand } from "@/components/search/SearchCommand";
-import { WorkspaceSidePane } from "@/components/workspace/WorkspaceSidePane";
 import { ShortcutOverlay } from "@/components/help/ShortcutOverlay";
+import { PaneContainer } from "@/components/workspace/PaneContainer";
+import { useWorkspaceLite } from "@/components/workspace/WorkspaceLiteProvider";
 import { Sidebar } from "./Sidebar";
 import { MobileNav } from "./MobileNav";
 import { useSidebarState } from "@/lib/hooks/useSidebarState";
@@ -15,6 +17,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const [searchOpen, setSearchOpen] = useState(false);
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const { toggle } = useSidebarState();
+  const { panes, split } = useWorkspaceLite();
 
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
@@ -36,6 +39,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     return () => document.removeEventListener("keydown", onKeyDown);
   }, []);
 
+  const sidePanes = panes.slice(1);
+  const handleClass =
+    split === "horizontal"
+      ? "w-1 bg-gray-800 hover:bg-blue-600 cursor-col-resize transition-colors"
+      : "h-1 bg-gray-800 hover:bg-blue-600 cursor-row-resize transition-colors";
+
   return (
     <div className="flex h-screen overflow-hidden bg-gray-950">
       <Sidebar />
@@ -43,9 +52,22 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <header role="banner">
           <MobileNav onOpen={toggle} />
         </header>
-        <main id="main-content" className="min-w-0 flex-1 overflow-y-auto">{children}</main>
+        <PanelGroup orientation={split} className="min-h-0 flex-1">
+          <Panel defaultSize={panes[0]?.sizePct ?? 100} minSize={20}>
+            <main id="main-content" className="h-full overflow-y-auto">
+              {children}
+            </main>
+          </Panel>
+          {sidePanes.map((pane, i) => (
+            <Fragment key={pane.id}>
+              <PanelResizeHandle className={handleClass} />
+              <Panel defaultSize={pane.sizePct} minSize={20}>
+                <PaneContainer pane={pane} isLast={i === sidePanes.length - 1} />
+              </Panel>
+            </Fragment>
+          ))}
+        </PanelGroup>
       </div>
-      <WorkspaceSidePane />
       {useV2Search
         ? <SearchCommand isOpen={searchOpen} onClose={() => setSearchOpen(false)} />
         : <SearchModal isOpen={searchOpen} onClose={() => setSearchOpen(false)} />
