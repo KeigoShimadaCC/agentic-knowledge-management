@@ -3,6 +3,7 @@
 import { objectKindLabel, objectRoute } from "@/lib/objectRouting";
 import { PagePaneView } from "./PagePaneView";
 import { SourcePaneView } from "./SourcePaneView";
+import { ProjectPaneView } from "@/components/projects/ProjectPaneView";
 
 interface ObjectPaneViewerProps {
   id: string;
@@ -13,6 +14,7 @@ interface ObjectPaneViewerProps {
 export function ObjectPaneViewer({ id, kind, title }: ObjectPaneViewerProps) {
   if (kind === "page") return <PagePaneView id={id} objectTitle={title} />;
   if (kind === "source") return <SourcePaneView id={id} title={title} />;
+  if (kind === "project") return <ProjectPaneView id={id} />;
 
   return (
     <div className="p-4">
