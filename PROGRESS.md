@@ -285,7 +285,7 @@ See [`project-phases/PHASE-ENHANCE-03-UX-POLISH.md`](project-phases/PHASE-ENHANC
 **Branch:** `phase-9b` (worktree: `/Users/keigoshimada/Documents/phase-9b`)
 
 - [x] **Subtask 0** — Audit + plan file already present; branch/worktree created; PROGRESS tracking started
-- [ ] **Subtask 1** — Pydantic request/response schemas in `schemas/career_ai.py`
+- [x] **Subtask 1** — Pydantic request/response schemas in `schemas/career_ai.py`
 - [ ] **Subtask 2** — Prompt templates in `career_ai_prompts.py` with prompt version `9b.1`
 - [ ] **Subtask 3** — Evidence helper and resume bullet generator service
 - [ ] **Subtask 4** — Interview STAR story generator service
