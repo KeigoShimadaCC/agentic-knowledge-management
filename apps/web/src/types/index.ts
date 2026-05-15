@@ -376,3 +376,50 @@ export interface TriageResponse {
   summary: string;
   agent_run_id: string;
 }
+
+// ── Workspace types ────────────────────────────────────────────────────────
+
+export type WorkspaceSplitAPI = "horizontal" | "vertical";
+export type PaneModeAPI = "read" | "edit";
+
+export interface WorkspacePaneAPI {
+  id: string;
+  object_id: string | null;
+  object_kind: string | null;
+  size_pct: number;
+  mode: PaneModeAPI;
+}
+
+export interface WorkspaceLayoutAPI {
+  version: 1;
+  split: WorkspaceSplitAPI | null;
+  panes: WorkspacePaneAPI[];
+  active_pane_id: string;
+}
+
+export interface WorkspaceOut {
+  id: string;
+  user_id: string;
+  name: string;
+  description: string | null;
+  layout: WorkspaceLayoutAPI;
+  is_pinned: boolean;
+  last_used_at: string | null;
+  created_at: string;
+  updated_at: string;
+  deleted_at: string | null;
+}
+
+export interface WorkspaceCreate {
+  name: string;
+  description?: string | null;
+  layout: WorkspaceLayoutAPI;
+  is_pinned?: boolean;
+}
+
+export interface WorkspaceUpdate {
+  name?: string;
+  description?: string | null;
+  layout?: WorkspaceLayoutAPI;
+  is_pinned?: boolean;
+}

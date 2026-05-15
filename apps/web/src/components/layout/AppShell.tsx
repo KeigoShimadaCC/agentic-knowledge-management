@@ -2,10 +2,12 @@
 
 import { Fragment, useEffect, useState } from "react";
 import { Group as PanelGroup, Panel, Separator as PanelResizeHandle } from "react-resizable-panels";
+import { Save } from "lucide-react";
 import { SearchModal } from "@/components/search/SearchModal";
 import { SearchCommand } from "@/components/search/SearchCommand";
 import { ShortcutOverlay } from "@/components/help/ShortcutOverlay";
 import { PaneContainer } from "@/components/workspace/PaneContainer";
+import { WorkspaceNameModal } from "@/components/workspace/WorkspaceNameModal";
 import { useWorkspaceLite } from "@/components/workspace/WorkspaceLiteProvider";
 import { Sidebar } from "./Sidebar";
 import { MobileNav } from "./MobileNav";
@@ -16,8 +18,9 @@ const useV2Search = process.env.NEXT_PUBLIC_UX_SEARCH_V2 === "1";
 export function AppShell({ children }: { children: React.ReactNode }) {
   const [searchOpen, setSearchOpen] = useState(false);
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
+  const [saveModalOpen, setSaveModalOpen] = useState(false);
   const { toggle } = useSidebarState();
-  const { panes, split } = useWorkspaceLite();
+  const { panes, split, savedWorkspaceId } = useWorkspaceLite();
 
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
@@ -52,6 +55,23 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <header role="banner">
           <MobileNav onOpen={toggle} />
         </header>
+        {panes.length > 1 && (
+          <div className="flex shrink-0 items-center gap-2 border-b border-gray-800 bg-gray-900 px-3 py-1">
+            {savedWorkspaceId && (
+              <span className="text-xs text-gray-500">Workspace saved</span>
+            )}
+            <div className="flex-1" />
+            <button
+              type="button"
+              onClick={() => setSaveModalOpen(true)}
+              title="Save workspace"
+              className="flex items-center gap-1.5 rounded px-2 py-1 text-xs text-gray-400 hover:bg-gray-800 hover:text-gray-200"
+            >
+              <Save className="h-3.5 w-3.5" />
+              Save workspace
+            </button>
+          </div>
+        )}
         <PanelGroup orientation={split} className="min-h-0 flex-1">
           <Panel defaultSize={panes[0]?.sizePct ?? 100} minSize={20}>
             <main id="main-content" className="h-full overflow-y-auto">
@@ -73,6 +93,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         : <SearchModal isOpen={searchOpen} onClose={() => setSearchOpen(false)} />
       }
       <ShortcutOverlay open={shortcutsOpen} onOpenChange={setShortcutsOpen} />
+      <WorkspaceNameModal open={saveModalOpen} onClose={() => setSaveModalOpen(false)} />
     </div>
   );
 }

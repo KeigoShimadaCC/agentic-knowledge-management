@@ -8,19 +8,23 @@ import {
   Files,
   Image,
   Inbox,
+  Layout,
   LogOut,
   MessageSquareText,
   Trash2,
+  Trash,
 } from "lucide-react";
 import { clsx } from "clsx";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { PanelLeft } from "lucide-react";
 
-import { logout } from "@/lib/api";
+import { logout, listWorkspaces, deleteWorkspace } from "@/lib/api";
+import type { WorkspaceOut } from "@/types";
 import { useAuth } from "@/lib/hooks/useAuth";
 import { useSidebarState } from "@/lib/hooks/useSidebarState";
 import { useShortcut } from "@/lib/hooks/useShortcut";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
+import { useWorkspaceLite } from "@/components/workspace/WorkspaceLiteProvider";
 
 const navItems = [
   { href: "/app", label: "All Objects", icon: Files },
@@ -38,6 +42,17 @@ export function Sidebar() {
   const { user, isLoading, mutate } = useAuth();
   const [signingOut, setSigningOut] = useState(false);
   const { collapsed, toggle } = useSidebarState();
+  const { loadWorkspace } = useWorkspaceLite();
+  const [workspaces, setWorkspaces] = useState<WorkspaceOut[]>([]);
+  const [wsExpanded, setWsExpanded] = useState(false);
+
+  useEffect(() => {
+    if (wsExpanded) {
+      listWorkspaces({ limit: 5 })
+        .then((res) => setWorkspaces(res.items))
+        .catch(() => {});
+    }
+  }, [wsExpanded]);
 
   useShortcut("\\", (e) => {
     if (e.metaKey || e.ctrlKey) {
@@ -99,6 +114,57 @@ export function Sidebar() {
             {!collapsed && label}
           </Link>
         ))}
+
+        {/* Workspaces section */}
+        <div className="pt-2">
+          <button
+            type="button"
+            onClick={() => setWsExpanded((v) => !v)}
+            title={collapsed ? "Workspaces" : undefined}
+            className={clsx(
+              "flex w-full items-center rounded-lg px-3 py-2 text-sm text-gray-400 transition-colors hover:bg-gray-800 hover:text-white",
+              collapsed ? "justify-center gap-0" : "gap-2.5"
+            )}
+          >
+            <Layout size={16} />
+            {!collapsed && (
+              <>
+                <span className="flex-1 text-left">Workspaces</span>
+                <span className="text-xs">{wsExpanded ? "▲" : "▼"}</span>
+              </>
+            )}
+          </button>
+          {!collapsed && wsExpanded && (
+            <div className="ml-4 mt-1 space-y-0.5">
+              {workspaces.length === 0 && (
+                <p className="px-3 py-1.5 text-xs text-gray-600">No saved workspaces</p>
+              )}
+              {workspaces.map((ws) => (
+                <div key={ws.id} className="group flex items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={() => void loadWorkspace(ws.id)}
+                    className="min-w-0 flex-1 truncate rounded px-2 py-1.5 text-left text-xs text-gray-400 hover:bg-gray-800 hover:text-white"
+                    title={ws.name}
+                  >
+                    {ws.name}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      await deleteWorkspace(ws.id);
+                      setWorkspaces((prev) => prev.filter((w) => w.id !== ws.id));
+                    }}
+                    aria-label={`Delete workspace ${ws.name}`}
+                    className="hidden shrink-0 rounded p-1 text-gray-600 hover:text-red-400 group-hover:block"
+                  >
+                    <Trash size={12} />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </nav>
 
       <div className="shrink-0 space-y-2 border-t border-gray-800 p-3">

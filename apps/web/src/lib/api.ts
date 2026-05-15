@@ -25,6 +25,9 @@ import type {
   SuggestLinksResponse,
   SummarizeResponse,
   TriageResponse,
+  WorkspaceOut,
+  WorkspaceCreate,
+  WorkspaceUpdate,
 } from "@/types";
 import { ApiError } from "@/types";
 
@@ -394,4 +397,54 @@ export async function updateObject(
 
 export async function deleteObject(id: string): Promise<ObjectOut> {
   return request<ObjectOut>(`/api/v1/objects/${id}`, { method: "DELETE" });
+}
+
+// ── Workspace API ─────────────────────────────────────────────────────────
+
+export async function listWorkspaces(params?: {
+  limit?: number;
+  offset?: number;
+  pinned_only?: boolean;
+}): Promise<PaginatedResponse<WorkspaceOut>> {
+  const qs = new URLSearchParams();
+  if (params?.limit !== undefined) qs.set("limit", String(params.limit));
+  if (params?.offset !== undefined) qs.set("offset", String(params.offset));
+  if (params?.pinned_only) qs.set("pinned_only", "true");
+  const query = qs.toString();
+  return request<PaginatedResponse<WorkspaceOut>>(
+    `/api/v1/workspaces${query ? `?${query}` : ""}`
+  );
+}
+
+export async function createWorkspace(
+  body: WorkspaceCreate
+): Promise<WorkspaceOut> {
+  return request<WorkspaceOut>("/api/v1/workspaces", {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
+}
+
+export async function getWorkspace(id: string): Promise<WorkspaceOut> {
+  return request<WorkspaceOut>(`/api/v1/workspaces/${id}`);
+}
+
+export async function updateWorkspace(
+  id: string,
+  body: WorkspaceUpdate
+): Promise<WorkspaceOut> {
+  return request<WorkspaceOut>(`/api/v1/workspaces/${id}`, {
+    method: "PATCH",
+    body: JSON.stringify(body),
+  });
+}
+
+export async function deleteWorkspace(id: string): Promise<void> {
+  await request<void>(`/api/v1/workspaces/${id}`, { method: "DELETE" });
+}
+
+export async function restoreWorkspace(id: string): Promise<WorkspaceOut> {
+  return request<WorkspaceOut>(`/api/v1/workspaces/${id}/restore`, {
+    method: "POST",
+  });
 }

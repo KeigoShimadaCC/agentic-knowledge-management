@@ -7,6 +7,11 @@ import {
   useCallback,
   type ReactNode,
 } from "react";
+import {
+  createWorkspace,
+  getWorkspace,
+} from "@/lib/api";
+import type { WorkspaceOut, WorkspacePaneAPI, WorkspaceLayoutAPI } from "@/types";
 
 export interface SidePaneObject {
   id: string;
@@ -36,6 +41,8 @@ export interface WorkspaceCtx {
   setSplit: (dir: WorkspaceSplit) => void;
   savedWorkspaceId: string | null;
   setSavedWorkspaceId: (id: string | null) => void;
+  saveWorkspace: (name: string, description?: string) => Promise<WorkspaceOut>;
+  loadWorkspace: (id: string) => Promise<void>;
   // Backward-compat aliases
   sidePaneObject: SidePaneObject | null;
   openSidePane: (obj: SidePaneObject) => void;
@@ -120,12 +127,51 @@ export function WorkspaceLiteProvider({ children }: { children: ReactNode }) {
     setActivePaneId(MAIN_PANE_ID);
   }, []);
 
+  const saveWorkspace = useCallback(
+    async (name: string, description?: string): Promise<WorkspaceOut> => {
+      const apiPanes: WorkspacePaneAPI[] = panes.map((p) => ({
+        id: p.id,
+        object_id: p.objectId,
+        object_kind: p.objectKind,
+        size_pct: Math.max(5, Math.min(95, p.sizePct)),
+        mode: p.mode,
+      }));
+      const layout: WorkspaceLayoutAPI = {
+        version: 1,
+        split: panes.length >= 2 ? split : null,
+        panes: apiPanes,
+        active_pane_id: activePaneId,
+      };
+      const ws = await createWorkspace({ name, description: description ?? null, layout });
+      setSavedWorkspaceId(String(ws.id));
+      return ws;
+    },
+    [panes, split, activePaneId]
+  );
+
+  const loadWorkspace = useCallback(async (id: string): Promise<void> => {
+    const ws = await getWorkspace(id);
+    const restored: PaneState[] = ws.layout.panes.map((p) => ({
+      id: p.id,
+      objectId: p.object_id,
+      objectKind: p.object_kind,
+      title: "",
+      mode: p.mode,
+      sizePct: p.size_pct,
+    }));
+    setPanes(restored);
+    if (ws.layout.split) setSplit(ws.layout.split);
+    setActivePaneId(ws.layout.active_pane_id);
+    setSavedWorkspaceId(String(ws.id));
+  }, []);
+
   return (
     <WorkspaceLiteContext.Provider
       value={{
         panes, activePaneId, split,
         openInPane, addPane, removePane, setActivePaneId, setSplit,
         savedWorkspaceId, setSavedWorkspaceId,
+        saveWorkspace, loadWorkspace,
         sidePaneObject, openSidePane, closeSidePane,
       }}
     >
