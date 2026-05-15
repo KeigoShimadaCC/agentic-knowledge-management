@@ -175,6 +175,24 @@ pnpm test:e2e
 pnpm --dir tests/e2e report
 ```
 
+### Testing Matrix
+
+| Layer | Command |
+|---|---|
+| Frontend unit/component | `make test-unit` or `pnpm test:web` |
+| API + unit pytest | `make test-api` |
+| Worker extractors | `make test-worker` |
+| MCP package | `make test-mcp` |
+| Playwright E2E | `make test-e2e` or `pnpm test:e2e` |
+| Everything | `make test-all` or `pnpm test:all` |
+
+`make test-e2e` expects the Compose stack to be running with a sandbox library root:
+
+```bash
+LIBRARY_ROOT=$PWD/tests/e2e/.tmp/library docker compose -f infra/docker-compose.yml up -d --build
+make test-e2e
+```
+
 ### Alembic Migrations
 
 ```bash
