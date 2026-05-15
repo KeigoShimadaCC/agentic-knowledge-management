@@ -1,6 +1,6 @@
 # KnowledgeOS — Progress Tracker
 
-> Last updated: 2026-05-15 (audit run; phase claims cross-checked against repo)
+> Last updated: 2026-05-15 (PHASE-FIX-03: routing unified, docs aligned, repo hygiene)
 
 ---
 
@@ -145,10 +145,6 @@ See [`project-phases/PHASE-5-AI-ASSISTANT.md`](project-phases/PHASE-5-AI-ASSISTA
 
 ## Phase 6A — Chat Import Lite ✅ Complete
 
-> Historical note: the bottom `Structured Import (requires Phase 5 AI)` subtasks listed under this phase have been superseded by the standalone Phase 6B section below. They are retained for traceability only.
-
-
-
 **Goal:** Turn pasted/uploaded ChatGPT, Claude, Markdown, and plain-text conversations into durable, searchable chat objects without AI extraction.
 
 See [`project-phases/PHASE-6A-CHAT-IMPORT-LITE.md`](project-phases/PHASE-6A-CHAT-IMPORT-LITE.md) for the full subtask spec.
@@ -162,10 +158,9 @@ See [`project-phases/PHASE-6A-CHAT-IMPORT-LITE.md`](project-phases/PHASE-6A-CHAT
 - [x] **Subtask 6** — Shared frontend object routing for `kind=chat` in search/graph/all-object navigation
 - [x] **Subtask 7** — Parser/API/search tests, fixtures, docs, and progress updates
 
-**Structured Import (requires Phase 5 AI):**
-- [ ] **Subtask 1** — LLM summarizer: decisions, open questions, action items, claims, concepts, projects
-- [ ] **Subtask 2** — Object extraction: Claim, Task, concept → edges from chat
-- [ ] **Subtask 3** — Tests + docs: fixture exports; update `docs/INGESTION.md`
+**Structured Import (superseded by Phase 6B):**
+- ✅ Implemented in [Phase 6B — Structured Chat Import](#phase-6b--structured-chat-import--complete).
+  See subtasks 1–8 under Phase 6B; that section is the canonical record.
 
 ---
 
@@ -291,13 +286,12 @@ See [`project-phases/PHASE-7A-MCP.md`](project-phases/PHASE-7A-MCP.md) for the f
 - **Phase 2 worker tests missing**: `tests/worker/` was specified in `PHASE-2-SOURCES.md` (extractor tests with `sample.pdf`, `sample.jpg`, `sample.csv`) but does not exist. Extractor logic in `services/worker/kos_worker/extractors/` has no automated coverage.
 - **Hardening track**: only Subtasks 0 + 1 are complete (see section above). Snippet sanitization, JP fixtures, debug UI, and index-status endpoint are still open.
 
-*Frontend routing oddities (not phase blockers but worth fixing):*
-- `Sidebar.tsx` links to `/app/trash` but no route exists at `(app)/app/trash/`.
-- `Sidebar.tsx` links to `/app/assets`, but the actual route file is `(app)/assets/page.tsx`, which serves at `/assets`. The active-state highlight and link both resolve to a 404 until you fix one side.
-- Inconsistent grouping: pages list is at `/app/pages` but page detail is at `/pages/[id]`; chats are entirely under `/app/chats/…`; sources are entirely under `/sources/…`. This is organic drift, not a phase-plan requirement.
+*Frontend routing oddities:* ✅ Resolved in PHASE-FIX-03 (branch `phase-fix-01`).
+- All routes unified under `/app/...` prefix (F16, F17).
+- Trash view built at `/app/trash` with restore action (F15).
+- `objectRouting.ts`, `Sidebar.tsx`, `SourceCard.tsx` updated to match.
 
 *Infrastructure oddities:*
 - `infra/.env.example` defines `MCP_INTERNAL_TOKEN=` twice and `MCP_API_BASE_URL=http://127.0.0.1:8000`, but the dockerized API is published on `127.0.0.1:8001` (compose maps `8001 → api:8000`). A host-side `kos-mcp` run against the dockerized API will need `MCP_API_BASE_URL=http://127.0.0.1:8001`.
 - Postgres in `docker-compose.yml` is published on `127.0.0.1:5433` (not 5432). Tests and scripts that assume 5432 should target 5433 or use the Docker network DNS.
-- `README.md` previously referenced `scripts/backup.sh` and `scripts/reindex.py`; only `scripts/setup.sh` and `scripts/run_tests.sh` exist. README has been corrected.
-- `test_output.txt` and `test_output_2.txt` are checked-in pytest log dumps (≈260KB / 21KB) at the repo root. They should be `.gitignore`d or deleted.
+- `test_output*.txt` files: `.gitignore` already excludes them; not tracked.

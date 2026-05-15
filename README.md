@@ -115,8 +115,8 @@ git clone <repo-url> && cd agentic-knowledge-management
 # 2. Create local directories + copy .env
 bash scripts/setup.sh
 
-# 3. Edit infra/.env — set SESSION_SECRET to a 32+ char random string
-#    (everything else works with defaults)
+# 3. Edit infra/.env as needed — all settings have working defaults
+#    (SESSION_SECRET is optional; see docs/SECURITY.md for the session model)
 
 # 4. Start all services
 docker compose -f infra/docker-compose.yml up -d
@@ -327,7 +327,7 @@ Copy `infra/.env.example` to `infra/.env` before starting Docker.
 
 | Variable | Default | Required |
 |---|---|---|
-| `SESSION_SECRET` | *(must set)* | **Yes** — min 32 chars |
+| `SESSION_SECRET` | *(not set)* | No — reserved for future signed URLs |
 | `POSTGRES_DB` | `knowledgeos` | No |
 | `POSTGRES_USER` | `kos` | No |
 | `POSTGRES_PASSWORD` | `kospass` | No |
