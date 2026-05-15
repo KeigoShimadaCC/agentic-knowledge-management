@@ -283,11 +283,14 @@ export const listEdges = (params?: { source_id?: string; target_id?: string; kin
 
 export async function keywordSearch(
   q: string,
-  opts?: { kind?: string; limit?: number }
+  opts?: { kind?: string; limit?: number; objectIds?: string[] }
 ): Promise<SearchResponse> {
   const params = new URLSearchParams({ q });
   if (opts?.kind) params.set("kind", opts.kind);
   if (opts?.limit) params.set("limit", String(opts.limit));
+  if (opts?.objectIds?.length) {
+    opts.objectIds.forEach((id) => params.append("object_ids", id));
+  }
   return request<SearchResponse>(`/api/v1/search/keyword?${params}`);
 }
 
@@ -303,7 +306,7 @@ export async function vectorSearch(
 
 export async function hybridSearch(
   q: string,
-  opts?: { kind?: string; limit?: number; debug?: boolean }
+  opts?: { kind?: string; limit?: number; debug?: boolean; objectIds?: string[] }
 ): Promise<HybridSearchResponse> {
   return request<HybridSearchResponse>("/api/v1/search/hybrid", {
     method: "POST",
@@ -312,6 +315,7 @@ export async function hybridSearch(
       kind: opts?.kind ?? null,
       limit: opts?.limit ?? 10,
       debug: opts?.debug ?? false,
+      object_ids: opts?.objectIds && opts.objectIds.length > 0 ? opts.objectIds : null,
     }),
   });
 }
