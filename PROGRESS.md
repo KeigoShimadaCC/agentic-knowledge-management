@@ -1,6 +1,6 @@
 # KnowledgeOS — Progress Tracker
 
-> Last updated: 2026-05-15 (Phase 9B career AI generators in progress on branch `phase-9b`; PHASE-ENHANCE-03 UX Polish all 6 PRs complete and merged to main; PHASE-ENHANCE-02 testing infra complete; Phase 9A backend complete)
+> Last updated: 2026-05-15 (Phase 9B career AI generators complete on branch `phase-9b`; PHASE-ENHANCE-03 UX Polish all 6 PRs complete and merged to main; PHASE-ENHANCE-02 testing infra complete; Phase 9A backend complete)
 
 ---
 
@@ -278,7 +278,7 @@ See [`project-phases/PHASE-ENHANCE-03-UX-POLISH.md`](project-phases/PHASE-ENHANC
 
 ---
 
-## Phase 9B — Career AI Generators 🚧 In Progress
+## Phase 9B — Career AI Generators ✅ Complete
 
 **Goal:** Backend-only AI generators for evidence-linked resume bullets and STAR interview stories from existing project records. Spec: [`project-phases/PHASE-9B-CAREER-AI-GENERATORS.md`](project-phases/PHASE-9B-CAREER-AI-GENERATORS.md).
 
@@ -291,7 +291,9 @@ See [`project-phases/PHASE-ENHANCE-03-UX-POLISH.md`](project-phases/PHASE-ENHANC
 - [x] **Subtask 4** — Interview STAR story generator service
 - [x] **Subtask 5** — Thin `/api/v1/ai/generate-*` endpoint handlers
 - [x] **Subtask 6** — Integration tests covering happy paths, validation, ownership, soft-delete, AI-disabled, malformed JSON, and evidence caps
-- [ ] **Subtask 7** — API docs and final PROGRESS completion update
+- [x] **Subtask 7** — API docs and final PROGRESS completion update
+
+**Verification:** `cd tests && UV_CACHE_DIR=/private/tmp/uv-cache-phase9b PYTHONPATH=../services/api uv run --project ../services/api --extra dev pytest api/test_career_ai.py -v` → 13 passed; isolated regression DB `knowledgeos_phase9b_test` with `pytest api/ unit/ -q` → 164 passed, 1 existing Qdrant version warning; `cd services/api && UV_CACHE_DIR=/private/tmp/uv-cache-phase9b uv run ruff check . && uv run ruff format --check .` clean; `pnpm typecheck` and `pnpm lint` clean.
 
 ---
 

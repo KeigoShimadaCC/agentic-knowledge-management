@@ -1063,6 +1063,81 @@ Draft (and optionally persist) a **project** object from an existing **page**, *
 
 **Errors**: `400` if `source_id` is not a page/chat/source; `404` if the object is missing or not owned by the user; `502` if the model returns non-JSON or malformed payload (failed `agent_run` is persisted); `503` if AI is disabled.
 
+### Career AI Generators
+
+Both endpoints are read-only for project data: they return generated content and audit the LLM call in `agent_runs`, but they do not write bullets, stories, or metadata back onto the project. Evidence is gathered from `projects.extracted_from` plus incoming `belongs_to_project` edges, capped by `max_evidence_objects`.
+
+#### POST /api/v1/ai/generate-resume-bullets
+
+Generate evidence-linked resume bullet variants for an owned, non-deleted project.
+
+**Request**:
+
+```json
+{
+  "project_id": "uuid",
+  "target_role": "Senior Backend Engineer",
+  "emphasis": "distributed systems and measurable user impact",
+  "count": 3,
+  "max_evidence_objects": 10
+}
+```
+
+**Response**:
+
+```json
+{
+  "project_id": "uuid",
+  "bullets": [
+    {
+      "text": "Built...",
+      "evidence_object_ids": ["uuid"],
+      "confidence": "high",
+      "metrics_cited": ["latency_ms"]
+    }
+  ],
+  "agent_run_id": "uuid",
+  "evidence_count": 3
+}
+```
+
+#### POST /api/v1/ai/generate-interview-story
+
+Generate one STAR-format interview story for an owned, non-deleted project.
+
+**Request**:
+
+```json
+{
+  "project_id": "uuid",
+  "question_type": "behavioral",
+  "target_role": "Senior Backend Engineer",
+  "max_words": 400,
+  "max_evidence_objects": 10
+}
+```
+
+`question_type` is `behavioral`, `technical`, or `leadership`.
+
+**Response**:
+
+```json
+{
+  "project_id": "uuid",
+  "story": {
+    "situation": "...",
+    "task": "...",
+    "action": "...",
+    "result": "...",
+    "evidence_object_ids": ["uuid"]
+  },
+  "agent_run_id": "uuid",
+  "word_count": 380
+}
+```
+
+**Errors**: `404` if the project is missing, soft-deleted, or not owned by the user; `422` for invalid bounds such as `count > 5`, `max_words < 100`, or invalid `question_type`; `502` if the model returns malformed JSON (failed `agent_run` is persisted with raw output); `503` if AI is disabled before any `agent_runs` row is created.
+
 ## Projects (career memory)
 
 Projects are `KosObject` rows with `kind="project"` plus a row in the `projects` table (migration `0007`). Soft-delete uses `objects.deleted_at`; restore with `POST /api/v1/objects/{id}/restore` (same as other objects).
