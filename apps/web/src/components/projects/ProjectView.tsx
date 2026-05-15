@@ -10,6 +10,9 @@ import { InterviewStoryPanel } from "@/components/projects/InterviewStoryPanel";
 import { ProjectForm } from "@/components/projects/ProjectForm";
 import { ResumeBulletsPanel } from "@/components/projects/ResumeBulletsPanel";
 import { toast } from "@/components/ui/Toast";
+import { projectToMarkdown } from "@/lib/export/projectMarkdown";
+import { projectToPdf } from "@/lib/export/projectPdf";
+import { useInterviewStories, useResumeBulletSets } from "@/lib/hooks/useProjects";
 import { cn } from "@/lib/cn";
 import type { ProjectOut } from "@/types";
 
@@ -27,28 +30,14 @@ function periodLabel(project: ProjectOut): string {
   return `${project.period_start ?? "Unknown"} - ${project.period_end ?? "Ongoing"}`;
 }
 
-function simpleProjectText(project: ProjectOut): string {
-  return [
-    `# ${project.title}`,
-    project.role || project.organization
-      ? `Role: ${[project.role, project.organization].filter(Boolean).join(" @ ")}`
-      : "",
-    `Period: ${periodLabel(project)}`,
-    project.description ?? "",
-    project.problem ? `Problem: ${project.problem}` : "",
-    project.actions ? `Actions: ${project.actions}` : "",
-    project.results ? `Results: ${project.results}` : "",
-  ]
-    .filter(Boolean)
-    .join("\n\n");
-}
-
 export function ProjectView({ project: initialProject }: { project: ProjectOut }) {
   const router = useRouter();
   const [project, setProject] = useState(initialProject);
   const [activeTab, setActiveTab] = useState<Tab>("overview");
   const [editing, setEditing] = useState(false);
   const [busy, setBusy] = useState(false);
+  const { bulletSets } = useResumeBulletSets(project.id);
+  const { stories } = useInterviewStories(project.id);
 
   async function handlePin() {
     setBusy(true);
@@ -95,8 +84,19 @@ export function ProjectView({ project: initialProject }: { project: ProjectOut }
   }
 
   async function copyText() {
-    await navigator.clipboard.writeText(simpleProjectText(project));
+    await navigator.clipboard.writeText(projectToMarkdown(project, bulletSets, stories));
     toast.success("Copied");
+  }
+
+  function downloadMarkdown() {
+    const markdown = projectToMarkdown(project, bulletSets, stories);
+    const blob = new Blob([markdown], { type: "text/markdown;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${project.title.replace(/[^a-z0-9]+/gi, "-") || "project"}.md`;
+    a.click();
+    URL.revokeObjectURL(url);
   }
 
   return (
@@ -185,7 +185,7 @@ export function ProjectView({ project: initialProject }: { project: ProjectOut }
         <div className="flex flex-wrap justify-end gap-2">
           <button
             type="button"
-            onClick={() => toast.message("Markdown export is not ready yet.")}
+            onClick={downloadMarkdown}
             className="inline-flex items-center gap-2 rounded-md border border-gray-700 px-3 py-2 text-sm text-gray-300 hover:bg-gray-800"
           >
             <Download size={15} />
@@ -193,7 +193,7 @@ export function ProjectView({ project: initialProject }: { project: ProjectOut }
           </button>
           <button
             type="button"
-            onClick={() => toast.message("PDF export is not ready yet.")}
+            onClick={() => projectToPdf(project, bulletSets, stories)}
             className="inline-flex items-center gap-2 rounded-md border border-gray-700 px-3 py-2 text-sm text-gray-300 hover:bg-gray-800"
           >
             <FileDown size={15} />
