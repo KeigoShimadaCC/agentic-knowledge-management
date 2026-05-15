@@ -61,7 +61,7 @@ export function ProjectForm({ mode, initialData, onSuccess, onClose }: ProjectFo
   const [saving, setSaving] = useState(false);
 
   const heading = mode === "create" ? "New project" : "Edit project";
-  const canSubmit = title.trim().length > 0 && !saving;
+  const canSubmit = !saving;
 
   const metricObject = useMemo(() => {
     const out: ProjectCreate["metrics"] = {};
@@ -172,7 +172,6 @@ export function ProjectForm({ mode, initialData, onSuccess, onClose }: ProjectFo
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               className="mt-1 h-9 w-full rounded-md border border-gray-700 bg-gray-900 px-3 text-sm text-white focus:border-gray-500 focus:outline-none"
-              required
             />
           </label>
           <label className="text-sm text-gray-300">

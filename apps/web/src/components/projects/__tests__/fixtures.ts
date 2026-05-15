@@ -1,0 +1,72 @@
+import type { InterviewStoryOut, ProjectOut, ResumeBulletSetOut } from "@/types";
+
+export const projectFixture: ProjectOut = {
+  id: "project-1",
+  user_id: "user-1",
+  kind: "project",
+  title: "KnowledgeOS v1",
+  description: "Local-first knowledge work",
+  tags: ["career"],
+  is_pinned: false,
+  is_archived: false,
+  period_start: "2025-01-01",
+  period_end: null,
+  role: "Lead Engineer",
+  organization: "Acme",
+  problem: "Knowledge was fragmented.",
+  actions: "Built ingestion and search.",
+  results: "Reduced lookup time.",
+  metrics: { impact: "40%" },
+  skills: ["python", "nextjs"],
+  status: "active",
+  confidence: "manual",
+  extracted_from: null,
+  extracted_by_agent_run_id: null,
+  created_at: "2026-05-15T00:00:00Z",
+  updated_at: "2026-05-15T00:00:00Z",
+  deleted_at: null,
+};
+
+export const bulletSetFixture: ResumeBulletSetOut = {
+  id: "set-1",
+  user_id: "user-1",
+  project_id: "project-1",
+  target_role: "Staff Engineer",
+  emphasis: "search",
+  count: 1,
+  bullets: [
+    {
+      text: "Built a retrieval system that reduced lookup time by 40%.",
+      confidence: "high",
+      metrics_cited: ["40%"],
+      evidence_object_ids: ["page-1"],
+    },
+  ],
+  agent_run_id: "run-1",
+  prompt_version: "9b.1",
+  created_at: "2026-05-15T00:00:00Z",
+  updated_at: "2026-05-15T00:00:00Z",
+  deleted_at: null,
+};
+
+export const storyFixture: InterviewStoryOut = {
+  id: "story-1",
+  user_id: "user-1",
+  project_id: "project-1",
+  question_type: "technical",
+  target_role: "Staff Engineer",
+  max_words: 400,
+  word_count: 32,
+  story: {
+    situation: "Knowledge was fragmented.",
+    task: "Make it searchable.",
+    action: "Built chunking and retrieval.",
+    result: "Lookup got faster.",
+    evidence_object_ids: ["page-1"],
+  },
+  agent_run_id: "run-2",
+  prompt_version: "9b.1",
+  created_at: "2026-05-15T00:00:00Z",
+  updated_at: "2026-05-15T00:00:00Z",
+  deleted_at: null,
+};
