@@ -1,14 +1,16 @@
 import uuid
 
 from fastapi import APIRouter, Depends, Query
+from sqlalchemy import case, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.deps import get_current_user
 from app.db.session import get_db
+from app.models.chunk import Chunk
 from app.models.user import User
 from app.schemas.common import PaginatedResponse
 from app.schemas.edge import EdgeDirection, EdgeWithObjectsOut, RelatedObjectOut
-from app.schemas.object import ObjectCreate, ObjectOut, ObjectUpdate
+from app.schemas.object import IndexStatusOut, ObjectCreate, ObjectOut, ObjectUpdate
 from app.services import edge_service, object_service
 
 router = APIRouter(prefix="/objects", tags=["objects"])
@@ -157,6 +159,40 @@ async def delete_object(
     await db.commit()
     await db.refresh(obj)
     return ObjectOut.model_validate(obj)
+
+
+@router.get("/{object_id}/index-status", response_model=IndexStatusOut)
+async def get_object_index_status(
+    object_id: uuid.UUID,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> IndexStatusOut:
+    await object_service.get_object_or_404(db, object_id, user.id)
+    result = await db.execute(
+        select(
+            func.count(Chunk.id).label("total_chunks"),
+            func.sum(case((Chunk.embedding_status == "done", 1), else_=0)).label("embedded_count"),
+            func.max(Chunk.embedded_at).label("last_embedded_at"),
+        ).where(Chunk.object_id == object_id)
+    )
+    row = result.one()
+    total = row.total_chunks or 0
+    embedded = int(row.embedded_count or 0)
+    if total == 0:
+        status = "not_indexed"
+    elif embedded == 0:
+        status = "pending"
+    elif embedded < total:
+        status = "partial"
+    else:
+        status = "done"
+    return IndexStatusOut(
+        object_id=object_id,
+        total_chunks=total,
+        embedded_count=embedded,
+        status=status,
+        last_embedded_at=row.last_embedded_at,
+    )
 
 
 @router.post("/{object_id}/restore", response_model=ObjectOut)
