@@ -1,10 +1,9 @@
 """Unit tests for the YouTube extractor — mocks safe_http_get and transcript API."""
+
 from __future__ import annotations
 
 import json
-from unittest.mock import MagicMock, patch
-
-import pytest
+from unittest.mock import MagicMock
 
 from helpers import make_source
 
@@ -31,11 +30,10 @@ def _run(source, monkeypatch, transcript_segments=None, oembed_resp=None):
     if transcript_segments is not None:
         mock_api = MagicMock()
         mock_api.get_transcript.return_value = transcript_segments
-        monkeypatch.setattr(
-            "youtube_transcript_api.YouTubeTranscriptApi", mock_api
-        )
+        monkeypatch.setattr("youtube_transcript_api.YouTubeTranscriptApi", mock_api)
     db = MagicMock()
     from kos_worker.extractors import youtube as extractor
+
     return extractor.extract(source, db)
 
 
@@ -65,5 +63,6 @@ def test_youtube_returns_error_when_no_url(monkeypatch):
     source = make_source("src-yt-3", url=None)
     db = MagicMock()
     from kos_worker.extractors import youtube as extractor
+
     result = extractor.extract(source, db)
     assert result["ingestion_status"] == "error"

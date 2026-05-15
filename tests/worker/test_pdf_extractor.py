@@ -1,10 +1,8 @@
 """Unit tests for the PDF extractor — fully mocked, no real PDF file needed."""
+
 from __future__ import annotations
 
-import pathlib
 from unittest.mock import MagicMock, patch
-
-import pytest
 
 from helpers import make_asset, make_db, make_source
 
@@ -12,6 +10,7 @@ from helpers import make_asset, make_db, make_source
 def _run(source, db, tmp_path, monkeypatch):
     monkeypatch.setattr("app.config.settings.library_root", tmp_path)
     from kos_worker.extractors import pdf as extractor
+
     return extractor.extract(source, db)
 
 

@@ -4,6 +4,7 @@ OpenAI calls are patched via unittest.mock — no real API calls are made.
 conftest sets OPENAI_API_KEY=sk-test-placeholder before app imports so
 settings.openai_api_key is non-empty for all tests.
 """
+
 from __future__ import annotations
 
 from types import SimpleNamespace
@@ -101,6 +102,7 @@ async def test_summarize_force_refresh(auth_client: AsyncClient, mock_openai: Ma
 async def test_summarize_no_key(auth_client: AsyncClient):
     """Verify the endpoint returns 503 when OPENAI_API_KEY is empty."""
     import app.ai.client as client_module
+
     page_data = await _make_page(auth_client)
     object_id = page_data["object"]["id"]
     fake_settings = SimpleNamespace(

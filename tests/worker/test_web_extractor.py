@@ -1,12 +1,10 @@
 """Unit tests for the web article extractor — mocks safe_http_get."""
+
 from __future__ import annotations
 
-from unittest.mock import MagicMock, patch
-
-import pytest
+from unittest.mock import MagicMock
 
 from helpers import make_source
-
 
 HTML_SAMPLE = b"""
 <html>
@@ -30,15 +28,12 @@ def _fake_http_response(content: bytes = HTML_SAMPLE, status: int = 200) -> Magi
 
 
 def _run(source, monkeypatch, http_response=None):
-    monkeypatch.setattr(
-        "app.core.url_safety.validate_safe_http_url", lambda url: None
-    )
+    monkeypatch.setattr("app.core.url_safety.validate_safe_http_url", lambda url: None)
     mock_resp = http_response or _fake_http_response()
-    monkeypatch.setattr(
-        "app.core.url_safety.safe_http_get", lambda *a, **kw: mock_resp
-    )
+    monkeypatch.setattr("app.core.url_safety.safe_http_get", lambda *a, **kw: mock_resp)
     db = MagicMock()
     from kos_worker.extractors import web as extractor
+
     return extractor.extract(source, db)
 
 
@@ -55,6 +50,7 @@ def test_web_returns_error_when_no_url(monkeypatch):
     source = make_source("src-web-2", url=None)
     db = MagicMock()
     from kos_worker.extractors import web as extractor
+
     result = extractor.extract(source, db)
     assert result["ingestion_status"] == "error"
     assert "URL" in result["error_message"]
