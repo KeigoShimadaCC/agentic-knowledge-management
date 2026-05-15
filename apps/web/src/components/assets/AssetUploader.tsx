@@ -33,6 +33,7 @@ export function AssetUploader({ onUploadComplete }: AssetUploaderProps) {
   return (
     <div className="space-y-3">
       <div
+        data-testid="asset-dropzone"
         onDragOver={(e) => {
           e.preventDefault();
           setIsDragging(true);
