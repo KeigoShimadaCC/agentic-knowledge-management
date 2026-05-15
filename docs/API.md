@@ -1086,3 +1086,76 @@ Partial update (`ProjectUpdate`). Omitted fields are unchanged; explicit `null` 
 ### DELETE /api/v1/projects/{project_id}
 
 Soft-delete the project (`204`). Subsequent `GET` returns `404` until `POST /api/v1/objects/{id}/restore`.
+
+## Workspaces
+
+Workspaces are user-owned saved UI layouts for the future multi-pane research environment. They are stored in their own `workspaces` table, not as `KosObject` rows. All endpoints require an authenticated session and return `404` for missing, deleted, or not-owned workspaces.
+
+### Layout shape
+
+```json
+{
+  "version": 1,
+  "split": "horizontal",
+  "panes": [
+    {
+      "id": "pane-1",
+      "object_id": "00000000-0000-0000-0000-000000000000",
+      "object_kind": "page",
+      "size_pct": 50,
+      "mode": "read"
+    },
+    {
+      "id": "pane-2",
+      "object_id": null,
+      "object_kind": null,
+      "size_pct": 50,
+      "mode": "read"
+    }
+  ],
+  "active_pane_id": "pane-1"
+}
+```
+
+Validation requires `version: 1`, 1-4 panes, unique pane ids, an `active_pane_id` that matches a pane, total size near 100, and object kinds limited to `page`, `source`, `asset`, `chat`, or `project`. Multi-pane layouts require `split` and each pane size must be between 5 and 95; single-pane layouts may omit `split` and use `size_pct: 100`. `object_id` is syntax-checked as a UUID but is not FK-validated, so stale references can still be loaded and handled by the UI.
+
+### POST /api/v1/workspaces
+
+Create a workspace. Returns `WorkspaceOut` (`201`).
+
+```json
+{
+  "name": "Research board",
+  "description": "Pages and source notes for a report",
+  "is_pinned": true,
+  "layout": {
+    "version": 1,
+    "split": "horizontal",
+    "panes": [
+      {"id": "pane-1", "object_kind": "page", "size_pct": 50},
+      {"id": "pane-2", "object_kind": "source", "size_pct": 50}
+    ],
+    "active_pane_id": "pane-1"
+  }
+}
+```
+
+### GET /api/v1/workspaces
+
+List the current user's workspaces. **Query**: `limit` (1-200, default 50), `offset` (default 0), `pinned_only` (default `false`), and `include_deleted` (default `false`). Returns `PaginatedResponse[WorkspaceOut]`.
+
+### GET /api/v1/workspaces/{workspace_id}
+
+Fetch one workspace and update its `last_used_at` timestamp. Returns `WorkspaceOut` (`200`).
+
+### PATCH /api/v1/workspaces/{workspace_id}
+
+Partial update. Body fields are optional: `name`, `description`, `layout`, `is_pinned`. Invalid layouts return `422`.
+
+### DELETE /api/v1/workspaces/{workspace_id}
+
+Soft-delete a workspace by setting `deleted_at` (`204`). Repeating the delete is idempotent and also returns `204`.
+
+### POST /api/v1/workspaces/{workspace_id}/restore
+
+Restore a soft-deleted workspace. Returns `WorkspaceOut` with `deleted_at: null`; returns `404` if the workspace does not exist, is not owned by the current user, or is not currently deleted.
