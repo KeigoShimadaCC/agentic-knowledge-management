@@ -1,6 +1,6 @@
 # KnowledgeOS — Progress Tracker
 
-> Last updated: 2026-05-15 (audit run; phase claims cross-checked against repo)
+> Last updated: 2026-05-15 (Phase Fix 02 cleanup verified on `phase-fix-02-forgotten-undocumented`)
 
 ---
 
@@ -278,6 +278,20 @@ See [`project-phases/PHASE-7A-MCP.md`](project-phases/PHASE-7A-MCP.md) for the f
 - Offline/degradation contract: keyword search always works; AI features degrade gracefully — see `docs/ARCHITECTURE.md`
 
 **Current repo state notes (2026-05-15 audit):**
+
+*Phase Fix 02 cleanup completed on branch `phase-fix-02-forgotten-undocumented`:*
+- Completed F8-F10: `infra/.env.example` has one `MCP_INTERNAL_TOKEN`, host-side MCP defaults point to `http://127.0.0.1:8001`, local published ports are documented, and host-side Postgres examples/tests use `127.0.0.1:5433`.
+- Completed F11: `scripts/backup.sh` ships a local Postgres dump, library tarball, and best-effort Qdrant snapshot flow; verified against running Compose services with output under `~/KnowledgeOS/backups/20260515-021801/`.
+- Completed F12: `tests/dummy_pkg` now has a README, with references in `tests/pyproject.toml` and `AGENTS.md`.
+- Completed F13: `project-phases/PHASE-7B-MCP-WRITE.md` exists, Phase 7B is marked unblocked, and `docs/MCP_TOOLS.md` links to the write-tools plan.
+- Completed F14: docs were swept for shipped Phase 5/6B/7A/8A state; validation also fixed a structured-summary prompt formatting bug and search/test harness issues uncovered by the full suite.
+
+*Verification on Phase Fix 02 branch:*
+- Static checks: `grep -c "^MCP_INTERNAL_TOKEN=" infra/.env.example` => `1`; no host-side `localhost:5432` / `127.0.0.1:5432` matches in `README.md`, `docs`, `project-phases`, `tests`, or `scripts`; no stale host-side `MCP_API_BASE_URL=http://127.0.0.1:8000` defaults in `docs`, `infra`, or `README.md`; `bash -n scripts/backup.sh` passed.
+- Frontend: `pnpm lint`, `pnpm typecheck`, and `pnpm build` passed.
+- Backend/API: `uv run --project services/api --extra dev ruff check services/api` passed; `PYTHONPATH=../services/api uv run --project ../services/api --extra dev pytest api/ unit/ -v` passed with 128 tests and one Qdrant client/server version warning.
+- MCP: `uv run --project services/mcp --extra dev pytest services/mcp/tests/ -v` passed with 19 tests.
+- Branch state before final push: local branch is ahead of `main`; push pending until the final `PROGRESS.md` commit is created.
 
 *Verified complete and matching the phase plans:*
 - Phase 1 Foundation, Phase 2 Sources, Phase 3 Search (incl. multilingual ILIKE fallback), Phase 4 Graph Lite, Phase 5 AI Assistant + Inbox, Phase 6A Chat Import, Phase 6B Structured Chat Import, Phase 7A MCP Read/Search, and Phase 8A Workspace Lite are all implemented and exercised by tests.
