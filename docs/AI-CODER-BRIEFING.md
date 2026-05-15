@@ -1,7 +1,7 @@
 # AI Coder Briefing — KnowledgeOS
 
 > **Use this:** Paste the full contents of this file at the start of any new AI coder session working on this repo, **before** the specific task description. Read end-to-end before doing anything.
-> **Last refreshed:** 2026-05-15
+> **Last refreshed:** 2026-05-16
 > **Why this exists:** `CLAUDE.md` and `AGENTS.md` cover the rules. The phase docs cover individual workstreams. This file is the missing **operating context**: what's actually built, what's in flight, what patterns to copy, what mistakes to avoid — distilled from a full repo audit and several weeks of multi-agent parallel development.
 
 ---
@@ -47,26 +47,29 @@ The README has been wrong before. **This table is the source of truth.** Cross-c
 | Phase | Status | What it shipped |
 |---|---|---|
 | 1 — Foundation | ✅ Complete | Monorepo, Docker stack, auth, objects/pages/assets CRUD, page editor (Tiptap), asset upload, 25 integration tests |
-| 2 — Sources & Rich Media | ✅ Complete | `sources` table, ingestion worker (PDF / image / CSV / YouTube / web), citations in editor, `derives_from` edges |
+| 2 — Sources & Rich Media | ✅ Complete | `sources` table + `source_type_enum` (8 types), ingestion worker (PDF / image / CSV / YouTube / web / video / audio / file), citations in editor, `derives_from` edges |
 | 3 — Search | ✅ Complete | Postgres FTS keyword, Qdrant vector, hybrid; chunking + embedding pipeline; Cmd+K modal |
 | 4 — Graph Lite | ✅ Complete | Edge taxonomy + validation, `/objects/{id}/{edges,backlinks,related}`, frontend BacklinksPanel + RelatedPanel + LinkToModal |
 | 5 — AI Assistant | ✅ Complete | `summarize`, `extract-claims`, `extract-tasks`, `suggest-links`, `answer`, `triage`, `inbox`; `agent_runs` + `object_revisions` always written |
 | 6A — Chat Import Lite | ✅ Complete | Paste / upload ChatGPT, Claude, Markdown, plain transcripts; `chats` table; structured chat objects |
-| 6B — Structured Chat Import | ✅ Complete | AI structured summary on import; `structured_summary` JSONB column |
-| 7A — MCP Read | ✅ Complete | stdio MCP server; tools: `search_objects`, `hybrid_search`, `get_object`, `get_page`, `get_source`, `get_related_objects`; `X-KOS-Internal-Token` auth; redaction |
-| 7B — MCP Write | 🚧 In flight on `phase-7b-mcp-write` worktree | Rate limiter, `audited_write` helper, archive + restore endpoints, `create_page` / `update_page` / `create_edge` / `archive_object` / `ingest_url` / `ingest_file` MCP tools, all gated behind `MCP_ALLOW_WRITE_TOOLS` |
+| 6B — Structured Chat Import | ✅ Complete | AI structured summary on import; `structured_summary` JSONB column; preview/apply flow |
+| 7A — MCP Read | ✅ Complete | stdio MCP server; 7 read tools: `search_objects`, `hybrid_search`, `get_object`, `get_page`, `get_source`, `get_related_objects`, `answer_from_kb`; `X-KOS-Internal-Token` auth; redaction |
+| 7B — MCP Write | ✅ Complete | Rate limiter, `audited_write` helper, archive + restore endpoints, `create_page` / `update_page` / `create_edge` / `archive_object` / `ingest_url` / `ingest_file` MCP tools, all gated behind `MCP_ALLOW_WRITE_TOOLS` |
 | 8A — Workspace Lite | ✅ Complete | `WorkspaceLiteProvider`, `WorkspaceSidePane`, "open in side pane" affordances |
-| 8 — Multi-pane Workspaces (full) | 📋 Planned, not yet specced | Saved workspace layouts, drag-drop between panes, AI scoped to workspace |
-| 9A — Career Memory Backend | 📋 Plan written (`PHASE-9A-CAREER-MEMORY-BACKEND.md`) | `projects` table + CRUD + `extract-project` AI endpoint |
-| 9B / 9C / 9D — Career Memory MCP, frontend, AI generators | 📋 Future, deferred | Resume bullets, interview stories, frontend, MCP tools |
-| ENHANCE-01 — Hardening (search/quality/multilingual) | ✅ Complete | Snippet sanitization (no more `dangerouslySetInnerHTML` for snippets), multilingual ILIKE fallback, eval fixtures, debug toggle, index-status endpoint |
-| ENHANCE-02 — Testing Infrastructure | 🚧 In flight on `phase-enhance-02-testing-infra` worktree | Vitest scaffold, frontend component tests, Playwright E2E, worker tests, CI workflow |
-| ENHANCE-03 — UX Polish | 📋 Plan written (`PHASE-ENHANCE-03-UX-POLISH.md`) | Design tokens, primitives, toasts, palette upgrade, light theme, a11y, responsive |
+| 8B — Workspaces Backend | ✅ Complete | Named workspaces API (`/api/v1/workspaces`), `layout_json` persistence, `workspaces` table (migration 0008) |
+| 8C — Multi-pane Workspaces | ✅ Complete | Resizable 2–4 panes, save/restore, cross-pane drag-to-quote, pane linking, workspace-scoped AI + search |
+| 9A — Career Memory Backend | ✅ Complete | `projects` table (migration 0007), CRUD, `extract-project` AI endpoint |
+| 9B — Career Memory Frontend | ✅ Complete | Project list/detail pages, STAR breakdown, evidence panel, resume bullets UI, interview stories UI |
+| 9C — Career Memory MCP | ✅ Complete | 7 career read MCP tools + 8 career write MCP tools (all gated behind `MCP_ALLOW_WRITE_TOOLS`) |
+| 9D — Career AI Generators | ✅ Complete | `generate_and_save_resume_bullets`, `generate_and_save_interview_story`; `resume_bullet_sets` + `interview_story_records` tables (migration 0009) |
+| ENHANCE-01 — Hardening (search/quality/multilingual) | ✅ Complete | Snippet sanitization, multilingual ILIKE fallback, eval fixtures, debug toggle, index-status endpoint |
+| ENHANCE-02 — Testing Infrastructure | ✅ Complete | Vitest scaffold, frontend component tests, Playwright E2E, worker tests, CI workflow |
+| ENHANCE-03 — UX Polish | ✅ Complete | Design tokens, primitives, toasts, palette upgrade, light theme, a11y baseline, responsive |
 | FIX-01 — Claimed-done gaps | ✅ Resolved | All 7 audit gaps closed |
 | FIX-02 — Forgotten / undocumented | ✅ Merged | Cleanup pass |
-| FIX-03 — Repo oddities | 📋 Plan written, partial | Some items addressed by FIX-01/02; others tracked in plan doc |
+| FIX-03 — Repo oddities | ✅ Addressed | Items resolved by FIX-01/02 and subsequent phases |
 
-Test counts as of last audit: **112 backend integration + 16 backend unit + 19 MCP package = 147 total.** Worker tests: 0 (closed by ENHANCE-02 T3). Frontend tests: 0 (closed by ENHANCE-02 T1+T2). E2E: 0 (closed by ENHANCE-02 T4+T5).
+Test counts as of 2026-05-16 audit: **210+ total** (frontend unit 27, API/unit 134, worker 19, MCP 20, E2E 10).
 
 ---
 
@@ -74,13 +77,13 @@ Test counts as of last audit: **112 backend integration + 16 backend unit + 19 M
 
 This repo uses `git worktree` to run multiple parallel implementations without context-switching `main`. **Before doing any backend or frontend work, run `git worktree list` and check what files each branch is currently editing.**
 
-Current worktrees (verified 2026-05-15):
+Current worktrees (verified 2026-05-16):
 
 | Path | Branch | Owns these files |
 |---|---|---|
 | `~/Documents/agentic-knowledge-management` | `main` | None — main is the integration point |
-| `~/Documents/agentic-knowledge-management-7b` | `phase-7b-mcp-write` | `services/api/app/api/v1/objects.py`, `services/api/app/config.py`, `services/api/app/core/{library,rate_limit}.py`, `services/api/app/services/{agent_run,audited_write,revision}_service.py`, `services/mcp/**`, `tests/api/test_{archive_restore,rate_limit}.py`, `infra/.env.example` |
-| `~/Documents/agentic-knowledge-management-enhance-02-testing-infra` | `phase-enhance-02-t3-worker-reconcile` | `apps/web/{package.json,tsconfig.json,vitest.*}`, `apps/web/src/test/**`, `apps/web/src/**/__tests__/**`, `tests/{worker,e2e}/**`, root `package.json`, `pnpm-workspace.yaml`, `.github/workflows/**` |
+
+No parallel worktrees are currently active. All phase branches through 9D and ENHANCE-01/02/03 have merged to main. When starting new phase work, create a new worktree following the coordination protocol below.
 
 ### Coordination protocol when starting work
 
@@ -156,7 +159,7 @@ The repo has settled patterns. Match them exactly. Inventing new structure is a 
 
 ### 6.1 Adding a new specialized object kind (the `KosObject` extension pattern)
 
-Existing kinds: `page`, `asset`, `note`, `bookmark`, `collection`, `source`, `chat`, `claim`, `task`. Adding a new one (e.g. `project`) means:
+Existing kinds: `page`, `asset`, `source`, `chat`, `project`, `claim`, `task`, `resume_bullet_set`, `interview_story`, `note`, `bookmark`, `collection`. Adding a new one (e.g. `bookmark` with a specialization table) means:
 
 1. Add the string to `services/api/app/core/object_kinds.py::VALID_OBJECT_KINDS`.
 2. New ORM model `services/api/app/models/<kind>.py` with PK = `ForeignKey("objects.id", ondelete="CASCADE")`. Mirror `models/chat.py` style.
@@ -407,7 +410,7 @@ That's why models use `metadata_: Mapped[dict] = mapped_column("metadata", JSONB
 
 ### 10.8 Alembic numbering is sequential, not autoincrement
 
-The latest applied migration on `main` is `0006_add_structured_chat_summary.py`. Your new migration is `0007_*.py` with `down_revision = "0006"`. **Never reuse a number** even if a previous migration was reverted.
+The latest applied migration on `main` is `0009_add_career_artifacts.py`. Your new migration is `0010_*.py` with `down_revision = "0009"`. **Never reuse a number** even if a previous migration was reverted.
 
 ### 10.9 `tailwind-merge` and `clsx` are already installed
 
