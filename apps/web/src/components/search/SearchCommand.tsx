@@ -36,10 +36,12 @@ interface SearchCommandProps {
 
 export function SearchCommand({ isOpen, onClose }: SearchCommandProps) {
   const router = useRouter();
-  const { openSidePane } = useWorkspaceLite();
-  const { results, isLoading, query, setQuery } = useSearch();
+  const { openSidePane, panes } = useWorkspaceLite();
+  const { results, isLoading, query, setQuery, objectIds, setObjectIds } = useSearch();
   const [kindFilter, setKindFilter] = useState("");
   const [recents, setRecents] = useState<string[]>([]);
+  const hasOpenPanes = panes.length > 1;
+  const isWorkspaceFiltered = !!objectIds?.length;
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -90,6 +92,25 @@ export function SearchCommand({ isOpen, onClose }: SearchCommandProps) {
             <kbd className="rounded bg-gray-800 px-1.5 py-0.5 text-xs text-gray-500">Esc</kbd>
           </div>
 
+          {hasOpenPanes && (
+            <div className="flex items-center gap-2 border-b border-gray-800 px-4 py-1.5">
+              <label className="flex cursor-pointer items-center gap-2 text-xs text-gray-400">
+                <input
+                  type="checkbox"
+                  checked={isWorkspaceFiltered}
+                  onChange={(e) => {
+                    if (e.target.checked) {
+                      setObjectIds(panes.flatMap((p) => (p.objectId ? [p.objectId] : [])));
+                    } else {
+                      setObjectIds(undefined);
+                    }
+                  }}
+                  className="h-3 w-3 rounded accent-blue-500"
+                />
+                Search workspace only
+              </label>
+            </div>
+          )}
           <SearchFilters activeKind={kindFilter} onChange={setKindFilter} />
 
           <Command.List className="max-h-80 overflow-y-auto">

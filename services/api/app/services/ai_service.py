@@ -283,11 +283,16 @@ async def answer_question(
     q: str,
     kind: str | None = None,
     limit: int = 8,
+    object_ids: list[uuid.UUID] | None = None,
 ) -> AnswerResponse:
     results, _ = await hybrid_search(db, user_id, q, kind=kind, limit=limit)
     if not results:
         results_kw = await keyword_search(db, user_id, q, kind=kind, limit=limit)
         results = results_kw  # type: ignore[assignment]
+
+    if object_ids:
+        id_set = {str(oid) for oid in object_ids}
+        results = [r for r in results if str(r.id) in id_set]
 
     context_parts = [f"[{r.id}] {r.title}\n{r.snippet or ''}" for r in results[:limit]]
     context = "\n\n".join(context_parts)

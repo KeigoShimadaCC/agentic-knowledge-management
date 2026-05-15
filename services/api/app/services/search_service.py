@@ -46,6 +46,7 @@ async def keyword_search(
     source_type: str | None = None,
     limit: int = 20,
     offset: int = 0,
+    object_ids: list[uuid.UUID] | None = None,
 ) -> list[SearchResult]:
     kinds = _resolve_kinds(kind)
     rows: list[SearchResult] = []
@@ -64,6 +65,9 @@ async def keyword_search(
         rows.extend(await _fts_generic_objects(db, user_id, q, generic_kinds, limit, offset))
 
     rows.sort(key=lambda r: r.score, reverse=True)
+    if object_ids:
+        id_set = {str(oid) for oid in object_ids}
+        rows = [r for r in rows if str(r.id) in id_set]
     return rows[:limit]
 
 
@@ -141,6 +145,7 @@ async def hybrid_search(
     kind: str | None = None,
     source_type: str | None = None,
     limit: int = 20,
+    object_ids: list[uuid.UUID] | None = None,
 ) -> tuple[list[HybridSearchResult], bool]:
     """Returns (results, embeddings_used)."""
     from app.search.embedding import get_embedding_provider
@@ -160,6 +165,9 @@ async def hybrid_search(
         vec_results = []
 
     merged = _merge_results(kw_results, vec_results, limit)
+    if object_ids:
+        id_set = {str(oid) for oid in object_ids}
+        merged = [r for r in merged if str(r.id) in id_set]
     return merged, embeddings_enabled
 
 

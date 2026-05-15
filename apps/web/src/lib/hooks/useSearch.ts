@@ -15,6 +15,8 @@ interface UseSearchReturn {
   setMode: (m: SearchMode) => void;
   debug: boolean;
   setDebug: (d: boolean) => void;
+  objectIds: string[] | undefined;
+  setObjectIds: (ids: string[] | undefined) => void;
 }
 
 export function useSearch(): UseSearchReturn {
@@ -23,6 +25,7 @@ export function useSearch(): UseSearchReturn {
   const [results, setResults] = useState<SearchResult[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [objectIds, setObjectIds] = useState<string[] | undefined>(undefined);
   const [debug, setDebugState] = useState(() => {
     if (typeof window === "undefined") return false;
     return localStorage.getItem("kos:search:debug") === "true";
@@ -34,51 +37,57 @@ export function useSearch(): UseSearchReturn {
     setDebugState(d);
   }, []);
 
-  const doSearch = useCallback(async (q: string, m: SearchMode, dbg: boolean) => {
-    if (q.length < 2) {
-      setResults([]);
-      return;
-    }
-    setIsLoading(true);
-    setError(null);
-    try {
-      const opts = { limit: 10, debug: dbg };
-      let resp;
-      if (m === "keyword") {
-        resp = await keywordSearch(q, opts);
-      } else if (m === "semantic") {
-        resp = await vectorSearch(q, opts);
-      } else {
-        resp = await hybridSearch(q, opts);
+  const doSearch = useCallback(
+    async (q: string, m: SearchMode, dbg: boolean, oids: string[] | undefined) => {
+      if (q.length < 2) {
+        setResults([]);
+        return;
       }
-      setResults(resp.results);
-    } catch (err) {
-      if (err instanceof ApiError && err.status === 503) {
-        try {
-          const resp = await keywordSearch(q, { limit: 10 });
-          setResults(resp.results);
-        } catch {
-          setError("Search unavailable");
+      setIsLoading(true);
+      setError(null);
+      try {
+        const opts = { limit: 10, debug: dbg, objectIds: oids };
+        let resp;
+        if (m === "keyword") {
+          resp = await keywordSearch(q, opts);
+        } else if (m === "semantic") {
+          resp = await vectorSearch(q, opts);
+        } else {
+          resp = await hybridSearch(q, opts);
+        }
+        setResults(resp.results);
+      } catch (err) {
+        if (err instanceof ApiError && err.status === 503) {
+          try {
+            const resp = await keywordSearch(q, { limit: 10, objectIds: oids });
+            setResults(resp.results);
+          } catch {
+            setError("Search unavailable");
+            setResults([]);
+          }
+        } else {
+          setError("Search failed");
           setResults([]);
         }
-      } else {
-        setError("Search failed");
-        setResults([]);
+      } finally {
+        setIsLoading(false);
       }
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
+    },
+    []
+  );
 
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => {
-      doSearch(query, mode, debug);
+      doSearch(query, mode, debug, objectIds);
     }, 300);
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current);
     };
-  }, [query, mode, debug, doSearch]);
+  }, [query, mode, debug, objectIds, doSearch]);
 
-  return { results, isLoading, error, query, setQuery, mode, setMode, debug, setDebug };
+  return {
+    results, isLoading, error, query, setQuery, mode, setMode, debug, setDebug,
+    objectIds, setObjectIds,
+  };
 }

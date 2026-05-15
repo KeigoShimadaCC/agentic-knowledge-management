@@ -52,6 +52,7 @@ class AnswerRequest(BaseModel):
     q: str
     kind: str | None = None
     limit: int = Field(default=10, ge=1, le=50)
+    object_ids: list[uuid.UUID] | None = None
 
 
 class Citation(BaseModel):

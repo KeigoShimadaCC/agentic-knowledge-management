@@ -46,6 +46,7 @@ class HybridSearchRequest(BaseModel):
     source_type: str | None = None
     limit: int = 20
     debug: bool = False
+    object_ids: list[uuid.UUID] | None = None
 
 
 class HybridSearchResult(SearchResult):

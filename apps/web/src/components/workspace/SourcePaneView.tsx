@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Image from "next/image";
 import { getSource } from "@/lib/api";
 import type { SourceOut } from "@/types";
+import { useCrossPaneDragSource } from "@/hooks/useCrossPane";
 
 const BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 const EXCERPT_LENGTH = 800;
@@ -26,10 +27,11 @@ function Badge({ label, colorClass }: { label: string; colorClass: string }) {
   );
 }
 
-export function SourcePaneView({ id }: { id: string }) {
+export function SourcePaneView({ id, title = "" }: { id: string; title?: string }) {
   const [source, setSource] = useState<SourceOut | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(false);
+  const { onDragStart } = useCrossPaneDragSource();
 
   useEffect(() => {
     let active = true;
@@ -79,7 +81,23 @@ export function SourcePaneView({ id }: { id: string }) {
         </div>
       )}
       {excerpt ? (
-        <p className="whitespace-pre-wrap text-sm leading-relaxed text-gray-300">{excerpt}</p>
+        <div>
+          <p className="mb-1 text-[10px] text-gray-600">Drag text to quote it in a page pane</p>
+          <p
+            draggable
+            onDragStart={(e) =>
+              onDragStart(e, {
+                text: window.getSelection()?.toString().trim() || excerpt,
+                sourceObjectId: id,
+                sourceKind: "source",
+                sourceTitle: title || source.url || id,
+              })
+            }
+            className="cursor-grab whitespace-pre-wrap text-sm leading-relaxed text-gray-300 active:cursor-grabbing"
+          >
+            {excerpt}
+          </p>
+        </div>
       ) : (
         <p className="text-sm text-gray-600">No extracted text yet.</p>
       )}

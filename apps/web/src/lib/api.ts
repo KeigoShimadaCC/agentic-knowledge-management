@@ -25,6 +25,9 @@ import type {
   SuggestLinksResponse,
   SummarizeResponse,
   TriageResponse,
+  WorkspaceOut,
+  WorkspaceCreate,
+  WorkspaceUpdate,
 } from "@/types";
 import { ApiError } from "@/types";
 
@@ -280,11 +283,14 @@ export const listEdges = (params?: { source_id?: string; target_id?: string; kin
 
 export async function keywordSearch(
   q: string,
-  opts?: { kind?: string; limit?: number }
+  opts?: { kind?: string; limit?: number; objectIds?: string[] }
 ): Promise<SearchResponse> {
   const params = new URLSearchParams({ q });
   if (opts?.kind) params.set("kind", opts.kind);
   if (opts?.limit) params.set("limit", String(opts.limit));
+  if (opts?.objectIds?.length) {
+    opts.objectIds.forEach((id) => params.append("object_ids", id));
+  }
   return request<SearchResponse>(`/api/v1/search/keyword?${params}`);
 }
 
@@ -300,7 +306,7 @@ export async function vectorSearch(
 
 export async function hybridSearch(
   q: string,
-  opts?: { kind?: string; limit?: number; debug?: boolean }
+  opts?: { kind?: string; limit?: number; debug?: boolean; objectIds?: string[] }
 ): Promise<HybridSearchResponse> {
   return request<HybridSearchResponse>("/api/v1/search/hybrid", {
     method: "POST",
@@ -309,6 +315,7 @@ export async function hybridSearch(
       kind: opts?.kind ?? null,
       limit: opts?.limit ?? 10,
       debug: opts?.debug ?? false,
+      object_ids: opts?.objectIds && opts.objectIds.length > 0 ? opts.objectIds : null,
     }),
   });
 }
@@ -358,10 +365,18 @@ export async function aiSuggestLinks(
   });
 }
 
-export async function aiAnswer(q: string, kind?: string): Promise<AnswerResponse> {
+export async function aiAnswer(
+  q: string,
+  kind?: string,
+  object_ids?: string[]
+): Promise<AnswerResponse> {
   return request<AnswerResponse>("/api/v1/ai/answer", {
     method: "POST",
-    body: JSON.stringify({ q, kind: kind ?? null }),
+    body: JSON.stringify({
+      q,
+      kind: kind ?? null,
+      object_ids: object_ids && object_ids.length > 0 ? object_ids : null,
+    }),
   });
 }
 
@@ -394,4 +409,54 @@ export async function updateObject(
 
 export async function deleteObject(id: string): Promise<ObjectOut> {
   return request<ObjectOut>(`/api/v1/objects/${id}`, { method: "DELETE" });
+}
+
+// ── Workspace API ─────────────────────────────────────────────────────────
+
+export async function listWorkspaces(params?: {
+  limit?: number;
+  offset?: number;
+  pinned_only?: boolean;
+}): Promise<PaginatedResponse<WorkspaceOut>> {
+  const qs = new URLSearchParams();
+  if (params?.limit !== undefined) qs.set("limit", String(params.limit));
+  if (params?.offset !== undefined) qs.set("offset", String(params.offset));
+  if (params?.pinned_only) qs.set("pinned_only", "true");
+  const query = qs.toString();
+  return request<PaginatedResponse<WorkspaceOut>>(
+    `/api/v1/workspaces${query ? `?${query}` : ""}`
+  );
+}
+
+export async function createWorkspace(
+  body: WorkspaceCreate
+): Promise<WorkspaceOut> {
+  return request<WorkspaceOut>("/api/v1/workspaces", {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
+}
+
+export async function getWorkspace(id: string): Promise<WorkspaceOut> {
+  return request<WorkspaceOut>(`/api/v1/workspaces/${id}`);
+}
+
+export async function updateWorkspace(
+  id: string,
+  body: WorkspaceUpdate
+): Promise<WorkspaceOut> {
+  return request<WorkspaceOut>(`/api/v1/workspaces/${id}`, {
+    method: "PATCH",
+    body: JSON.stringify(body),
+  });
+}
+
+export async function deleteWorkspace(id: string): Promise<void> {
+  await request<void>(`/api/v1/workspaces/${id}`, { method: "DELETE" });
+}
+
+export async function restoreWorkspace(id: string): Promise<WorkspaceOut> {
+  return request<WorkspaceOut>(`/api/v1/workspaces/${id}/restore`, {
+    method: "POST",
+  });
 }

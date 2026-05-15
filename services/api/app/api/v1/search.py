@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import uuid
+
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -24,11 +26,13 @@ async def keyword_search(
     source_type: str | None = Query(None),
     limit: int = Query(20, ge=1, le=100),
     offset: int = Query(0, ge=0),
+    object_ids: list[uuid.UUID] | None = Query(None),
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> SearchResponse:
     results = await search_service.keyword_search(
-        db, user.id, q, kind=kind, source_type=source_type, limit=limit, offset=offset
+        db, user.id, q, kind=kind, source_type=source_type, limit=limit, offset=offset,
+        object_ids=object_ids,
     )
     return SearchResponse(results=results, total=len(results), query=q, mode="keyword")
 
@@ -70,6 +74,7 @@ async def hybrid_search(
         kind=body.kind,
         source_type=body.source_type,
         limit=body.limit,
+        object_ids=body.object_ids,
     )
     return HybridSearchResponse(
         results=results,
