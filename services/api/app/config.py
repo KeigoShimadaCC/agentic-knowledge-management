@@ -49,6 +49,18 @@ class Settings(BaseSettings):
             "Empty = disabled."
         ),
     )
+    mcp_rate_limit_per_minute: int = Field(
+        default=60,
+        description="Max MCP write calls per minute per agent identity (sliding window).",
+    )
+    mcp_rate_limit_per_hour: int = Field(
+        default=600,
+        description="Max MCP write calls per hour per agent identity (sliding window).",
+    )
+    mcp_agent_id_header: str = Field(
+        default="X-KOS-Agent-Id",
+        description="Header name that agents use to identify themselves for rate limiting.",
+    )
 
     model_config = {"env_file": ".env", "env_file_encoding": "utf-8"}
 
