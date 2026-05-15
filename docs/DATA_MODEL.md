@@ -19,6 +19,9 @@ Supported object kinds:
 | `chat` | Phase 6A | `chats` table |
 | `claim` | Phase 6B | Generic `objects` row |
 | `task` | Phase 6B | Generic `objects` row |
+| `project` | Phase 9A | `projects` table |
+| `resume_bullet_set` | Phase 9 | `resume_bullet_sets` table |
+| `interview_story` | Phase 9 | `interview_story_records` table |
 
 The specialization table uses the same primary key as the base object row. For example, a page has `objects.id = pages.id`.
 
@@ -42,9 +45,11 @@ The specialization table uses the same primary key as the base object row. For e
 | `id` | UUID | Primary key |
 | `user_id` | UUID | Required FK to `users.id` |
 | `token_hash` | text | Required, unique SHA-256 hash of the browser session token |
+| `user_agent` | text | Optional; recorded at login time |
+| `ip_address` | text | Optional; recorded at login time |
 | `expires_at` | timestamptz | Required expiration time |
 | `created_at` | timestamptz | Required |
-| `revoked_at` | timestamptz | Optional; invalidates the session when set |
+| `last_seen` | timestamptz | Required; updated on each authenticated request |
 
 ### `objects`
 
@@ -52,14 +57,14 @@ The specialization table uses the same primary key as the base object row. For e
 | --- | --- | --- |
 | `id` | UUID | Primary key |
 | `user_id` | UUID | Required FK to `users.id`; all queries must scope by user |
-| `kind` | text / enum | Required; one of `page`, `asset`, `note`, `bookmark`, `collection`, `source`, `chat`, `claim`, `task` |
+| `kind` | text (String 32) | Required; validated in application code — no DB CHECK constraint. Current valid kinds: `page`, `asset`, `source`, `chat`, `project`, `claim`, `task`, `resume_bullet_set`, `interview_story`, `note`, `bookmark`, `collection` |
 | `title` | text | Required display title |
 | `description` | text | Optional summary or user-authored description |
 | `tags` | text[] | Required array, default empty |
 | `metadata` | JSONB | Required object, default `{}` |
 | `is_pinned` | boolean | Required, default `false` |
 | `is_archived` | boolean | Required, default `false` |
-| `ai_generated` | boolean | Required, default `false`; marks AI-created claims/tasks |
+| `ai_generated` | boolean | Required, default `false`; marks AI-created claims, tasks, and career artifacts |
 | `created_at` | timestamptz | Required |
 | `updated_at` | timestamptz | Required |
 | `deleted_at` | timestamptz | Optional soft-delete marker |
@@ -69,8 +74,10 @@ The specialization table uses the same primary key as the base object row. For e
 | Field | Type | Constraints / Notes |
 | --- | --- | --- |
 | `id` | UUID | Primary key and FK to `objects.id` |
-| `content` | JSONB | Tiptap document JSON |
+| `content_json` | JSONB | Tiptap document JSON |
 | `content_text` | text | Plain-text projection used for search and previews |
+| `word_count` | integer | Required; updated on every save |
+| `version` | integer | Monotonically increasing; used for optimistic-locking in `update_page` |
 | `created_at` | timestamptz | Required |
 | `updated_at` | timestamptz | Required |
 
@@ -194,13 +201,18 @@ store `source_chat_id`, `turn_refs`, `confidence`, `agent_run_id`, and an `extra
 | --- | --- | --- |
 | `id` | UUID | Primary key |
 | `user_id` | UUID | Required FK to `users.id` |
-| `object_id` | UUID | Optional FK to the object being processed |
-| `job_type` | text | Required job category |
-| `status` | text | Required lifecycle state such as `pending`, `running`, `ready`, or `error` |
-| `error` | text | Optional failure message |
-| `metadata` | JSONB | Required object, default `{}` |
+| `object_id` | UUID | Optional FK to the object being processed; SET NULL on object delete |
+| `status` | text | Required; one of `pending`, `running`, `done`, `failed` |
+| `job_type` | text | Required job category (e.g. `ingest_source`, `reindex_object`) |
+| `payload` | JSONB | Required; job input parameters, default `{}` |
+| `result` | JSONB | Optional; written by the worker on completion |
+| `error` | text | Optional; last failure message |
+| `attempts` | integer | Required, default 0 |
+| `max_attempts` | integer | Required, default 3 |
+| `enqueued_at` | timestamptz | Required; set when the job is created |
+| `started_at` | timestamptz | Optional; set when a worker claims the job |
+| `finished_at` | timestamptz | Optional; set when the job reaches `done` or `failed` |
 | `created_at` | timestamptz | Required |
-| `updated_at` | timestamptz | Required |
 
 ### `agent_runs`
 
@@ -208,14 +220,18 @@ store `source_chat_id`, `turn_refs`, `confidence`, `agent_run_id`, and an `extra
 | --- | --- | --- |
 | `id` | UUID | Primary key |
 | `user_id` | UUID | Required FK to `users.id` |
-| `agent_name` | text | Required agent identifier |
-| `action` | text | Required high-level action name |
-| `status` | text | Required lifecycle state |
-| `input` | JSONB | Request or prompt metadata |
-| `output` | JSONB | Result metadata |
-| `error` | text | Optional failure message |
+| `status` | text | Required; one of `running`, `done`, `failed`, `cancelled` |
+| `agent_type` | text | Required; identifies the AI tool or endpoint that ran (e.g. `summarize`, `create_page`) |
+| `input` | JSONB | Required; request metadata logged at call time, default `{}` |
+| `output` | JSONB | Optional; result metadata written on completion |
+| `error` | text | Optional; failure message |
+| `model` | text | Optional; model identifier used (e.g. `gpt-4o`) |
+| `input_tokens` | integer | Optional; tokens consumed in the prompt |
+| `output_tokens` | integer | Optional; tokens generated in the response |
+| `cost_usd` | numeric(10,6) | Optional; approximate cost in USD |
+| `started_at` | timestamptz | Required; set at row creation |
+| `finished_at` | timestamptz | Optional; set when the run reaches a terminal state |
 | `created_at` | timestamptz | Required |
-| `updated_at` | timestamptz | Required |
 
 ### `object_revisions`
 
@@ -322,20 +338,22 @@ Graph Lite rules:
 
 ## Object Type Registry (Design Note)
 
-Search UI, graph UI, MCP tools, and AI context packing should not hardcode every object type. A future object type registry will map each `kind` to routing, display, and search behavior:
+Search UI, graph UI, MCP tools, and AI context packing should not hardcode every object type. A future centralized object type registry will map each `kind` to routing, display, and search behavior. The contract to follow:
 
 ```
 objectTypeRegistry = {
-  page:    { route, icon, searchableFields: ["title", "content_text"] },
-  source:  { route, icon, searchableFields: ["title", "extracted_text"] },
-  asset:   { route, icon, searchableFields: ["title", "filename"] },
-  chat:    { route, icon, searchableFields: ["title", "summary"] },
-  project: { route, icon, searchableFields: ["title", "description"] },
-  claim:   { route, icon, searchableFields: ["title", "content"] },
+  page:              { route, icon, searchableFields: ["title", "content_text"] },
+  source:            { route, icon, searchableFields: ["title", "extracted_text"] },
+  asset:             { route, icon, searchableFields: ["title", "filename"] },
+  chat:              { route, icon, searchableFields: ["title", "content_text"] },
+  project:           { route, icon, searchableFields: ["title", "description", "role", "organization"] },
+  claim:             { route, icon, searchableFields: ["title", "content"] },
+  resume_bullet_set: { route, icon, searchableFields: ["title"] },
+  interview_story:   { route, icon, searchableFields: ["title"] },
 }
 ```
 
-This registry is not yet implemented. When adding new object types, design search and display behavior with this contract in mind.
+The `project` kind is live (Phase 9A). `resume_bullet_set` and `interview_story` are live (Phase 9). The formal registry object in `lib/objectRouting.ts` covers routing; the full registry with searchable fields and display metadata is a planned future consolidation. When adding new object types, design search and display behavior with this contract in mind.
 
 ## Phase 8B: Workspaces
 
@@ -385,3 +403,67 @@ Indexes exist on `user_id`, active user workspaces (`user_id WHERE deleted_at IS
 ```
 
 The API validates `version: 1`, 1-4 panes, unique pane ids, active pane membership, size totals near 100, and pane kinds limited to `page`, `source`, `asset`, `chat`, or `project`. Multi-pane layouts require `split` and each pane size must be between 5 and 95; single-pane layouts may omit `split` and use `size_pct: 100`. `object_id` is UUID-validated but deliberately has no database FK, so a workspace can survive deleted or missing referenced objects and let the UI render an unavailable placeholder.
+
+## Phase 9A: Projects
+
+`projects` is a specialization table for objects with `kind="project"`. It holds the STAR (Situation/Task/Action/Result) career narrative plus structured metadata for evidence linking and career artifact generation.
+
+### `projects`
+
+| Field | Type | Constraints / Notes |
+| --- | --- | --- |
+| `id` | UUID | Primary key and FK to `objects.id` (CASCADE delete) |
+| `period_start` | date | Optional; start date of the project |
+| `period_end` | date | Optional; end date of the project |
+| `role` | text | Optional; the user's role during this project |
+| `organization` | text | Optional; employer or client organization |
+| `problem` | text | Optional; STAR "Situation/Task" narrative |
+| `actions` | text | Optional; STAR "Action" narrative |
+| `results` | text | Optional; STAR "Result" narrative |
+| `metrics` | JSONB | Required; structured metrics object, default `{}` |
+| `skills` | text[] | Required; list of skills demonstrated, default `{}` |
+| `status` | varchar(16) | Required; one of `active`, `paused`, `completed`, `archived`; default `active` |
+| `confidence` | varchar(16) | Required; `manual` (user-authored) or `ai_extracted`; default `manual` |
+| `extracted_from` | UUID | Optional FK to `objects.id` (SET NULL); the source object AI extracted this project from |
+| `extracted_by_agent_run_id` | UUID | Optional FK to `agent_runs.id` (SET NULL); the AI run that created this project |
+| `created_at` | timestamptz | Required |
+| `updated_at` | timestamptz | Required |
+
+Indexes exist on `period_start`, `period_end`, `status`, and `skills` (GIN for array queries like "projects with skill python").
+
+Evidence is linked via `belongs_to_project` edges from pages, sources, chats, or claims to the project object.
+
+## Phase 9: Career Artifacts
+
+Career artifacts are generated from projects and stored as first-class objects. Both tables extend `objects` (using `kind="resume_bullet_set"` and `kind="interview_story"` respectively).
+
+### `resume_bullet_sets`
+
+| Field | Type | Constraints / Notes |
+| --- | --- | --- |
+| `id` | UUID | Primary key and FK to `objects.id` (CASCADE delete) |
+| `project_id` | UUID | Required FK to `objects.id` (CASCADE delete); the project this set belongs to |
+| `target_role` | text | Optional; the role this bullet set was optimized for |
+| `emphasis` | text | Optional; focus area requested (e.g. "scale and reliability") |
+| `count` | smallint | Required; number of bullets generated |
+| `bullets` | JSONB | Required; array of bullet objects with `text`, `confidence`, `evidence_object_ids`, `metrics_cited`; default `[]` |
+| `agent_run_id` | UUID | Optional FK to `agent_runs.id` (SET NULL); the generation run |
+| `prompt_version` | varchar(16) | Optional; tracks which prompt template was used |
+| `created_at` | timestamptz | Required |
+| `updated_at` | timestamptz | Required |
+
+### `interview_story_records`
+
+| Field | Type | Constraints / Notes |
+| --- | --- | --- |
+| `id` | UUID | Primary key and FK to `objects.id` (CASCADE delete) |
+| `project_id` | UUID | Required FK to `objects.id` (CASCADE delete); the project this story belongs to |
+| `question_type` | varchar(16) | Required; one of `behavioral`, `technical`, `leadership`; default `behavioral` |
+| `target_role` | text | Optional; the role this story was optimized for |
+| `max_words` | integer | Required; word limit requested; default 400 |
+| `word_count` | integer | Required; actual word count of generated story; default 0 |
+| `story` | JSONB | Required; structured STAR story with `situation`, `task`, `action`, `result`, `evidence_object_ids`; default `{}` |
+| `agent_run_id` | UUID | Optional FK to `agent_runs.id` (SET NULL); the generation run |
+| `prompt_version` | varchar(16) | Optional; tracks which prompt template was used |
+| `created_at` | timestamptz | Required |
+| `updated_at` | timestamptz | Required |
