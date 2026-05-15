@@ -4,8 +4,10 @@ OpenAI calls are patched via unittest.mock — no real API calls are made.
 conftest sets OPENAI_API_KEY=sk-test-placeholder before app imports so
 settings.openai_api_key is non-empty for all tests.
 """
+
 from __future__ import annotations
 
+import json
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -101,6 +103,7 @@ async def test_summarize_force_refresh(auth_client: AsyncClient, mock_openai: Ma
 async def test_summarize_no_key(auth_client: AsyncClient):
     """Verify the endpoint returns 503 when OPENAI_API_KEY is empty."""
     import app.ai.client as client_module
+
     page_data = await _make_page(auth_client)
     object_id = page_data["object"]["id"]
     fake_settings = SimpleNamespace(
@@ -249,3 +252,148 @@ async def test_extract_creates_edges(auth_client: AsyncClient, mock_openai_json:
     edge_targets = {e["target_id"] for e in edges_resp.json()}
     for item in items:
         assert item["id"] in edge_targets
+
+
+def _extract_project_json() -> str:
+    return json.dumps(
+        {
+            "title": "Shipped Feature X",
+            "description": "One line summary for tests.",
+            "period_start": None,
+            "period_end": None,
+            "role": "IC Engineer",
+            "organization": "TestCo",
+            "problem": "Slow queries hurt UX.",
+            "actions": "Added indexes and caching.",
+            "results": "50% faster page loads.",
+            "metrics": {"p50_ms": 120},
+            "skills": ["Python", "postgres"],
+            "confidence": 0.88,
+        }
+    )
+
+
+@pytest.fixture
+def mock_openai_extract():
+    client_mock = _make_openai_mock(_extract_project_json())
+    with patch("openai.AsyncOpenAI", return_value=client_mock):
+        yield client_mock
+
+
+@pytest.mark.asyncio
+async def test_extract_project_from_page(auth_client: AsyncClient, mock_openai_extract: MagicMock):
+    page_data = await _make_page(auth_client, title="Career Page")
+    object_id = page_data["object"]["id"]
+
+    resp = await auth_client.post(
+        "/api/v1/ai/extract-project",
+        json={"source_id": object_id, "create": True},
+    )
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["source_id"] == object_id
+    assert data["project_id"] is not None
+    assert data["draft"]["title"] == "Shipped Feature X"
+    assert data["draft"]["skills"] == ["python", "postgres"]
+
+    from app.db.session import engine
+    from app.models.agent_run import AgentRun
+    from sqlalchemy import select
+    from sqlalchemy.ext.asyncio import AsyncSession
+
+    async with AsyncSession(engine) as session:
+        result = await session.execute(select(AgentRun).where(AgentRun.id == data["agent_run_id"]))
+        row = result.scalar_one_or_none()
+    assert row is not None
+    assert row.agent_type == "extract-project"
+    assert row.status == "success"
+
+
+@pytest.mark.asyncio
+async def test_extract_project_dry_run(auth_client: AsyncClient, mock_openai_extract: MagicMock):
+    page_data = await _make_page(auth_client, title="Dry Run Page")
+    object_id = page_data["object"]["id"]
+
+    before = await auth_client.get("/api/v1/projects?limit=100")
+    n_before = before.json()["total"]
+
+    resp = await auth_client.post(
+        "/api/v1/ai/extract-project",
+        json={"source_id": object_id, "create": False},
+    )
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["project_id"] is None
+    assert data["draft"]["title"] == "Shipped Feature X"
+
+    after = await auth_client.get("/api/v1/projects?limit=100")
+    assert after.json()["total"] == n_before
+
+
+@pytest.mark.asyncio
+async def test_extract_project_invalid_kind(
+    auth_client: AsyncClient, mock_openai_extract: MagicMock
+):
+    r = await auth_client.post(
+        "/api/v1/objects",
+        json={"kind": "note", "title": "Not a project source"},
+    )
+    assert r.status_code == 201
+    note_id = r.json()["id"]
+
+    resp = await auth_client.post(
+        "/api/v1/ai/extract-project",
+        json={"source_id": note_id, "create": True},
+    )
+    assert resp.status_code == 400
+    assert "page, chat, or source" in resp.json()["detail"].lower()
+
+
+@pytest.mark.asyncio
+async def test_extract_project_ai_disabled(auth_client: AsyncClient):
+    import app.services.project_service as ps
+
+    page_data = await _make_page(auth_client)
+    object_id = page_data["object"]["id"]
+    fake_settings = SimpleNamespace(
+        openai_api_key="",
+        openai_chat_model="gpt-4o-mini",
+        openai_max_tokens=2000,
+    )
+    with patch.object(ps, "settings", fake_settings):
+        resp = await auth_client.post(
+            "/api/v1/ai/extract-project",
+            json={"source_id": object_id, "create": True},
+        )
+    assert resp.status_code == 503
+
+
+@pytest.mark.asyncio
+async def test_extract_project_malformed_json(auth_client: AsyncClient):
+    client_mock = _make_openai_mock("NOT VALID JSON {{{")
+    with patch("openai.AsyncOpenAI", return_value=client_mock):
+        page_data = await _make_page(auth_client)
+        object_id = page_data["object"]["id"]
+
+        resp = await auth_client.post(
+            "/api/v1/ai/extract-project",
+            json={"source_id": object_id, "create": True},
+        )
+    assert resp.status_code == 502
+    assert "malformed" in resp.json()["detail"].lower()
+
+    from app.db.session import engine
+    from app.models.agent_run import AgentRun
+    from sqlalchemy import select
+    from sqlalchemy.ext.asyncio import AsyncSession
+
+    async with AsyncSession(engine) as session:
+        result = await session.execute(
+            select(AgentRun)
+            .where(AgentRun.agent_type == "extract-project")
+            .order_by(AgentRun.created_at.desc())
+            .limit(1)
+        )
+        row = result.scalar_one_or_none()
+    assert row is not None
+    assert row.status == "failed"

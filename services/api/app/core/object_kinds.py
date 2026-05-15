@@ -8,6 +8,7 @@ VALID_OBJECT_KINDS = (
     "chat",
     "claim",
     "task",
+    "project",
 )
 
 

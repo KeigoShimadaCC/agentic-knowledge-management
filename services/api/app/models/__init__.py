@@ -6,6 +6,7 @@ from app.models.edge import Edge
 from app.models.ingestion_job import IngestionJob
 from app.models.object import KosObject
 from app.models.page import Page
+from app.models.project import Project
 from app.models.revision import ObjectRevision
 from app.models.session import Session
 from app.models.source import Source
@@ -21,6 +22,7 @@ __all__ = [
     "KosObject",
     "ObjectRevision",
     "Page",
+    "Project",
     "Session",
     "Source",
     "User",

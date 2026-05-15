@@ -24,7 +24,8 @@ from app.schemas.ai import (
 )
 from app.schemas.common import PaginatedResponse
 from app.schemas.object import ObjectOut
-from app.services import ai_service
+from app.schemas.project import ExtractProjectRequest, ExtractProjectResponse
+from app.services import ai_service, project_service
 
 router = APIRouter(prefix="/ai", tags=["ai"])
 
@@ -81,6 +82,17 @@ async def triage(
     db: AsyncSession = Depends(get_db),
 ) -> TriageResponse:
     return await ai_service.triage_object(db, user.id, body.object_id)
+
+
+@router.post("/extract-project", response_model=ExtractProjectResponse)
+async def extract_project_endpoint(
+    body: ExtractProjectRequest,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> ExtractProjectResponse:
+    result = await project_service.extract_project(db, user_id=user.id, payload=body)
+    await db.commit()
+    return result
 
 
 @router.get("/inbox", response_model=PaginatedResponse[ObjectOut])
