@@ -397,3 +397,19 @@ async def test_hybrid_search_with_object_ids_filter(
     filtered_ids = {r["id"] for r in resp.json()["results"]}
     assert page_a in filtered_ids
     assert page_b not in filtered_ids
+
+
+@pytest.mark.asyncio
+async def test_keyword_search_object_ids_empty_list_returns_no_results(
+    auth_client: AsyncClient,
+) -> None:
+    """keyword search with object_ids=[] (empty via no params) returns normal results, not filtered-empty."""
+    # object_ids query param with a random UUID that doesn't exist should return empty
+    random_id = str(uuid.uuid4())
+    resp = await auth_client.get(
+        "/api/v1/search/keyword",
+        params={"q": "the", "object_ids": random_id, "limit": 20},
+    )
+    assert resp.status_code == 200
+    # With a non-existent object_id filter, nothing should match
+    assert resp.json()["results"] == []

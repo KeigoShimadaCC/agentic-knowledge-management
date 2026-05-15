@@ -363,6 +363,13 @@ export interface AiCitation {
   snippet: string | null;
 }
 
+export interface AnswerRequest {
+  q: string;
+  kind?: string | null;
+  limit?: number;
+  object_ids?: string[] | null;
+}
+
 export interface AnswerResponse {
   answer: string;
   citations: AiCitation[];
