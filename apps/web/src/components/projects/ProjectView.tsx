@@ -7,6 +7,7 @@ import { Archive, Copy, Download, Edit, FileDown, Trash2 } from "lucide-react";
 import { archiveObject, deleteProject, updateObject } from "@/lib/api";
 import { EvidencePanel } from "@/components/projects/EvidencePanel";
 import { ProjectForm } from "@/components/projects/ProjectForm";
+import { ResumeBulletsPanel } from "@/components/projects/ResumeBulletsPanel";
 import { toast } from "@/components/ui/Toast";
 import { cn } from "@/lib/cn";
 import type { ProjectOut } from "@/types";
@@ -175,7 +176,7 @@ export function ProjectView({ project: initialProject }: { project: ProjectOut }
       <main className="px-8 py-6">
         {activeTab === "overview" && <Overview project={project} />}
         {activeTab === "evidence" && <EvidencePanel projectId={project.id} />}
-        {activeTab === "bullets" && <PanelPlaceholder title="Resume Bullets" />}
+        {activeTab === "bullets" && <ResumeBulletsPanel projectId={project.id} project={project} />}
         {activeTab === "stories" && <PanelPlaceholder title="Interview Stories" />}
       </main>
 
