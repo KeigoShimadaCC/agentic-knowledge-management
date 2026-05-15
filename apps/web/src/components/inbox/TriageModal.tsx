@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { aiTriage, createEdge, updateObject } from "@/lib/api";
 import type { ObjectOut, TriageResponse } from "@/types";
+import { toast } from "@/components/ui/Toast";
 
 interface TriageModalProps {
   object: ObjectOut;
@@ -47,6 +48,7 @@ export function TriageModal({ object, onClose, onApplied }: TriageModalProps) {
         description: triage?.summary ?? undefined,
         tags: selectedTags,
       });
+      toast.success("Organized");
       onApplied();
       onClose();
     } catch (e) {

@@ -9,6 +9,7 @@ import {
   aiSummarize,
   createEdge,
 } from "@/lib/api";
+import { toast } from "@/components/ui/Toast";
 import type {
   AnswerResponse,
   ExtractResponse,
@@ -66,8 +67,10 @@ export function AiPanel({ objectId, onEdgeCreated }: AiPanelProps) {
         kind: "related_to",
       });
       onEdgeCreated?.();
-    } catch {
-      // ignore
+    } catch (err) {
+      toast.error("Couldn't create link", {
+        description: err instanceof Error ? err.message : undefined,
+      });
     } finally {
       setCreatingEdge(null);
     }

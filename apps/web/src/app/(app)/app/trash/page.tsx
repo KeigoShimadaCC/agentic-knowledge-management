@@ -5,6 +5,7 @@ import useSWR from "swr";
 import { RotateCcw } from "lucide-react";
 import { listTrashObjects, restoreObject } from "@/lib/api";
 import type { ObjectOut } from "@/types";
+import { toast } from "@/components/ui/Toast";
 
 function KindBadge({ kind }: { kind: string }) {
   return (
@@ -68,8 +69,10 @@ export default function TrashPage() {
   );
 
   async function handleRestore(id: string) {
+    const item = items.find((o) => o.id === id);
     await restoreObject(id);
     await mutate();
+    toast.success(`"${item?.title || "Item"}" restored`);
   }
 
   const items = objects ?? [];

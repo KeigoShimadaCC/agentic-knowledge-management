@@ -4,6 +4,7 @@ import { useState } from "react";
 import { clsx } from "clsx";
 import { createSource } from "@/lib/api";
 import type { SourceType } from "@/types";
+import { toast } from "@/components/ui/Toast";
 
 const BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
@@ -31,6 +32,7 @@ export function CreateSourceModal({ isOpen, onClose, onCreated }: CreateSourceMo
     try {
       await createSource({ source_type: sourceType, url });
       setUrl("");
+      toast.success("Source created");
       onCreated();
       onClose();
     } catch (err) {
@@ -59,6 +61,7 @@ export function CreateSourceModal({ isOpen, onClose, onCreated }: CreateSourceMo
         const body = (await res.json().catch(() => fallback)) as { detail?: string };
         throw new Error(body.detail ?? res.statusText);
       }
+      toast.success("File uploaded");
       onCreated();
       onClose();
     } catch (err) {

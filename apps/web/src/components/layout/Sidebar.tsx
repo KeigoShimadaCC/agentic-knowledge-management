@@ -14,9 +14,12 @@ import {
 } from "lucide-react";
 import { clsx } from "clsx";
 import { useState } from "react";
+import { PanelLeft } from "lucide-react";
 
 import { logout } from "@/lib/api";
 import { useAuth } from "@/lib/hooks/useAuth";
+import { useSidebarState } from "@/lib/hooks/useSidebarState";
+import { useShortcut } from "@/lib/hooks/useShortcut";
 
 const navItems = [
   { href: "/app", label: "All Objects", icon: Files },
@@ -33,6 +36,14 @@ export function Sidebar() {
   const router = useRouter();
   const { user, isLoading, mutate } = useAuth();
   const [signingOut, setSigningOut] = useState(false);
+  const { collapsed, toggle } = useSidebarState();
+
+  useShortcut("\\", (e) => {
+    if (e.metaKey || e.ctrlKey) {
+      e.preventDefault();
+      toggle();
+    }
+  });
 
   async function handleSignOut() {
     setSigningOut(true);
@@ -47,9 +58,26 @@ export function Sidebar() {
   }
 
   return (
-    <aside className="flex h-full w-60 shrink-0 flex-col border-r border-gray-800 bg-gray-900">
-      <div className="border-b border-gray-800 p-4">
-        <span className="text-lg font-bold tracking-tight text-white">KnowledgeOS</span>
+    <aside className={clsx(
+      "flex h-full shrink-0 flex-col border-r border-gray-800 bg-gray-900 transition-all duration-base",
+      collapsed ? "w-14" : "w-60"
+    )}>
+      <div className="flex items-center justify-between border-b border-gray-800 p-4">
+        {!collapsed && (
+          <span className="text-lg font-bold tracking-tight text-white">KnowledgeOS</span>
+        )}
+        <button
+          type="button"
+          onClick={toggle}
+          aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+          title={collapsed ? "Expand (⌘\\)" : "Collapse (⌘\\)"}
+          className={clsx(
+            "rounded p-1 text-gray-400 hover:bg-gray-800 hover:text-white transition-colors",
+            collapsed && "mx-auto"
+          )}
+        >
+          <PanelLeft size={16} />
+        </button>
       </div>
 
       <nav className="flex-1 space-y-1 overflow-y-auto p-2">
@@ -57,15 +85,17 @@ export function Sidebar() {
           <Link
             key={href}
             href={href}
+            title={collapsed ? label : undefined}
             className={clsx(
-              "flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm transition-colors",
+              "flex items-center rounded-lg px-3 py-2 text-sm transition-colors",
+              collapsed ? "justify-center gap-0" : "gap-2.5",
               pathname === href
                 ? "bg-gray-700 text-white"
                 : "text-gray-400 hover:bg-gray-800 hover:text-white"
             )}
           >
             <Icon size={16} />
-            {label}
+            {!collapsed && label}
           </Link>
         ))}
       </nav>
@@ -73,17 +103,23 @@ export function Sidebar() {
       <div className="shrink-0 space-y-2 border-t border-gray-800 p-3">
         {!isLoading && user ? (
           <>
-            <p className="truncate px-2 text-xs text-gray-500" title={user.email}>
-              {user.display_name?.trim() || user.email}
-            </p>
+            {!collapsed && (
+              <p className="truncate px-2 text-xs text-gray-500" title={user.email}>
+                {user.display_name?.trim() || user.email}
+              </p>
+            )}
             <button
               type="button"
               disabled={signingOut}
               onClick={() => void handleSignOut()}
-              className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-gray-400 transition-colors hover:bg-gray-800 hover:text-white disabled:opacity-50"
+              title={collapsed ? "Sign out" : undefined}
+              className={clsx(
+                "flex w-full items-center rounded-lg px-3 py-2 text-sm text-gray-400 transition-colors hover:bg-gray-800 hover:text-white disabled:opacity-50",
+                collapsed ? "justify-center gap-0" : "gap-2"
+              )}
             >
               <LogOut size={16} aria-hidden />
-              {signingOut ? "Signing out…" : "Sign out"}
+              {!collapsed && (signingOut ? "Signing out…" : "Sign out")}
             </button>
           </>
         ) : null}

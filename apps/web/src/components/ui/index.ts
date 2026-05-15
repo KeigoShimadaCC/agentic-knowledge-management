@@ -18,3 +18,4 @@ export * from "./Spinner";
 export * from "./EmptyState";
 export * from "./ErrorState";
 export * from "./Avatar";
+export * from "./SaveStatusChip";

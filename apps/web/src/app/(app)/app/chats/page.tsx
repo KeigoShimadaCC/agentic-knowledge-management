@@ -9,6 +9,7 @@ import { Plus, Upload } from "lucide-react";
 import { importChatContent, importChatFile } from "@/lib/api";
 import { useChats } from "@/lib/hooks/useChats";
 import type { ChatOut, ChatProvider, ChatRawFormat } from "@/types";
+import { toast } from "@/components/ui/Toast";
 
 const PROVIDERS: { label: string; value: ChatProvider }[] = [
   { label: "Auto", value: "auto" },
@@ -200,6 +201,8 @@ export default function ChatsPage() {
 
   function handleImported(imported: ChatOut[]) {
     void mutate();
+    const count = imported.length;
+    toast.success(count === 1 ? "Chat imported" : `${count} chats imported`);
     const onlyChat = imported[0];
     if (imported.length === 1 && onlyChat) {
       router.push(`/app/chats/${onlyChat.id}`);

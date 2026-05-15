@@ -2,6 +2,8 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { AppShell } from "@/components/layout/AppShell";
 import { WorkspaceLiteProvider } from "@/components/workspace/WorkspaceLiteProvider";
+import { ErrorBoundary } from "@/components/layout/ErrorBoundary";
+import { Toaster } from "@/components/ui/Toast";
 
 async function getCurrentUser() {
   const apiUrl = process.env.API_URL ?? "http://localhost:8000";
@@ -30,7 +32,10 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   return (
     <WorkspaceLiteProvider>
-      <AppShell>{children}</AppShell>
+      <ErrorBoundary>
+        <AppShell>{children}</AppShell>
+      </ErrorBoundary>
+      <Toaster position="bottom-right" richColors />
     </WorkspaceLiteProvider>
   );
 }
