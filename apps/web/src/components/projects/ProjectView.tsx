@@ -6,6 +6,7 @@ import { Archive, Copy, Download, Edit, FileDown, Trash2 } from "lucide-react";
 
 import { archiveObject, deleteProject, updateObject } from "@/lib/api";
 import { EvidencePanel } from "@/components/projects/EvidencePanel";
+import { InterviewStoryPanel } from "@/components/projects/InterviewStoryPanel";
 import { ProjectForm } from "@/components/projects/ProjectForm";
 import { ResumeBulletsPanel } from "@/components/projects/ResumeBulletsPanel";
 import { toast } from "@/components/ui/Toast";
@@ -177,7 +178,7 @@ export function ProjectView({ project: initialProject }: { project: ProjectOut }
         {activeTab === "overview" && <Overview project={project} />}
         {activeTab === "evidence" && <EvidencePanel projectId={project.id} />}
         {activeTab === "bullets" && <ResumeBulletsPanel projectId={project.id} project={project} />}
-        {activeTab === "stories" && <PanelPlaceholder title="Interview Stories" />}
+        {activeTab === "stories" && <InterviewStoryPanel projectId={project.id} project={project} />}
       </main>
 
       <div className="fixed bottom-0 left-60 right-0 z-30 border-t border-gray-800 bg-gray-950/95 px-8 py-3 backdrop-blur">
