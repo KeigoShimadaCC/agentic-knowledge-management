@@ -77,7 +77,7 @@ All services run via `docker compose -f infra/docker-compose.yml`. See `docs/ARC
 
 ## MCP & Agent Safety Rules
 
-- MCP tools expose: `search`, `read_object`, `create_page`, `update_page`, `link_objects`, `ingest_url`, `ingest_file`. Nothing else.
+- MCP read tools (Phase 7A): `search_objects`, `hybrid_search`, `get_object`, `get_page`, `get_source`, `get_related_objects`, `answer_from_kb`. Write tools (Phase 7B, gated by `MCP_ALLOW_WRITE_TOOLS`): `create_page`, `update_page`, `create_edge`, `archive_object`, `ingest_url`, `ingest_file`. Nothing else.
 - Every MCP write must validate the calling agent identity (from session or token) and write an `agent_runs` audit row.
 - MCP read tools may return object content, metadata, and search results. They must never return `api_keys`, `session_secret`, or password hashes.
 - Ingestion tools accept URLs and file paths under `LIBRARY_ROOT` only. Reject paths outside the library root.
