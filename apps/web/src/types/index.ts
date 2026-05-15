@@ -285,11 +285,16 @@ export class ApiError extends Error {
 
 export type SearchMode = "keyword" | "semantic" | "hybrid";
 
+export interface SearchSnippet {
+  text: string;
+  highlights: [number, number][];
+}
+
 export interface SearchResult {
   id: string;
   kind: ObjectKind | string;
   title: string;
-  snippet: string | null;
+  snippet: SearchSnippet | null;
   tags: string[];
   score: number;
   updated_at: string;

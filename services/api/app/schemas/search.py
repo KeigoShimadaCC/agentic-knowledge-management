@@ -6,11 +6,17 @@ from datetime import datetime
 from pydantic import BaseModel
 
 
+class SearchSnippet(BaseModel):
+    """Plain-text snippet with character ranges marking highlighted terms."""
+    text: str
+    highlights: list[tuple[int, int]] = []
+
+
 class SearchResult(BaseModel):
     id: uuid.UUID
     kind: str
     title: str
-    snippet: str | None = None
+    snippet: SearchSnippet | None = None
     tags: list[str] = []
     score: float
     updated_at: datetime

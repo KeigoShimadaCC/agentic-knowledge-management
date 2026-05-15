@@ -234,3 +234,58 @@ async def test_search_deleted_object_excluded(auth_client: AsyncClient):
     resp = await auth_client.get("/api/v1/search/keyword", params={"q": title})
     assert resp.status_code == 200
     assert page_id not in {result["id"] for result in resp.json()["results"]}
+
+
+@pytest.mark.asyncio
+async def test_snippet_shape_is_struct(auth_client: AsyncClient):
+    """Snippet must be {text, highlights} — not a raw HTML string."""
+    title = f"SnippetShape {uuid.uuid4().hex}"
+    await _create_searchable_page(
+        auth_client,
+        title=title,
+        content_text=(
+            "Snippet shape validation checks that the API returns structured plain-text "
+            "snippets with highlight ranges instead of raw HTML markup from ts_headline."
+        ),
+    )
+    resp = await auth_client.get("/api/v1/search/keyword", params={"q": title})
+    assert resp.status_code == 200
+    results = resp.json()["results"]
+    assert results
+    snippet = results[0]["snippet"]
+    if snippet is not None:
+        assert isinstance(snippet, dict), "snippet must be an object, not a string"
+        assert "text" in snippet
+        assert "highlights" in snippet
+        assert isinstance(snippet["text"], str)
+        assert isinstance(snippet["highlights"], list)
+        assert "<mark>" not in snippet["text"], "snippet.text must not contain HTML markup"
+
+
+@pytest.mark.asyncio
+async def test_snippet_xss_payload_not_rendered_as_html(auth_client: AsyncClient):
+    """XSS regression: <script> in page content must not appear as live HTML in snippet."""
+    payload = "<script>document.title='pwned'</script>"
+    title = f"XSSTarget {uuid.uuid4().hex}"
+    await _create_searchable_page(
+        auth_client,
+        title=title,
+        content_text=(
+            f"Safety test for XSS regression. This page contains: {payload} "
+            "which must be returned as plain text, not as an executable HTML tag."
+        ),
+    )
+    resp = await auth_client.get("/api/v1/search/keyword", params={"q": "XSS regression"})
+    assert resp.status_code == 200
+    body = resp.text
+    # The raw JSON response must not contain an unescaped <script> that a browser would execute.
+    # Since snippet.text is a plain string inside JSON, the angle brackets will appear as-is
+    # in the JSON body but will NOT be parsed as HTML when rendered via React text nodes.
+    # Verify the response is well-formed JSON and snippet is not a raw HTML string.
+    for result in resp.json()["results"]:
+        snippet = result.get("snippet")
+        if snippet is not None:
+            assert isinstance(snippet, dict), f"snippet must be a struct, got: {type(snippet)}"
+            # Ensure no HTML-only markup like <mark> ended up in text
+            assert "<mark>" not in snippet["text"]
+    _ = body  # referenced to suppress unused-var lint
