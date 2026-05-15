@@ -1,12 +1,19 @@
+import Link from "next/link";
+import { AuthLayout } from "@/components/auth/AuthLayout";
 import { LoginForm } from "@/components/auth/LoginForm";
+
+export const metadata = { title: "Sign in — KnowledgeOS" };
 
 export default function LoginPage() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-950">
-      <div className="w-full max-w-sm bg-gray-900 rounded-xl border border-gray-800 p-8">
-        <h1 className="text-2xl font-bold text-white mb-6">Sign in to KnowledgeOS</h1>
-        <LoginForm />
-      </div>
-    </div>
+    <AuthLayout title="Sign in to KnowledgeOS" subtitle="Your local-first AI knowledge base.">
+      <LoginForm />
+      <p className="mt-4 text-center text-sm text-gray-500">
+        No account?{" "}
+        <Link href="/register" className="text-indigo-400 hover:underline">Register</Link>
+        {" · "}
+        <Link href="/forgot-password" className="text-indigo-400 hover:underline">Forgot password?</Link>
+      </p>
+    </AuthLayout>
   );
 }

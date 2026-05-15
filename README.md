@@ -394,6 +394,24 @@ Copy `infra/.env.example` to `infra/.env` before starting Docker.
 
 ---
 
+## Keyboard Shortcuts
+
+Press `?` anywhere in the app (outside a text field) to open the keyboard shortcut overlay.
+
+| Key | Action |
+|-----|--------|
+| `⌘K` | Open search |
+| `⌘\` | Collapse / expand sidebar |
+| `?` | Show shortcuts |
+| `j / ↓` | Move highlight down (lists) |
+| `k / ↑` | Move highlight up (lists) |
+| `Enter` | Open highlighted item (lists) |
+| `Backspace` | Soft-delete highlighted item (lists) |
+
+See [`docs/SHORTCUTS.md`](docs/SHORTCUTS.md) for the full reference.
+
+---
+
 ## For AI Agents
 
 If you are a coding agent (Claude, Codex, Cursor) working in this repo:

@@ -1,9 +1,10 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { Upload } from "lucide-react";
 import { clsx } from "clsx";
 import { useUpload } from "@/lib/hooks/useUpload";
+import { toast } from "@/components/ui/Toast";
 
 interface AssetUploaderProps {
   onUploadComplete?: () => void;
@@ -13,6 +14,21 @@ export function AssetUploader({ onUploadComplete }: AssetUploaderProps) {
   const { uploads, upload } = useUpload();
   const [isDragging, setIsDragging] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const notifiedRef = useRef<Set<number>>(new Set());
+
+  useEffect(() => {
+    uploads.forEach((u, i) => {
+      if (!notifiedRef.current.has(i)) {
+        if (u.status === "done") {
+          notifiedRef.current.add(i);
+          toast.success(`${u.file.name} uploaded`);
+        } else if (u.status === "error") {
+          notifiedRef.current.add(i);
+          toast.error(`Failed to upload ${u.file.name}`);
+        }
+      }
+    });
+  }, [uploads]);
 
   function handleFiles(files: FileList | null) {
     if (!files || files.length === 0) return;
