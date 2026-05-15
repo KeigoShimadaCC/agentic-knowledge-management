@@ -90,6 +90,105 @@ class KosApiClient:
         r.raise_for_status()
         return r.json()
 
+    # --- Write methods (Phase 7B) ---
+
+    async def create_page(
+        self,
+        title: str,
+        content_text: str | None = None,
+        tags: list[str] | None = None,
+    ) -> dict:
+        body: dict = {"title": title}
+        if content_text is not None:
+            body["content_text"] = content_text
+        if tags:
+            body["tags"] = tags
+        r = await self._client.post("/api/v1/pages", json=body)
+        r.raise_for_status()
+        return r.json()
+
+    async def update_page(
+        self,
+        page_id: str,
+        title: str | None = None,
+        content_text: str | None = None,
+        tags: list[str] | None = None,
+        expected_version: int | None = None,
+    ) -> dict:
+        body: dict = {}
+        if title is not None:
+            body["title"] = title
+        if content_text is not None:
+            body["content_text"] = content_text
+        if tags is not None:
+            body["tags"] = tags
+        if expected_version is not None:
+            body["expected_version"] = expected_version
+        r = await self._client.patch(f"/api/v1/pages/{page_id}", json=body)
+        r.raise_for_status()
+        return r.json()
+
+    async def create_edge(
+        self,
+        source_id: str,
+        target_id: str,
+        kind: str,
+        weight: float | None = None,
+        metadata: dict | None = None,
+    ) -> dict:
+        body: dict = {"source_id": source_id, "target_id": target_id, "kind": kind}
+        if weight is not None:
+            body["weight"] = weight
+        if metadata is not None:
+            body["metadata"] = metadata
+        r = await self._client.post("/api/v1/edges", json=body)
+        r.raise_for_status()
+        return r.json()
+
+    async def archive_object(self, object_id: str, reason: str | None = None) -> dict:
+        body: dict = {}
+        if reason is not None:
+            body["reason"] = reason
+        r = await self._client.post(f"/api/v1/objects/{object_id}/archive", json=body)
+        r.raise_for_status()
+        return r.json()
+
+    async def ingest_url(
+        self,
+        url: str,
+        source_type: str | None = None,
+        title: str | None = None,
+        tags: list[str] | None = None,
+    ) -> dict:
+        body: dict = {"url": url}
+        if source_type is not None:
+            body["source_type"] = source_type
+        if title is not None:
+            body["title"] = title
+        if tags:
+            body["tags"] = tags
+        r = await self._client.post("/api/v1/sources", json=body)
+        r.raise_for_status()
+        return r.json()
+
+    async def ingest_file(
+        self,
+        file_path: str,
+        source_type: str | None = None,
+        title: str | None = None,
+        tags: list[str] | None = None,
+    ) -> dict:
+        body: dict = {"file_path": file_path}
+        if source_type is not None:
+            body["source_type"] = source_type
+        if title is not None:
+            body["title"] = title
+        if tags:
+            body["tags"] = tags
+        r = await self._client.post("/api/v1/sources", json=body)
+        r.raise_for_status()
+        return r.json()
+
     async def aclose(self) -> None:
         await self._client.aclose()
 
