@@ -67,14 +67,28 @@ See `docs/MCP_TOOLS.md` for full setup instructions. In brief:
 - **Discovery first**: always run `search_objects` or `hybrid_search` to find relevant objects before fetching full content.
 - **Follow up with get_***: search returns compact summaries with IDs; call `get_page` or `get_source` for full content.
 - **Graph traversal**: use `get_related_objects` at `depth: 1` before `depth: 2` to avoid over-fetching.
-- **Write tools are not available in Phase 7A.** Do not attempt to create or modify objects through MCP. Use the REST API directly (see below) or wait for Phase 7B.
+- **Write tools require `MCP_ALLOW_WRITE_TOOLS=true`** in the server's environment. They are disabled by default.
+- **Read then write**: always call `get_object` or `get_page` before calling `update_page` so you have the current `version` for optimistic locking.
+- **Idempotency**: `archive_object` is idempotent — calling it twice on the same object returns the already-archived state without creating a duplicate audit row.
+- **Rate limits**: write tools are capped at 60 calls/minute and 600 calls/hour per agent identity. If you hit the limit, back off and retry — the error text includes the retry window in seconds.
+
+### Write tool selection guide
+
+| Goal | Tool |
+|---|---|
+| Capture a new idea or note | `create_page` |
+| Update a page you just read | `update_page` with `expected_version` from `get_page` |
+| Link two objects | `create_edge` with an appropriate `kind` |
+| Remove an object from view | `archive_object` (reversible) |
+| Ingest a URL for later analysis | `ingest_url` — creates a `Source` object in `pending` state |
+| Ingest a local file | `ingest_file` — path must be under `LIBRARY_ROOT` |
 
 ### What MCP tools will never do
 
 - Execute shell commands
 - Access files outside `~/KnowledgeOS`
 - Return `api_key`, `password`, session secrets, or token hashes
-- Modify any data (Phase 7A is read-only)
+- Hard-delete data (archive = soft-hide, not delete)
 
 ---
 

@@ -106,15 +106,25 @@ FastAPI accepts an `X-KOS-Internal-Token` header as an alternative to the sessio
 
 **Limitation:** Multi-user instances are not supported through MCP in Phase 7A. The token grants access as the first active user. Phase 7B will address per-user MCP auth if needed.
 
-## MCP Server Safety (Phase 7A)
+## MCP Server Safety (Phases 7A + 7B)
 
 - **Disabled by default** (`MCP_ENABLED=false`). Server exits immediately if not enabled.
 - **stdio transport only** — no HTTP server, no new open port.
 - **Tool allowlist** (`MCP_ALLOWED_TOOLS`) enforced at startup. Tools not in the list are not registered.
-- **No write tools** registered in Phase 7A regardless of config flags.
+- **Write tools gated** (`MCP_ALLOW_WRITE_TOOLS=false` by default) — even if listed in the allowlist, write tools are not registered unless the flag is `true`.
 - **No shell execution** — no tools that run commands or access the filesystem arbitrarily.
 - **Secret redaction** — `redact_dict()` applied to every tool response. Keys: `api_key`, `openai_api_key`, `session_secret`, `mcp_internal_token`, `token`, `token_hash`, `password`, `password_hash`, `secret`.
 - **`answer_from_kb`** — wired to `POST /api/v1/ai/answer`. Returns a structured `{error: "ai_disabled"}` dict (not an exception) when the server has no `OPENAI_API_KEY` (503 from the API layer). All other `httpx` errors propagate normally.
+
+### Write-Tool Safety Invariants (Phase 7B)
+
+1. **Rate limiting** — Redis sliding-window counter per agent identity (`X-KOS-Agent-Id` header). Default: 60 writes/minute, 600 writes/hour. Rate-limit rejection never touches the database.
+2. **Audit trail** — Every write call creates an `agent_runs` row with tool name, input summary (content stripped), agent identity, and completion status (`success`/`failed`).
+3. **Revision history** — Mutating writes (`update_page`, `archive_object`, `restore_revision`) capture a before/after snapshot in `object_revisions`, linked to the `agent_runs` row by `agent_run_id`.
+4. **Soft-delete only** — `archive_object` sets `is_archived=true`; it never calls `DELETE` or sets `deleted_at`. Data is always recoverable.
+5. **`LIBRARY_ROOT` enforcement** — `ingest_file` validates the path with `validate_path_under_library_root()`: resolves symlinks, checks `is_relative_to(LIBRARY_ROOT)`, rejects escapes.
+6. **URL safety** — `ingest_url` rejects `file://`, `localhost`, loopback IPs (`127.0.0.0/8`), and link-local ranges before calling the API.
+7. **Optimistic locking** — `update_page` accepts an optional `expected_version`; returns 409 Conflict if the page was modified between read and write.
 
 ## Search Output Encoding (XSS Mitigation)
 

@@ -11,6 +11,7 @@ from app.models.revision import ObjectRevision
 from app.models.session import Session
 from app.models.source import Source
 from app.models.user import User
+from app.models.workspace import Workspace
 
 __all__ = [
     "AgentRun",
@@ -26,4 +27,5 @@ __all__ = [
     "Session",
     "Source",
     "User",
+    "Workspace",
 ]

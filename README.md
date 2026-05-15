@@ -25,7 +25,7 @@ The full product vision is in [`project-phases/IDEA-DRAFT.md`](project-phases/ID
 
 ## Current Status
 
-Phases 1–4, Phase 5 AI Assistant, Phase 6A/6B Chat Import, Phase 7A MCP Read/Search, and Phase 8A Workspace Lite are complete. Phase 7B (MCP write tools), Phase 8 (multi-pane workspaces), Phase 9 (career memory), and the multilingual search hardening track are in progress or planned.
+Phases 1–4, Phase 5 AI Assistant, Phase 6A/6B Chat Import, Phase 7A MCP Read/Search, Phase 7B MCP Write Tools, and Phase 8A Workspace Lite are complete. Phase 8 (multi-pane workspaces), Phase 9 (career memory), and the multilingual search hardening track are in progress or planned.
 
 See [`PROGRESS.md`](PROGRESS.md) for the canonical progress tracker.
 
@@ -39,19 +39,19 @@ See [`PROGRESS.md`](PROGRESS.md) for the canonical progress tracker.
 | Phase 6A — Chat Import Lite | ✅ Complete |
 | Phase 6B — Structured Chat Import | ✅ Complete |
 | Phase 7A — MCP Read/Search | ✅ Complete |
+| Phase 7B — MCP Write Tools | ✅ Complete |
 | Phase 8A — Workspace Lite (split pane) | ✅ Complete |
 | Hardening — Search Quality / Multilingual | 🚧 Partial (ILIKE fallback only) |
-| Phase 7B — MCP Write Tools | ⬜ Planned |
 | Phase 8 — Multi-Pane Workspaces | ⬜ Planned |
 | Phase 9 — Career & Project Memory | ⬜ Planned |
 
 **Test counts (as of 2026-05-15):**
 - Frontend unit/component tests: 27 in `apps/web/src/**/__tests__/`
-- API integration + backend unit tests: 134 across `tests/api/` and `tests/unit/`
+- API integration + backend unit tests: 147 across `tests/api/` and `tests/unit/` (131 api + 16 unit)
 - Worker extractor tests: 19 in `tests/worker/`
-- MCP package tests: 20 in `services/mcp/tests/`
+- MCP package tests: 35 in `services/mcp/tests/`
 - Playwright E2E tests: 10 in `tests/e2e/specs/`
-- Total: 210 tests across all local suites
+- Total: 238 tests across all local suites
 
 See each phase's plan in [`project-phases/`](project-phases/) for the full subtask spec.
 
@@ -329,7 +329,7 @@ The complete product is built across 9 phases. Phases 1–6B, Phase 7A, and Phas
 | **Chat structured import** | AI summary, decisions, claims/tasks extracted with turn refs | 6B | ✅ |
 | **MCP read/search server** | stdio MCP with `search_objects`, `hybrid_search`, `get_*`, `get_related_objects` | 7A | ✅ |
 | **Workspace Lite (split pane)** | Open any object in a side pane from search/backlinks/related | 8A | ✅ |
-| **MCP write tools** | `create_page`, `update_page`, `create_edge`, `archive_object`, `ingest_url` | 7B | ⬜ |
+| **MCP write tools** | `create_page`, `update_page`, `create_edge`, `archive_object`, `ingest_url`, `ingest_file` | 7B | ✅ |
 | **Multi-pane workspaces** | Persistent layouts, drag-across-pane, workspace-scoped AI | 8 | ⬜ |
 | **Career/project memory** | Project schema, evidence-linked resume bullets, STAR stories | 9 | ⬜ |
 
@@ -349,7 +349,7 @@ The complete product is built across 9 phases. Phases 1–6B, Phase 7A, and Phas
 | 7A — MCP Read/Search | stdio MCP server, read-only tools, internal-token auth | **Done** |
 | 8A — Workspace Lite | Frontend split pane (no schema change) | **Done** |
 | Hardening — Search Quality | Multilingual ILIKE fallback ✅; snippet sanitization, JP fixtures, debug UI, index-status endpoint pending | **Partial** |
-| 7B — MCP Write Tools | `create_page`, `update_page`, `create_edge`, `archive_object`, `ingest_url` | Planned |
+| 7B — MCP Write Tools | `create_page`, `update_page`, `create_edge`, `archive_object`, `ingest_url`, `ingest_file` | **Done** |
 | 8 — Multi-Pane Workspaces | Persistent layout engine, saved workspaces, workspace-scoped AI | Planned |
 | 9 — Career Memory | Project schema UI, resume bullet generator, STAR story generator | Planned |
 
@@ -359,18 +359,27 @@ Each phase has a detailed spec in [`project-phases/`](project-phases/).
 
 ## MCP & Agent Access
 
-**Phase 7A is shipped.** KnowledgeOS exposes a local stdio MCP server in `services/mcp/` that external agents (Claude Desktop, Claude Code, Cursor, Codex) can spawn as a subprocess. The server talks to FastAPI over `127.0.0.1` using a shared `MCP_INTERNAL_TOKEN`.
+**Phases 7A + 7B are shipped.** KnowledgeOS exposes a local stdio MCP server in `services/mcp/` that external agents (Claude Desktop, Claude Code, Cursor, Codex) can spawn as a subprocess. The server talks to FastAPI over `127.0.0.1` using a shared `MCP_INTERNAL_TOKEN`.
 
 Enable it by setting `MCP_ENABLED=true` and a random `MCP_INTERNAL_TOKEN` in `infra/.env`, then point your agent client at `uv run --project services/mcp kos-mcp`. For the dockerized API, keep `MCP_API_BASE_URL=http://127.0.0.1:8001`; for a native API run on port 8000, override it to `http://127.0.0.1:8000`.
 
-**Read/search tools (Phase 7A — live):** `search_objects`, `hybrid_search`, `get_object`, `get_page`, `get_source`, `get_related_objects`  
-**Disabled stub:** `answer_from_kb` — wiring this to `POST /api/v1/ai/answer` is a known follow-up now that Phase 5 is complete.  
-**Write tools (Phase 7B — planned):** `create_page`, `update_page`, `create_edge`, `archive_object`  
-**Ingestion tools (Phase 7B — planned):** `ingest_url`, `ingest_file`, `import_chat`
+To enable write tools, also set `MCP_ALLOW_WRITE_TOOLS=true`.
+
+**Read/search tools (Phase 7A — live):** `search_objects`, `hybrid_search`, `get_object`, `get_page`, `get_source`, `get_related_objects`, `answer_from_kb`
+
+**Write tools (Phase 7B — live, requires `MCP_ALLOW_WRITE_TOOLS=true`):**
+- `create_page` — create a new page
+- `update_page` — update title/content/tags (supports `expected_version` for optimistic locking)
+- `create_edge` — link two objects with a typed relationship
+- `archive_object` — soft-archive (reversible via restore endpoint)
+- `ingest_url` — ingest a URL as a new source (web/youtube)
+- `ingest_file` — ingest a local file from `LIBRARY_ROOT`
 
 **Safety invariants (always enforced):**
-- Every agent write logs an `agent_runs` row (identity, model, input, output, changed objects)
-- All writes are soft-delete only — no hard deletes through MCP
+- Every write tool call creates an `agent_runs` audit row
+- Mutating tools (`update_page`, `archive_object`) create `object_revisions` rows with before/after snapshots
+- Rate-limited per agent identity: 60 writes/minute, 600 writes/hour
+- Soft-delete only — `archive_object` is reversible, no hard deletes through MCP
 - No arbitrary shell execution through any MCP tool
 - No file access outside `~/KnowledgeOS/`
 - API keys and session secrets are never returned in tool outputs

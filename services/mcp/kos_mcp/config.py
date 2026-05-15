@@ -1,7 +1,7 @@
 from pydantic import Field
 from pydantic_settings import BaseSettings
 
-DEFAULT_ALLOWED_TOOLS: list[str] = [
+READ_TOOLS: list[str] = [
     "search_objects",
     "hybrid_search",
     "get_object",
@@ -10,6 +10,19 @@ DEFAULT_ALLOWED_TOOLS: list[str] = [
     "get_related_objects",
     "answer_from_kb",
 ]
+
+WRITE_TOOLS: list[str] = [
+    "create_page",
+    "update_page",
+    "create_edge",
+    "archive_object",
+    "ingest_url",
+    "ingest_file",
+]
+
+WRITE_TOOL_NAMES: frozenset[str] = frozenset(WRITE_TOOLS)
+
+DEFAULT_ALLOWED_TOOLS: list[str] = READ_TOOLS + WRITE_TOOLS
 
 
 class McpSettings(BaseSettings):

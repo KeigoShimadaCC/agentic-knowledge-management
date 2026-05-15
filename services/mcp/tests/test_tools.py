@@ -6,17 +6,26 @@ import httpx
 import pytest
 
 from kos_mcp.client import KosApiClient
+from kos_mcp.config import McpSettings
 from kos_mcp.redaction import redact_dict
 from kos_mcp.tools import (
+    _PAGE_TEXT_LIMIT,
+    _SOURCE_TEXT_DEFAULT_LIMIT,
     _answer_from_kb,
+    _archive_object,
+    _create_edge,
+    _create_page,
     _get_object,
     _get_page,
     _get_related_objects,
     _get_source,
     _hybrid_search,
+    _ingest_file,
+    _ingest_url,
+    _update_page,
     _search_objects,
-    _PAGE_TEXT_LIMIT,
-    _SOURCE_TEXT_DEFAULT_LIMIT,
+    _validate_url_safe,
+    register_tools,
 )
 
 
@@ -281,3 +290,148 @@ def test_redact_dict_strips_known_secrets() -> None:
     assert result["session_secret"] == "[REDACTED]"
     assert result["nested"]["name"] == "visible"
     assert result["nested"]["token"] == "[REDACTED]"
+
+
+# ── Write tool gating ────────────────────────────────────────────────────────
+
+@pytest.mark.asyncio
+async def test_list_tools_returns_7_when_flag_off(mock_client: KosApiClient) -> None:
+    """With mcp_allow_write_tools=False, list_tools returns only the 7 read tools."""
+    import mcp.types
+    from mcp.server import Server
+    srv = Server("test")
+    settings = McpSettings(mcp_enabled=True, mcp_allow_write_tools=False)
+    register_tools(srv, mock_client, settings)
+
+    handler = srv.request_handlers[mcp.types.ListToolsRequest]
+    req = mcp.types.ListToolsRequest(method="tools/list")
+    server_result = await handler(req)
+    tools = server_result.root.tools
+    assert len(tools) == 7
+    tool_names = {t.name for t in tools}
+    assert "create_page" not in tool_names
+    assert "search_objects" in tool_names
+
+
+@pytest.mark.asyncio
+async def test_list_tools_returns_13_when_flag_on(mock_client: KosApiClient) -> None:
+    """With mcp_allow_write_tools=True, list_tools returns 13 tools (7 read + 6 write)."""
+    import mcp.types
+    from mcp.server import Server
+    srv = Server("test")
+    settings = McpSettings(mcp_enabled=True, mcp_allow_write_tools=True)
+    register_tools(srv, mock_client, settings)
+
+    handler = srv.request_handlers[mcp.types.ListToolsRequest]
+    req = mcp.types.ListToolsRequest(method="tools/list")
+    server_result = await handler(req)
+    tools = server_result.root.tools
+    assert len(tools) == 13
+    tool_names = {t.name for t in tools}
+    assert "create_page" in tool_names
+    assert "search_objects" in tool_names
+
+
+@pytest.mark.asyncio
+async def test_call_tool_rejects_write_when_flag_off(mock_client: KosApiClient) -> None:
+    """With mcp_allow_write_tools=False, call_tool returns an error for write tool names."""
+    import mcp.types
+    from mcp.server import Server
+    srv = Server("test")
+    settings = McpSettings(mcp_enabled=True, mcp_allow_write_tools=False)
+    register_tools(srv, mock_client, settings)
+
+    handler = srv.request_handlers[mcp.types.CallToolRequest]
+    req = mcp.types.CallToolRequest(
+        method="tools/call",
+        params=mcp.types.CallToolRequestParams(name="create_page", arguments={"title": "X"}),
+    )
+    server_result = await handler(req)
+    content = server_result.root.content
+    assert any(
+        "disabled" in str(c.text).lower() or "write" in str(c.text).lower()
+        for c in content
+        if hasattr(c, "text")
+    )
+
+
+# ── ingest_url safety ────────────────────────────────────────────────────────
+
+def test_validate_url_safe_rejects_file_scheme() -> None:
+    with pytest.raises(ValueError, match="file"):
+        _validate_url_safe("file:///etc/passwd")
+
+
+def test_validate_url_safe_rejects_localhost() -> None:
+    with pytest.raises(ValueError):
+        _validate_url_safe("http://localhost/foo")
+
+
+def test_validate_url_safe_rejects_loopback_ip() -> None:
+    with pytest.raises(ValueError):
+        _validate_url_safe("http://127.0.0.1/foo")
+
+
+def test_validate_url_safe_accepts_https() -> None:
+    # Should not raise
+    _validate_url_safe("https://www.example.com/article")
+
+
+@pytest.mark.asyncio
+async def test_ingest_url_rejects_file_scheme(mock_client: KosApiClient) -> None:
+    with pytest.raises(ValueError, match="not allowed"):
+        await _ingest_url(mock_client, url="file:///etc/passwd")
+
+
+@pytest.mark.asyncio
+async def test_ingest_url_rejects_localhost(mock_client: KosApiClient) -> None:
+    with pytest.raises(ValueError):
+        await _ingest_url(mock_client, url="http://localhost/page")
+
+
+# ── ingest_file path validation ──────────────────────────────────────────────
+
+@pytest.mark.asyncio
+async def test_ingest_file_rejects_nonexistent_path(mock_client: KosApiClient) -> None:
+    with pytest.raises(ValueError, match="not found"):
+        await _ingest_file(mock_client, file_path="/nonexistent/path/file.pdf")
+
+
+# ── create_page ──────────────────────────────────────────────────────────────
+
+@pytest.mark.asyncio
+async def test_create_page_returns_id(mock_client: KosApiClient) -> None:
+    mock_client.create_page.return_value = {
+        "object": {"id": "page-123", "kind": "page", "title": "New Page"},
+        "page": {"id": "page-123"},
+    }
+    result = await _create_page(mock_client, title="New Page")
+    assert result["id"] == "page-123"
+    assert result["kind"] == "page"
+
+
+@pytest.mark.asyncio
+async def test_create_page_rejects_empty_title(mock_client: KosApiClient) -> None:
+    with pytest.raises(ValueError, match="title"):
+        await _create_page(mock_client, title="   ")
+
+
+# ── create_edge ──────────────────────────────────────────────────────────────
+
+@pytest.mark.asyncio
+async def test_create_edge_rejects_invalid_kind(mock_client: KosApiClient) -> None:
+    with pytest.raises(ValueError, match="edge kind"):
+        await _create_edge(mock_client, source_id="a", target_id="b", kind="invalid_kind")
+
+
+@pytest.mark.asyncio
+async def test_create_edge_happy_path(mock_client: KosApiClient) -> None:
+    mock_client.create_edge.return_value = {
+        "id": "edge-1",
+        "source_id": "obj-a",
+        "target_id": "obj-b",
+        "kind": "links_to",
+    }
+    result = await _create_edge(mock_client, source_id="obj-a", target_id="obj-b", kind="links_to")
+    assert result["id"] == "edge-1"
+    assert result["kind"] == "links_to"

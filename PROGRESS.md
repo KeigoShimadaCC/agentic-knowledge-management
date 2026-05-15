@@ -1,6 +1,10 @@
 # KnowledgeOS — Progress Tracker
 
+<<<<<<< HEAD
 > Last updated: 2026-05-15 (Phase 9B career AI generators complete on branch `phase-9b`; PHASE-ENHANCE-03 UX Polish all 6 PRs complete and merged to main; PHASE-ENHANCE-02 testing infra complete; Phase 9A backend complete)
+=======
+> Last updated: 2026-05-15 (Phase 8B workspaces backend complete and validated; PHASE-ENHANCE-03 UX Polish all 6 PRs complete and merged to main; PHASE-ENHANCE-02 testing infra complete; Phase 9A backend complete)
+>>>>>>> origin/main
 
 ---
 
@@ -124,6 +128,24 @@ See [`project-phases/PHASE-8A-WORKSPACE-LITE.md`](project-phases/PHASE-8A-WORKSP
 
 ---
 
+## Phase 8B — Workspaces Backend Foundation ✅ Complete
+
+**Goal:** Persist named multi-pane workspaces with validated layout JSON, user-owned CRUD endpoints, soft delete/restore, and docs. Backend-only; no frontend, MCP, worker, object-kind, or `KosObject` changes.
+
+Working branch: `phase-8b` (worktree: `/Users/keigoshimada/Documents/phase-8b`)
+
+See [`project-phases/PHASE-8B-WORKSPACES-BACKEND.md`](project-phases/PHASE-8B-WORKSPACES-BACKEND.md) for the full contract.
+
+- [x] **Subtask 0** — Audit + Phase 8B plan review + progress tracker start
+- [x] **Subtask 1** — `workspaces` Alembic migration, ORM model, and model export
+- [x] **Subtask 2** — Pydantic workspace schemas with layout validation
+- [x] **Subtask 3** — Workspace service layer with CRUD, soft delete, restore, and last-used tracking
+- [x] **Subtask 4** — Authenticated workspace REST endpoints wired into API router
+- [x] **Subtask 5** — Workspace CRUD, validation, ownership, and restore integration tests
+- [x] **Subtask 6** — API/data model/architecture docs and final validation
+
+---
+
 ## Phase 5 — AI Assistant + Inbox/Triage ✅ Complete
 
 **Goal:** Embed AI directly into the editing and research workflow. Every AI write creates an `agent_runs` row + `object_revisions` row; features degrade gracefully when `OPENAI_API_KEY` is absent.
@@ -222,14 +244,25 @@ See [`project-phases/PHASE-ENHANCE-03-UX-POLISH.md`](project-phases/PHASE-ENHANC
 
 ---
 
-## Phase 7B — MCP Write Tools ⬜ Planned
+## Phase 7B — MCP Write Tools ✅ Complete
 
-**Goal:** Add create/update/archive write tools to MCP. Phase 5 `object_revisions` now ships, so this phase is unblocked and planned in [`project-phases/PHASE-7B-MCP-WRITE.md`](project-phases/PHASE-7B-MCP-WRITE.md).
+**Goal:** Add 6 audited, rate-limited, reversible write tools to MCP: `create_page`, `update_page`, `create_edge`, `archive_object`, `ingest_url`, `ingest_file`. Every write produces an `agent_runs` row and (for mutations) an `object_revisions` row.
 
-- [ ] **v2 — Create Tools:** `create_page`, `create_edge`, `ingest_url`, `ingest_file`; validates agent identity + writes `agent_runs` and `object_revisions`
-- [ ] **v3 — Update/Archive Tools:** `update_page`, `archive_object`; before/after snapshots logged; rollback supported
-- [ ] **MCP resources:** `knowledgeos://objects/{id}`, `knowledgeos://pages/{id}`, `knowledgeos://sources/{id}`
-- [ ] **Tests + docs**
+See [`project-phases/PHASE-7B-MCP-WRITE.md`](project-phases/PHASE-7B-MCP-WRITE.md) for the full subtask spec.
+
+- [x] **Subtask 0** — Branch + PROGRESS update (this entry)
+- [x] **Subtask 1** — Rate limiter (`core/rate_limit.py`) + Redis test fixture (5 tests)
+- [x] **Subtask 2** — Audit + revision wrapper (`audited_write_service.py`) + `snapshot_object_state()` + `complete()`/`fail()` aliases
+- [x] **Subtask 3** — `POST /objects/{id}/archive` + `POST /objects/{id}/revisions/{rev_id}/restore` endpoints (4 tests)
+- [x] **Subtask 4** — `MCP_ALLOW_WRITE_TOOLS` gating + per-tool registration filter (35 MCP tests)
+- [x] **Subtask 5** — `create_page` MCP tool + client method + API test
+- [x] **Subtask 6** — `create_edge` MCP tool + client method + API test
+- [x] **Subtask 7** — `update_page` MCP tool + optimistic locking (`expected_version` 409) + API tests
+- [x] **Subtask 8** — `archive_object` MCP tool + API test
+- [x] **Subtask 9** — `ingest_url` MCP tool + URL safety validation + API tests
+- [x] **Subtask 10** — `ingest_file` MCP tool + `validate_path_under_library_root()` + MCP tests
+- [x] **Subtask 11** — Docs (`MCP_TOOLS.md`, `SECURITY.md`, `AGENT_GUIDE.md`, `REVISION_HISTORY.md`) + PROGRESS flip
+- [x] **Subtask 12** — End-to-end smoke harness (`scripts/mcp_smoke.py`, 11/11 checks pass)
 
 ---
 
@@ -372,7 +405,7 @@ See [`project-phases/PHASE-ENHANCE-03-UX-POLISH.md`](project-phases/PHASE-ENHANC
 | 6B | Structured Chat Import | ✅ Complete | 9 / 9 subtasks |
 | 7A | MCP Read/Search | ✅ Complete | 10 / 10 subtasks |
 | Hardening | Search Quality + Multilingual | 🚧 Partial | 2 / 7 subtasks |
-| 7B | MCP Write Tools | ⬜ Planned | 0 / 4 subtasks |
+| 7B | MCP Write Tools | ✅ Complete | 13 / 13 subtasks |
 | 8 | Multi-Pane Workspaces | ⬜ Planned | 0 / 8 subtasks |
 | 9 | Career & Project Memory | 🚧 In progress (9A backend shipped) | 1 / 8 (9A scope) |
 | Enhance-03 | UX/UI Polish | 🚧 In Progress | 1 / 6 PRs (UX-T1 shipped) |

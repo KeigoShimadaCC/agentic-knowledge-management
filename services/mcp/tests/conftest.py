@@ -26,4 +26,12 @@ def mock_client() -> KosApiClient:
     client.get_page = AsyncMock()
     client.get_source = AsyncMock()
     client.get_related_objects = AsyncMock()
+    client.answer_from_kb = AsyncMock()
+    # Write methods
+    client.create_page = AsyncMock()
+    client.update_page = AsyncMock()
+    client.create_edge = AsyncMock()
+    client.archive_object = AsyncMock()
+    client.ingest_url = AsyncMock()
+    client.ingest_file = AsyncMock()
     return client
