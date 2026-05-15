@@ -384,4 +384,4 @@ Indexes exist on `user_id`, active user workspaces (`user_id WHERE deleted_at IS
 }
 ```
 
-The API validates `version: 1`, 1-4 panes, unique pane ids, active pane membership, size totals near 100, and pane kinds limited to `page`, `source`, `asset`, `chat`, or `project`. `object_id` is UUID-validated but deliberately has no database FK, so a workspace can survive deleted or missing referenced objects and let the UI render an unavailable placeholder.
+The API validates `version: 1`, 1-4 panes, unique pane ids, active pane membership, size totals near 100, and pane kinds limited to `page`, `source`, `asset`, `chat`, or `project`. Multi-pane layouts require `split` and each pane size must be between 5 and 95; single-pane layouts may omit `split` and use `size_pct: 100`. `object_id` is UUID-validated but deliberately has no database FK, so a workspace can survive deleted or missing referenced objects and let the UI render an unavailable placeholder.

@@ -1117,7 +1117,7 @@ Workspaces are user-owned saved UI layouts for the future multi-pane research en
 }
 ```
 
-Validation requires `version: 1`, 1-4 panes, unique pane ids, an `active_pane_id` that matches a pane, pane sizes between 5 and 95, total size near 100, and object kinds limited to `page`, `source`, `asset`, `chat`, or `project`. `object_id` is syntax-checked as a UUID but is not FK-validated, so stale references can still be loaded and handled by the UI.
+Validation requires `version: 1`, 1-4 panes, unique pane ids, an `active_pane_id` that matches a pane, total size near 100, and object kinds limited to `page`, `source`, `asset`, `chat`, or `project`. Multi-pane layouts require `split` and each pane size must be between 5 and 95; single-pane layouts may omit `split` and use `size_pct: 100`. `object_id` is syntax-checked as a UUID but is not FK-validated, so stale references can still be loaded and handled by the UI.
 
 ### POST /api/v1/workspaces
 

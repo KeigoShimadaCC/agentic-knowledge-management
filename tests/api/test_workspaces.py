@@ -22,6 +22,16 @@ def _layout(*, first_id: str = "pane-1", second_id: str = "pane-2") -> dict:
     }
 
 
+def _single_pane_layout() -> dict:
+    return {
+        "version": 1,
+        "panes": [
+            {"id": "pane-1", "size_pct": 100, "mode": "read"},
+        ],
+        "active_pane_id": "pane-1",
+    }
+
+
 async def _create_workspace(
     client: AsyncClient, *, name: str = "Research", layout: dict | None = None
 ) -> dict:
@@ -45,6 +55,18 @@ async def test_create_workspace_happy_path(auth_client: AsyncClient):
     assert data["layout"]["active_pane_id"] == "pane-1"
     assert data["is_pinned"] is False
     assert data["deleted_at"] is None
+
+
+@pytest.mark.asyncio
+async def test_create_workspace_accepts_single_pane_layout(auth_client: AsyncClient):
+    resp = await auth_client.post(
+        "/api/v1/workspaces",
+        json={"name": "Single", "layout": _single_pane_layout()},
+    )
+    assert resp.status_code == 201
+    data = resp.json()
+    assert data["layout"]["split"] is None
+    assert data["layout"]["panes"][0]["size_pct"] == 100
 
 
 @pytest.mark.asyncio
@@ -74,6 +96,30 @@ async def test_create_workspace_rejects_five_panes(auth_client: AsyncClient):
         "panes": [{"id": f"pane-{i}", "size_pct": 20} for i in range(5)],
         "active_pane_id": "pane-0",
     }
+
+    resp = await auth_client.post("/api/v1/workspaces", json={"name": "Bad", "layout": bad})
+    assert resp.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_create_workspace_rejects_zero_panes(auth_client: AsyncClient):
+    bad = {
+        "version": 1,
+        "split": "horizontal",
+        "panes": [],
+        "active_pane_id": "pane-0",
+    }
+
+    resp = await auth_client.post("/api/v1/workspaces", json={"name": "Bad", "layout": bad})
+    assert resp.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_create_workspace_rejects_missing_split_for_multiple_panes(
+    auth_client: AsyncClient,
+):
+    bad = _layout()
+    bad.pop("split")
 
     resp = await auth_client.post("/api/v1/workspaces", json={"name": "Bad", "layout": bad})
     assert resp.status_code == 422
