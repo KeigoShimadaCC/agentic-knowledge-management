@@ -1,11 +1,16 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useCallback } from "react";
 import useSWR from "swr";
-import { getInbox } from "@/lib/api";
+import { getInbox, aiTriage, updateObject } from "@/lib/api";
 import type { ObjectOut, PaginatedResponse } from "@/types";
 import { TriageModal } from "./TriageModal";
+import { toast } from "@/components/ui/Toast";
+import { ListPage } from "@/components/lists/ListPage";
+import { BulkActionBar } from "@/components/lists/BulkActionBar";
+import { useListSelection } from "@/lib/hooks/useListSelection";
+import { cn } from "@/lib/cn";
 
 const PAGE_SIZE = 20;
 
@@ -25,8 +30,10 @@ function kindBadge(kind: string) {
 export function InboxView() {
   const [offset, setOffset] = useState(0);
   const [triageTarget, setTriageTarget] = useState<ObjectOut | null>(null);
+  const [bulkTriaging, setBulkTriaging] = useState(false);
+  const selection = useListSelection();
 
-  const { data, mutate } = useSWR<PaginatedResponse<ObjectOut>>(
+  const { data, mutate, isLoading } = useSWR<PaginatedResponse<ObjectOut>>(
     ["inbox", offset],
     () => getInbox({ limit: PAGE_SIZE, offset }),
     { keepPreviousData: true }
@@ -36,82 +43,136 @@ export function InboxView() {
     void mutate();
   }, [mutate]);
 
-  const items = data?.items ?? [];
+  const items = useMemo(() => data?.items ?? [], [data]);
   const total = data?.total ?? 0;
 
+  async function handleBulkTriage() {
+    setBulkTriaging(true);
+    const ids = Array.from(selection.selected);
+    let succeeded = 0;
+    let failed = 0;
+
+    const chunks: string[][] = [];
+    for (let i = 0; i < ids.length; i += 4) chunks.push(ids.slice(i, i + 4));
+
+    for (const chunk of chunks) {
+      const results = await Promise.allSettled(
+        chunk.map(async (id) => {
+          const suggestion = await aiTriage(id);
+          await updateObject(id, {
+            ...(suggestion.suggested_tags.length > 0 && { tags: suggestion.suggested_tags }),
+            ...(suggestion.suggested_title && { title: suggestion.suggested_title }),
+          });
+        })
+      );
+      for (const r of results) {
+        if (r.status === "fulfilled") succeeded++;
+        else failed++;
+      }
+    }
+
+    await mutate();
+    selection.clear();
+    setBulkTriaging(false);
+
+    if (failed === 0) {
+      toast.success(`${succeeded} item${succeeded !== 1 ? "s" : ""} auto-triaged`);
+    } else {
+      toast.error(`${succeeded} succeeded, ${failed} failed`);
+    }
+  }
+
   return (
-    <div className="mx-auto max-w-3xl px-6 py-8">
-      <div className="mb-6">
-        <h1 className="text-xl font-semibold text-gray-100">Inbox</h1>
-        <p className="mt-1 text-sm text-gray-500">
-          {total > 0
-            ? `${total} item${total !== 1 ? "s" : ""} need attention`
-            : "All caught up!"}
-          {total > 0 && " — objects without tags or description from the last 30 days"}
-        </p>
-      </div>
-
-      {items.length === 0 && data && (
-        <div className="rounded-lg border border-gray-800 bg-gray-900 px-6 py-12 text-center">
-          <p className="text-gray-500">No unorganized items. Great job!</p>
-        </div>
-      )}
-
-      <div className="space-y-3">
-        {items.map((obj) => (
-          <div
-            key={obj.id}
-            className="flex items-start justify-between gap-4 rounded-lg border border-gray-800 bg-gray-900 px-4 py-3"
-          >
-            <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-2">
-                <span
-                  className={`rounded px-1.5 py-0.5 text-xs ${kindBadge(obj.kind)}`}
-                >
-                  {obj.kind}
-                </span>
-                <span className="truncate text-sm font-medium text-gray-100">
-                  {obj.title}
-                </span>
-              </div>
-              <p className="mt-0.5 text-xs text-gray-600">
-                {new Date(obj.created_at).toLocaleDateString()}
-              </p>
+    <>
+      <ListPage
+        title="Inbox"
+        description={
+          total > 0
+            ? `${total} item${total !== 1 ? "s" : ""} need attention — objects without tags or description from the last 30 days`
+            : undefined
+        }
+        loading={isLoading}
+        empty={items.length === 0 && !!data}
+        emptyTitle="All caught up!"
+        emptyDescription="No unorganized items."
+        skeletonRows={5}
+      >
+        <div className="space-y-3">
+          {items.map((obj) => (
+            <div
+              key={obj.id}
+              className={cn(
+                "flex items-start justify-between gap-4 rounded-lg border bg-gray-900 px-4 py-3 transition-colors",
+                selection.has(obj.id) ? "border-brand/50 bg-brand/5" : "border-gray-800"
+              )}
+            >
+              <label className="flex min-w-0 flex-1 cursor-pointer items-start gap-3">
+                <input
+                  type="checkbox"
+                  className="mt-0.5 rounded border-gray-600 bg-gray-800 accent-indigo-500"
+                  checked={selection.has(obj.id)}
+                  onChange={() => selection.toggle(obj.id)}
+                  aria-label={`Select ${obj.title ?? obj.id}`}
+                />
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <span className={`rounded px-1.5 py-0.5 text-xs ${kindBadge(obj.kind)}`}>
+                      {obj.kind}
+                    </span>
+                    <span className="truncate text-sm font-medium text-gray-100">{obj.title}</span>
+                  </div>
+                  <p className="mt-0.5 text-xs text-gray-600">
+                    {new Date(obj.created_at).toLocaleDateString()}
+                  </p>
+                </div>
+              </label>
+              <button
+                type="button"
+                onClick={() => setTriageTarget(obj)}
+                className="shrink-0 rounded bg-blue-900 px-2.5 py-1 text-xs text-blue-200 hover:bg-blue-800"
+              >
+                Triage with AI
+              </button>
             </div>
+          ))}
+        </div>
+
+        {total > PAGE_SIZE && (
+          <div className="mt-6 flex items-center justify-center gap-4">
             <button
               type="button"
-              onClick={() => setTriageTarget(obj)}
-              className="shrink-0 rounded bg-blue-900 px-2.5 py-1 text-xs text-blue-200 hover:bg-blue-800"
+              disabled={offset === 0}
+              onClick={() => setOffset(Math.max(0, offset - PAGE_SIZE))}
+              className="rounded bg-gray-800 px-3 py-1.5 text-sm text-gray-300 hover:bg-gray-700 disabled:opacity-40"
             >
-              Triage with AI
+              Previous
+            </button>
+            <span className="text-sm text-gray-500">
+              {offset + 1}–{Math.min(offset + PAGE_SIZE, total)} of {total}
+            </span>
+            <button
+              type="button"
+              disabled={offset + PAGE_SIZE >= total}
+              onClick={() => setOffset(offset + PAGE_SIZE)}
+              className="rounded bg-gray-800 px-3 py-1.5 text-sm text-gray-300 hover:bg-gray-700 disabled:opacity-40"
+            >
+              Next
             </button>
           </div>
-        ))}
-      </div>
+        )}
+      </ListPage>
 
-      {total > PAGE_SIZE && (
-        <div className="mt-6 flex items-center justify-center gap-4">
-          <button
-            type="button"
-            disabled={offset === 0}
-            onClick={() => setOffset(Math.max(0, offset - PAGE_SIZE))}
-            className="rounded bg-gray-800 px-3 py-1.5 text-sm text-gray-300 hover:bg-gray-700 disabled:opacity-40"
-          >
-            Previous
-          </button>
-          <span className="text-sm text-gray-500">
-            {offset + 1}–{Math.min(offset + PAGE_SIZE, total)} of {total}
-          </span>
-          <button
-            type="button"
-            disabled={offset + PAGE_SIZE >= total}
-            onClick={() => setOffset(offset + PAGE_SIZE)}
-            className="rounded bg-gray-800 px-3 py-1.5 text-sm text-gray-300 hover:bg-gray-700 disabled:opacity-40"
-          >
-            Next
-          </button>
-        </div>
-      )}
+      <BulkActionBar
+        count={selection.size}
+        onClear={selection.clear}
+        actions={[
+          {
+            label: "Auto-triage selected",
+            onClick: () => void handleBulkTriage(),
+            loading: bulkTriaging,
+          },
+        ]}
+      />
 
       {triageTarget && (
         <TriageModal
@@ -120,6 +181,6 @@ export function InboxView() {
           onApplied={handleApplied}
         />
       )}
-    </div>
+    </>
   );
 }

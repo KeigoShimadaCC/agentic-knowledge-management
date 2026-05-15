@@ -40,7 +40,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     <div className="flex h-screen overflow-hidden bg-gray-950">
       <Sidebar />
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
-        <MobileNav onOpen={toggle} />
+        <header role="banner">
+          <MobileNav onOpen={toggle} />
+        </header>
         <main id="main-content" className="min-w-0 flex-1 overflow-y-auto">{children}</main>
       </div>
       <WorkspaceSidePane />

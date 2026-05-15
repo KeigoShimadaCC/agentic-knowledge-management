@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Placeholder from "@tiptap/extension-placeholder";
@@ -18,6 +18,7 @@ import { createEdge } from "@/lib/api";
 import { PageTitle } from "./PageTitle";
 import { useAutoSave } from "@/lib/hooks/useAutoSave";
 import { SaveStatusChip } from "@/components/ui/SaveStatusChip";
+import { toast } from "@/components/ui/Toast";
 import { EditorBubbleMenu } from "@/components/editor/BubbleMenu";
 import { SlashMenu } from "@/components/editor/SlashMenu";
 import { SlashMenuExtension } from "@/components/editor/extensions/SlashMenuExtension";
@@ -96,6 +97,14 @@ export function PageView({ pageId, initialTitle, initialContent }: PageViewProps
   }, [pageId]);
 
   const { status } = useAutoSave(pageId, saveData, 800, createCitationEdges);
+
+  const prevStatusRef = useRef(status);
+  useEffect(() => {
+    if (status === "error" && prevStatusRef.current !== "error") {
+      toast.error("Auto-save failed");
+    }
+    prevStatusRef.current = status;
+  }, [status]);
 
   const editor = useEditor({
     extensions: [
