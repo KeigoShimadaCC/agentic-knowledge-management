@@ -1,6 +1,6 @@
 # KnowledgeOS — Progress Tracker
 
-> Last updated: 2026-05-15 (PHASE-ENHANCE-03 UX Polish all 6 PRs complete and merged to main; PHASE-ENHANCE-02 testing infra complete; Phase 9A backend complete)
+> Last updated: 2026-05-15 (Phase 8B workspaces backend complete and validated; PHASE-ENHANCE-03 UX Polish all 6 PRs complete and merged to main; PHASE-ENHANCE-02 testing infra complete; Phase 9A backend complete)
 
 ---
 
@@ -124,7 +124,7 @@ See [`project-phases/PHASE-8A-WORKSPACE-LITE.md`](project-phases/PHASE-8A-WORKSP
 
 ---
 
-## Phase 8B — Workspaces Backend Foundation 🚧 In Progress
+## Phase 8B — Workspaces Backend Foundation ✅ Complete
 
 **Goal:** Persist named multi-pane workspaces with validated layout JSON, user-owned CRUD endpoints, soft delete/restore, and docs. Backend-only; no frontend, MCP, worker, object-kind, or `KosObject` changes.
 
@@ -138,7 +138,7 @@ See [`project-phases/PHASE-8B-WORKSPACES-BACKEND.md`](project-phases/PHASE-8B-WO
 - [x] **Subtask 3** — Workspace service layer with CRUD, soft delete, restore, and last-used tracking
 - [x] **Subtask 4** — Authenticated workspace REST endpoints wired into API router
 - [x] **Subtask 5** — Workspace CRUD, validation, ownership, and restore integration tests
-- [ ] **Subtask 6** — API/data model/architecture docs and final validation
+- [x] **Subtask 6** — API/data model/architecture docs and final validation
 
 ---
 

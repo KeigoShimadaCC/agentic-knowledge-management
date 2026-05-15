@@ -336,3 +336,52 @@ objectTypeRegistry = {
 ```
 
 This registry is not yet implemented. When adding new object types, design search and display behavior with this contract in mind.
+
+## Phase 8B: Workspaces
+
+Workspaces persist named multi-pane UI layouts. They are personal application state, not knowledge objects, so they do not create rows in `objects`, do not extend `VALID_OBJECT_KINDS`, and are not indexed for search or graph traversal.
+
+### `workspaces`
+
+| Field | Type | Constraints / Notes |
+| --- | --- | --- |
+| `id` | UUID | Primary key, default `gen_random_uuid()` |
+| `user_id` | UUID | Required FK to `users.id` (`ON DELETE CASCADE`) |
+| `name` | varchar(255) | Required display name |
+| `description` | text | Optional |
+| `layout_json` | JSONB | Required validated layout payload, default `{}` |
+| `is_pinned` | boolean | Required, default `false` |
+| `last_used_at` | timestamptz | Updated when `GET /api/v1/workspaces/{id}` loads the workspace |
+| `created_at` | timestamptz | Required |
+| `updated_at` | timestamptz | Required |
+| `deleted_at` | timestamptz | Soft-delete marker |
+
+Indexes exist on `user_id`, active user workspaces (`user_id WHERE deleted_at IS NULL`), and `last_used_at DESC NULLS LAST`.
+
+### `layout_json`
+
+```json
+{
+  "version": 1,
+  "split": "horizontal",
+  "panes": [
+    {
+      "id": "pane-1",
+      "object_id": null,
+      "object_kind": null,
+      "size_pct": 50,
+      "mode": "read"
+    },
+    {
+      "id": "pane-2",
+      "object_id": "00000000-0000-0000-0000-000000000000",
+      "object_kind": "source",
+      "size_pct": 50,
+      "mode": "read"
+    }
+  ],
+  "active_pane_id": "pane-1"
+}
+```
+
+The API validates `version: 1`, 1-4 panes, unique pane ids, active pane membership, size totals near 100, and pane kinds limited to `page`, `source`, `asset`, `chat`, or `project`. `object_id` is UUID-validated but deliberately has no database FK, so a workspace can survive deleted or missing referenced objects and let the UI render an unavailable placeholder.

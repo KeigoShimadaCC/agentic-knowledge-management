@@ -17,7 +17,7 @@ FastAPI api (host :8001 -> container :8000)
   |\
   | \-- Postgres (host :5433 -> container :5432)
   |                        users, sessions, objects, pages, assets, edges,
-  |                        chunks, ingestion_jobs, agent_runs
+  |                        chunks, ingestion_jobs, agent_runs, workspaces
   |
   |---- Redis (:6379)     RQ queue and job coordination
   |
@@ -44,7 +44,7 @@ Qdrant (host/container :6333)  vector search index
 | --- | ---: | ---: | --- |
 | `web` | `3000` | `3000` | Next.js 14 App Router frontend. Provides the editor and object browsing UI. |
 | `api` | `8001` | `8000` | FastAPI application. Owns authentication, object CRUD, page content, asset upload/download, ingestion endpoints, AI routes, and internal MCP auth. |
-| `postgres` | `5433` | `5432` | Primary durable database. Stores users, sessions, universal object records, specialization tables, edges, chunks, jobs, revisions, and agent audit records. |
+| `postgres` | `5433` | `5432` | Primary durable database. Stores users, sessions, universal object records, specialization tables, workspaces, edges, chunks, jobs, revisions, and agent audit records. |
 | `redis` | `6379` | `6379` | Queue backend for RQ. Used by the API to enqueue jobs and by the worker to claim work. |
 | `qdrant` | `6333` / `6334` | `6333` / `6334` | Rebuildable vector database for semantic search. |
 
@@ -58,7 +58,7 @@ The API is the system boundary for all application state changes. It validates r
 
 The worker (`services/worker/kos_worker/`) runs as a separate process via `rq worker kos-ingest`. It is responsible for slow ingestion tasks: extracting text from PDFs, generating thumbnails, reading CSV previews, fetching YouTube transcripts, scraping web articles, and updating source status after asynchronous work completes.
 
-Postgres is the source of truth for identity, object metadata, page documents, asset records, graph edges, chat imports, revisions, ingestion status, and agent run records. The filesystem is the source of truth for large original files and later extracted derivatives. Redis is transient coordination state and should not be treated as durable storage.
+Postgres is the source of truth for identity, object metadata, page documents, asset records, workspace layouts, graph edges, chat imports, revisions, ingestion status, and agent run records. The filesystem is the source of truth for large original files and later extracted derivatives. Redis is transient coordination state and should not be treated as durable storage.
 
 ## Backup and Restore Boundary
 
