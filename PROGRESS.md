@@ -274,6 +274,11 @@ See [`project-phases/PHASE-7A-MCP.md`](project-phases/PHASE-7A-MCP.md) for the f
 
 **Current repo state notes (2026-05-15 audit):**
 
+*Phase Enhance 02 testing infrastructure started on branch `phase-enhance-02-t1-vitest`:*
+- T1 checkpoint 1 complete: added Vitest 4 + jsdom + React Testing Library + MSW scaffold for `apps/web`, root `test:web`, web `test`, `test:run`, and `test:coverage` scripts, and HTML coverage output under `apps/web/coverage/`.
+- Added 17 frontend unit/hook tests across `apiFetch` and API helper routing, `objectRoute`, `useAuth`, `useSearch`, and `useAutoSave`.
+- Verification: `pnpm -F @kos/web test:run` passed with 5 files / 17 tests in ~1.5s; `pnpm -F @kos/web test:coverage` passed with 84.53% line coverage over the configured T1 targets; `pnpm -F @kos/web typecheck` and `pnpm -F @kos/web lint` passed.
+
 *Phase Fix 02 cleanup completed on branch `phase-fix-02-forgotten-undocumented`:*
 - Completed F8-F10: `infra/.env.example` has one `MCP_INTERNAL_TOKEN`, host-side MCP defaults point to `http://127.0.0.1:8001`, local published ports are documented, and host-side Postgres examples/tests use `127.0.0.1:5433`.
 - Completed F11: `scripts/backup.sh` ships a local Postgres dump, library tarball, and best-effort Qdrant snapshot flow; verified against running Compose services with output under `~/KnowledgeOS/backups/20260515-021801/`.
