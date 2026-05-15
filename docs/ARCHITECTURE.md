@@ -1,6 +1,6 @@
 # KnowledgeOS Architecture
 
-KnowledgeOS is a local-first personal AI knowledge base designed to run on a Mac with Docker Compose. The current shipped stack includes the browser UI, authenticated FastAPI API, Postgres source of truth, Redis-backed background jobs, content-addressed local files, search, graph traversal, AI assistant routes, chat import, read-only MCP, and Workspace Lite.
+KnowledgeOS is a local-first personal AI knowledge base designed to run on a Mac with Docker Compose. The current shipped stack includes the browser UI, authenticated FastAPI API, Postgres source of truth, Redis-backed background workers, content-addressed local files, search (keyword + vector + hybrid), graph traversal, AI assistant routes, chat import with structured summaries, full MCP read/write tools, multi-pane workspaces, and career/project memory (Phase 9).
 
 ## System Diagram
 
@@ -16,8 +16,10 @@ Next.js web (:3000)
 FastAPI api (host :8001 -> container :8000)
   |\
   | \-- Postgres (host :5433 -> container :5432)
-  |                        users, sessions, objects, pages, assets, edges,
-  |                        chunks, ingestion_jobs, agent_runs, workspaces
+  |                        users, sessions, objects, pages, assets, sources,
+  |                        edges, chunks, ingestion_jobs, agent_runs,
+  |                        object_revisions, chats, projects, workspaces,
+  |                        resume_bullet_sets, interview_story_records
   |
   |---- Redis (:6379)     RQ queue and job coordination
   |
@@ -43,10 +45,11 @@ Qdrant (host/container :6333)  vector search index
 | Service | Host port | Container port | Purpose |
 | --- | ---: | ---: | --- |
 | `web` | `3000` | `3000` | Next.js 14 App Router frontend. Provides the editor and object browsing UI. |
-| `api` | `8001` | `8000` | FastAPI application. Owns authentication, object CRUD, page content, asset upload/download, ingestion endpoints, AI routes, and internal MCP auth. |
-| `postgres` | `5433` | `5432` | Primary durable database. Stores users, sessions, universal object records, specialization tables, workspaces, edges, chunks, jobs, revisions, and agent audit records. |
-| `redis` | `6379` | `6379` | Queue backend for RQ. Used by the API to enqueue jobs and by the worker to claim work. |
-| `qdrant` | `6333` / `6334` | `6333` / `6334` | Rebuildable vector database for semantic search. |
+| `api` | `8001` | `8000` | FastAPI application. Owns authentication, object CRUD, page content, asset upload/download, source ingestion, AI routes, career module, and internal MCP auth. |
+| `worker` | — | — | RQ worker process (`rq worker kos-ingest`). Runs ingestion extractors (PDF, web, YouTube, image, CSV, video, audio, file) and the reindex pipeline (chunk → embed → upsert to Qdrant). |
+| `postgres` | `5433` | `5432` | Primary durable database. Stores all object metadata, specialization tables (pages, assets, sources, chats, projects, career artifacts), workspaces, edges, chunks, ingestion jobs, object revisions, and agent audit records. |
+| `redis` | `6379` | `6379` | Queue backend for RQ. Used by the API to enqueue jobs and by the worker to claim work. Also backs the MCP rate limiter. |
+| `qdrant` | `6333` / `6334` | `6333` / `6334` | Rebuildable vector database for semantic search (collection `knowledgeos_chunks`, COSINE distance, 1536 dimensions). |
 
 All published ports bind to `127.0.0.1`. Use container hostnames such as `api:8000` or `postgres:5432` only from inside the Docker network; host-side tools should use `127.0.0.1:8001` for the API and `127.0.0.1:5433` for Postgres.
 
@@ -146,16 +149,20 @@ Source types: PDFs, images, videos, YouTube URLs, web articles, and CSV files. C
 
 **Local LLM support** (e.g., Ollama) is a future option behind the `EmbeddingProvider` abstraction. No current code assumes OpenAI as the only option.
 
-## Phase 3+ Direction
+## Shipped Features (Phase 3–9)
 
-| Area | Planned Role |
-| --- | --- |
-| Vector search | Qdrant for chunk embeddings; gracefully disabled when no API key |
-| Graph Lite | Typed edge UI, backlinks, related objects from Postgres; Kùzu added later |
-| AI workflows | Summarization, Q&A, extraction — all behind provider abstraction, all opt-in |
-| Inbox/Triage | AI-classified staging area for unprocessed items |
-| Chat Import | ChatGPT/Claude export → searchable chat history + linked knowledge objects |
-| MCP | Staged rollout: read/search tools first, then create, then update/archive |
+| Area | Status | What was built |
+| --- | --- | --- |
+| Vector search | ✅ Shipped | Qdrant chunks collection; `text-embedding-3-small`; graceful 503 when `OPENAI_API_KEY` absent |
+| Graph Lite | ✅ Shipped | Typed edges in Postgres; backlinks, related objects, depth-2 traversal; graph panel UI |
+| AI workflows | ✅ Shipped | Summarize, extract-claims/tasks, suggest-links, Q&A, triage, inbox; all behind `OPENAI_API_KEY` guard |
+| Inbox/Triage | ✅ Shipped | AI-classified staging area with triage UI |
+| Chat Import | ✅ Shipped | Phase 6A: ChatGPT/Claude/Markdown → searchable chat objects; Phase 6B: structured summary preview/apply |
+| MCP (read) | ✅ Shipped | 7 stdio read/search tools with internal token auth |
+| MCP (write) | ✅ Shipped | 6 core write tools + 8 career write tools; rate-limited, audited |
+| Multi-pane Workspaces | ✅ Shipped | Phase 8B: named workspace API; Phase 8C: resizable panes, save/restore, drag-to-quote, workspace-scoped AI |
+| Career Module | ✅ Shipped | Phase 9: projects table, resume bullet sets, STAR interview stories, evidence linking, MCP tools |
+| Kùzu graph index | 🔮 Future | Postgres edge traversal is sufficient for depth 1–2; Kùzu to be added only if Postgres becomes insufficient |
 
 ## Phase 6A: Chat Import Lite
 
