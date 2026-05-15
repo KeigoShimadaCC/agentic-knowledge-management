@@ -329,6 +329,20 @@ POST /api/v1/objects/{id}/restore
 
 Do not remove rows from Postgres. Do not remove files from `~/KnowledgeOS/library` unless a future API endpoint explicitly supports permanent deletion.
 
+## Career Module
+
+Career memory is project-centered. Agents should work through the API and leave generated artifacts previewable and auditable.
+
+End-to-end flow:
+
+1. Search for source material with `POST /api/v1/search/hybrid` or `GET /api/v1/search/keyword` using terms from the user's project, role, or employer.
+2. Extract a project record from a page, source, or chat with `POST /api/v1/ai/extract-project` and `create: true`.
+3. Generate resume bullets with `POST /api/v1/ai/generate-resume-bullets`; this returns a preview only and does not write artifacts.
+4. Let the frontend save approved bullets with `POST /api/v1/projects/{project_id}/resume-bullet-sets`.
+5. Generate interview prep with `POST /api/v1/ai/generate-interview-story`; save approved STAR stories with `POST /api/v1/projects/{project_id}/interview-stories`.
+
+Evidence should be linked with `belongs_to_project` edges from pages, sources, chats, or claims to the project. Saved bullets and stories are first-class objects and cite their evidence with `cites` edges.
+
 ## Workspace Lite State
 
 `WorkspaceLiteProvider` manages which object is shown in the side pane. This state is local React UI state — it is **not** persisted to Postgres, Redis, or any API. Do not:

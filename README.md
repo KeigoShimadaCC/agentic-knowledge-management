@@ -335,6 +335,10 @@ The complete product is built across 9 phases. Phases 1–6B, Phase 7A, and Phas
 
 ---
 
+## AI Features
+
+- Career memory: project records, AI-generated resume bullets & STAR stories — see [AGENT_GUIDE.md](docs/AGENT_GUIDE.md).
+
 ## Roadmap
 
 | Phase | Goal | Status |

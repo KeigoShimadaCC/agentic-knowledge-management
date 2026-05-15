@@ -277,7 +277,7 @@ See [`project-phases/PHASE-7B-MCP-WRITE.md`](project-phases/PHASE-7B-MCP-WRITE.m
 
 ---
 
-## Phase 9 — Career & Project Memory ⬜ Planned
+## Phase 9 — Career & Project Memory 🚧 (9A+9B+9C done; 9D MCP pending)
 
 **Goal:** Make KnowledgeOS a personal career memory system — structured project records, evidence-linked resume bullets, and STAR interview stories generated from real project data.
 
@@ -289,6 +289,23 @@ See [`project-phases/PHASE-7B-MCP-WRITE.md`](project-phases/PHASE-7B-MCP-WRITE.m
 - [ ] **Subtask 6** — Career memory dashboard: timeline view of projects; filter by skill/role/period; evidence completeness indicator per project
 - [ ] **Subtask 7** — Export: generate Markdown / PDF resume section from selected projects + bullets
 - [ ] **Subtask 8** — Tests + docs: project extraction tests; bullet generation tests with mocked OpenAI; `docs/AGENT_GUIDE.md` updated with career module
+
+---
+
+## Phase 9C — Career Memory Frontend ✅ Complete
+
+**Branch:** `phase-9c-career-frontend` (worktree: `/Users/keigoshimada/Documents/akm-phase-9c`)
+
+- [x] **Backend artifact persistence** — migration `0009`, ORM/schema/service/API for `resume_bullet_set` and `interview_story`; audited save mutations; artifact chunking/reindex integration
+- [x] **Frontend project dashboard** — `/app/projects` list, filters, timeline sort, bulk delete, create form, extraction modal, sidebar nav
+- [x] **Project detail UI** — `/app/projects/[id]`, overview tabs, edit/archive/delete/pin actions, evidence linking, resume bullets, interview stories, Markdown/PDF/copy export
+- [x] **Workspace support** — project object routing and compact side-pane view
+- [x] **Tests** — 14 backend integration tests, 7 new frontend test files, 1 Playwright career spec
+- [x] **Docs** — `docs/API.md`, `docs/AGENT_GUIDE.md`, `README.md`, and this tracker updated
+
+**Verification:** `api/test_career_artifacts.py -v` → 14 passed; `pnpm -F @kos/web test:run` → 20 files / 57 tests passed; `pnpm -F @kos/web typecheck` and `pnpm -F @kos/web lint` clean; `pnpm --dir tests/e2e exec tsc --noEmit` clean. Playwright runtime E2E intentionally skipped because it requires Docker.
+
+**Known repo-state note:** the exact backend gate `cd services/api && uv run ruff check . && uv run ruff format --check .` reports pre-existing format-only drift in `app/api/v1/search.py`, `app/core/rate_limit.py`, `app/services/audited_write_service.py`, and `app/services/page_service.py`. `audited_write_service.py` is hard-fenced for this phase, so 9C did not reformat these unrelated files.
 
 ---
 
@@ -432,11 +449,11 @@ See [`project-phases/PHASE-8C-MULTI-PANE-WORKSPACES.md`](project-phases/PHASE-8C
 | Hardening | Search Quality + Multilingual | ✅ Complete | 6 / 7 subtasks (Subtask 1 pg_trgm deferred) |
 | 7B | MCP Write Tools | ✅ Complete | 13 / 13 subtasks |
 | 8C | Multi-Pane Workspaces | ✅ Complete | 7 / 7 subtasks |
-| 9 | Career & Project Memory | 🚧 In progress (9A+9B backend shipped) | 2 / 8 subtasks |
-| 9C | Career Memory Frontend | 🚧 Phase 9C — In Progress | 0 / 20 subtasks |
+| 9 | Career & Project Memory | 🚧 (9A+9B+9C done; 9D MCP pending) | 7 / 8 subtasks |
+| 9C | Career Memory Frontend | ✅ Complete | 20 / 20 subtasks |
 | Enhance-03 | UX/UI Polish | ✅ Complete | 6 / 6 PRs |
 
-**Total:** 89 / 103 subtasks complete
+**Total:** 109 / 123 subtasks complete
 
 **Key cross-cutting concepts to track:**
 - Inbox/Triage (Phase 5): AI-classified staging area for unprocessed items

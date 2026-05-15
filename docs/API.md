@@ -1162,6 +1162,44 @@ Partial update (`ProjectUpdate`). Omitted fields are unchanged; explicit `null` 
 
 Soft-delete the project (`204`). Subsequent `GET` returns `404` until `POST /api/v1/objects/{id}/restore`.
 
+## Career Artifacts
+
+Career artifacts persist Phase 9B generator previews as first-class objects. Resume bullet sets use `kind="resume_bullet_set"` and rows in `resume_bullet_sets`; interview stories use `kind="interview_story"` and rows in `interview_story_records`. Both link to their project with `belongs_to_project` and to source evidence with `cites` edges. Restore uses the existing `POST /api/v1/objects/{id}/restore`.
+
+These endpoints complement Phase 9A project CRUD (`/api/v1/projects`) and Phase 9B preview-only generators (`/api/v1/ai/generate-resume-bullets`, `/api/v1/ai/generate-interview-story`).
+
+### POST /api/v1/projects/{project_id}/resume-bullet-sets
+
+Persist a generated bullet preview. **Body**: `target_role`, `emphasis`, `count` (1-5), `bullets` (`text`, `evidence_object_ids`, `confidence`, `metrics_cited`), optional `agent_run_id`, optional `prompt_version`. Returns `ResumeBulletSetOut` (`201`). Uses audited write logging.
+
+### GET /api/v1/projects/{project_id}/resume-bullet-sets
+
+List saved bullet sets for a project. **Query**: `limit` (1-200, default 50), `offset` (default 0). Returns `ResumeBulletSetOut[]`, newest first.
+
+### GET /api/v1/resume-bullet-sets/{id}
+
+Fetch one saved bullet set. Returns `404` if missing, deleted, or not owned.
+
+### DELETE /api/v1/resume-bullet-sets/{id}
+
+Soft-delete the artifact object (`204`). Restore through `POST /api/v1/objects/{id}/restore`.
+
+### POST /api/v1/projects/{project_id}/interview-stories
+
+Persist a generated STAR story. **Body**: `question_type` (`behavioral` | `technical` | `leadership`), `target_role`, `max_words` (100-800), `word_count`, `story` (`situation`, `task`, `action`, `result`, `evidence_object_ids`), optional `agent_run_id`, optional `prompt_version`. Returns `InterviewStoryOut` (`201`). Uses audited write logging.
+
+### GET /api/v1/projects/{project_id}/interview-stories
+
+List saved stories for a project. **Query**: optional `question_type`, `limit` (1-200, default 50), `offset` (default 0). Returns `InterviewStoryOut[]`, newest first.
+
+### GET /api/v1/interview-stories/{id}
+
+Fetch one saved story. Returns `404` if missing, deleted, or not owned.
+
+### DELETE /api/v1/interview-stories/{id}
+
+Soft-delete the artifact object (`204`). Restore through `POST /api/v1/objects/{id}/restore`.
+
 ## Workspaces
 
 Workspaces are user-owned saved UI layouts for the future multi-pane research environment. They are stored in their own `workspaces` table, not as `KosObject` rows. All endpoints require an authenticated session and return `404` for missing, deleted, or not-owned workspaces.
