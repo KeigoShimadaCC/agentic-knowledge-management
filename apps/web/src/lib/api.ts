@@ -412,7 +412,13 @@ export async function getInbox(
 
 export async function updateObject(
   id: string,
-  data: { title?: string; description?: string; tags?: string[] }
+  data: {
+    title?: string;
+    description?: string;
+    tags?: string[];
+    is_pinned?: boolean;
+    is_archived?: boolean;
+  }
 ): Promise<ObjectOut> {
   return request<ObjectOut>(`/api/v1/objects/${id}`, {
     method: "PATCH",
@@ -422,6 +428,10 @@ export async function updateObject(
 
 export async function deleteObject(id: string): Promise<ObjectOut> {
   return request<ObjectOut>(`/api/v1/objects/${id}`, { method: "DELETE" });
+}
+
+export async function archiveObject(id: string): Promise<ObjectOut> {
+  return request<ObjectOut>(`/api/v1/objects/${id}/archive`, { method: "POST" });
 }
 
 // ── Workspace API ─────────────────────────────────────────────────────────
