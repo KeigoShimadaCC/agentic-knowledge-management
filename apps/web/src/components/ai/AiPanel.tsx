@@ -17,11 +17,14 @@ import type {
   SuggestLinksResponse,
   SummarizeResponse,
 } from "@/types";
+import { useWorkspaceLite } from "@/components/workspace/WorkspaceLiteProvider";
 
 interface AiPanelProps {
   objectId: string;
   onEdgeCreated?: () => void;
 }
+
+type AiScope = "all" | "pane" | "workspace";
 
 type ActionState<T> =
   | { status: "idle" }
@@ -57,6 +60,16 @@ export function AiPanel({ objectId, onEdgeCreated }: AiPanelProps) {
   const answer = useAiAction<AnswerResponse>();
   const [question, setQuestion] = useState("");
   const [creatingEdge, setCreatingEdge] = useState<string | null>(null);
+  const [aiScope, setAiScope] = useState<AiScope>("all");
+  const { panes } = useWorkspaceLite();
+
+  function getScopeObjectIds(): string[] | undefined {
+    if (aiScope === "all") return undefined;
+    if (aiScope === "pane") return objectId ? [objectId] : undefined;
+    // workspace = all panes with objectId
+    const ids = panes.flatMap((p) => (p.objectId ? [p.objectId] : []));
+    return ids.length > 0 ? ids : undefined;
+  }
 
   async function handleCreateLink(suggestion: LinkSuggestion) {
     setCreatingEdge(suggestion.target_id);
@@ -253,7 +266,20 @@ export function AiPanel({ objectId, onEdgeCreated }: AiPanelProps) {
 
       {/* Ask KB */}
       <section>
-        <span className="text-xs font-medium text-gray-400">Ask KB</span>
+        <div className="flex items-center justify-between">
+          <span className="text-xs font-medium text-gray-400">Ask KB</span>
+          {panes.length > 1 && (
+            <select
+              value={aiScope}
+              onChange={(e) => setAiScope(e.target.value as AiScope)}
+              className="rounded border border-gray-700 bg-gray-900 px-1 py-0.5 text-[10px] text-gray-400 focus:outline-none"
+            >
+              <option value="all">All knowledge</option>
+              <option value="pane">This object</option>
+              <option value="workspace">Open panes</option>
+            </select>
+          )}
+        </div>
         <div className="mt-1 flex gap-1">
           <input
             type="text"
@@ -261,7 +287,7 @@ export function AiPanel({ objectId, onEdgeCreated }: AiPanelProps) {
             onChange={(e) => setQuestion(e.target.value)}
             onKeyDown={(e) => {
               if (e.key === "Enter" && question.trim()) {
-                answer.run(() => aiAnswer(question.trim()));
+                answer.run(() => aiAnswer(question.trim(), undefined, getScopeObjectIds()));
               }
             }}
             placeholder="Ask a question…"
@@ -270,7 +296,7 @@ export function AiPanel({ objectId, onEdgeCreated }: AiPanelProps) {
           <button
             type="button"
             disabled={!question.trim() || answer.state.status === "loading"}
-            onClick={() => answer.run(() => aiAnswer(question.trim()))}
+            onClick={() => answer.run(() => aiAnswer(question.trim(), undefined, getScopeObjectIds()))}
             className="shrink-0 rounded bg-gray-800 px-2 py-1 text-xs text-gray-300 hover:bg-gray-700 disabled:opacity-50"
           >
             Ask

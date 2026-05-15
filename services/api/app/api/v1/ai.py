@@ -78,7 +78,9 @@ async def answer(
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> AnswerResponse:
-    return await ai_service.answer_question(db, user.id, body.q, body.kind, body.limit)
+    return await ai_service.answer_question(
+        db, user.id, body.q, body.kind, body.limit, body.object_ids
+    )
 
 
 @router.post("/triage", response_model=TriageResponse)

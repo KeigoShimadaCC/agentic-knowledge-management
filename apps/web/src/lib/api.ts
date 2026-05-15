@@ -361,10 +361,18 @@ export async function aiSuggestLinks(
   });
 }
 
-export async function aiAnswer(q: string, kind?: string): Promise<AnswerResponse> {
+export async function aiAnswer(
+  q: string,
+  kind?: string,
+  object_ids?: string[]
+): Promise<AnswerResponse> {
   return request<AnswerResponse>("/api/v1/ai/answer", {
     method: "POST",
-    body: JSON.stringify({ q, kind: kind ?? null }),
+    body: JSON.stringify({
+      q,
+      kind: kind ?? null,
+      object_ids: object_ids && object_ids.length > 0 ? object_ids : null,
+    }),
   });
 }
 
