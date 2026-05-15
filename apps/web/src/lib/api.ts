@@ -294,6 +294,9 @@ export const listEdges = (params?: { source_id?: string; target_id?: string; kin
       (params ? "?" + new URLSearchParams(params as Record<string, string>).toString() : "")
   );
 
+export const deleteEdge = (id: string) =>
+  apiFetch<EdgeOut>(`/api/v1/edges/${id}`, { method: "DELETE" });
+
 export async function keywordSearch(
   q: string,
   opts?: { kind?: string; limit?: number; objectIds?: string[] }

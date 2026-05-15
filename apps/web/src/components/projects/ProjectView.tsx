@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Archive, Copy, Download, Edit, FileDown, Trash2 } from "lucide-react";
 
 import { archiveObject, deleteProject, updateObject } from "@/lib/api";
+import { EvidencePanel } from "@/components/projects/EvidencePanel";
 import { ProjectForm } from "@/components/projects/ProjectForm";
 import { toast } from "@/components/ui/Toast";
 import { cn } from "@/lib/cn";
@@ -173,7 +174,7 @@ export function ProjectView({ project: initialProject }: { project: ProjectOut }
 
       <main className="px-8 py-6">
         {activeTab === "overview" && <Overview project={project} />}
-        {activeTab === "evidence" && <PanelPlaceholder title="Evidence" />}
+        {activeTab === "evidence" && <EvidencePanel projectId={project.id} />}
         {activeTab === "bullets" && <PanelPlaceholder title="Resume Bullets" />}
         {activeTab === "stories" && <PanelPlaceholder title="Interview Stories" />}
       </main>
