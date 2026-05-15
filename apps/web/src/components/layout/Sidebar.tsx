@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
   BookOpen,
+  Briefcase,
   FileText,
   Files,
   Image,
@@ -32,6 +33,7 @@ const navItems = [
   { href: "/app/assets", label: "Assets", icon: Image },
   { href: "/app/sources", label: "Sources", icon: BookOpen },
   { href: "/app/chats", label: "Chats", icon: MessageSquareText },
+  { href: "/app/projects", label: "Projects", icon: Briefcase },
   { href: "/app/inbox", label: "Inbox", icon: Inbox },
   { href: "/app/trash", label: "Trash", icon: Trash2 },
 ];
