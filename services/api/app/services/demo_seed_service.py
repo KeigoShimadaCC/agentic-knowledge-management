@@ -23,8 +23,10 @@ from app.services import chat_service, edge_service, object_service, page_servic
 logger = logging.getLogger(__name__)
 
 DEMO_TAG_SEED = "demo_seed_v1"
-# Earlier seeds used demo@knowledgeos.local; pydantic EmailStr rejects ".local".
-# Renamed on startup via migrate_legacy_demo_email.
+# LEGACY: Earlier dev seeds used demo@knowledgeos.local. pydantic EmailStr rejects ".local",
+# so on startup migrate_legacy_demo_email renames any existing row to settings.DEMO_SEED_EMAIL.
+# Safe to remove when all known local databases have been re-seeded (target: after v0.3 release).
+# Last touched 2026-05-15.
 LEGACY_DEMO_EMAIL = "demo@knowledgeos.local"
 DEFAULT_WEB_SOURCE_URL = "https://spec.modelcontextprotocol.io/"
 CHAT_MARKDOWN = (

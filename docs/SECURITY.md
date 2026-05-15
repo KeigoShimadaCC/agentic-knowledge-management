@@ -19,9 +19,18 @@
 - Only `http`/`https` are allowed; URLs with embedded credentials are rejected; hosts must resolve only to **globally routable** addresses (private, loopback, and link-local ranges are blocked). Redirects are followed manually with a small hop limit and response size cap.
 - DNS rebinding between validation and connect is not fully eliminated (acceptable residual risk for local-first; use egress controls if the API is exposed beyond localhost).
 
+## Session model
+
+Sessions are DB-backed opaque tokens — not signed cookies.
+
+- Login creates a `secrets.token_urlsafe(32)` value, stores `sha256(token)` in `sessions.token_hash`, and sets an HTTP-only `kos_session` cookie with the raw token.
+- Each authenticated request looks up the hash in Postgres; if the row is missing or expired the request is rejected.
+- 30-day TTL enforced server-side; logout deletes the row immediately.
+- `SESSION_SECRET` in `infra/.env` is **not currently used** — it is reserved for future CSRF tokens or signed password-reset URLs. It does not affect session cookie integrity. Leaving it unset is safe.
+
 ## Optional secrets
 
-- `SESSION_SECRET` in `infra/.env` is **reserved for future CSRF or signed URLs**. Session cookies use opaque tokens hashed in Postgres (`sessions` table), not this value.
+- `SESSION_SECRET`: reserved for future CSRF or signed URLs; sessions are DB-backed and do not depend on it (see Session model above).
 
 ## API Key Storage
 
