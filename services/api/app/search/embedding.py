@@ -59,6 +59,6 @@ def get_embedding_provider() -> EmbeddingProvider:
     key = settings.openai_api_key
     if not key:
         return DisabledEmbeddingProvider()
-    if key == "test-mock":
+    if key in {"test-mock", "sk-test-placeholder"}:
         return MockEmbeddingProvider()
     return OpenAIEmbeddingProvider()

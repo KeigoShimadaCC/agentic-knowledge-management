@@ -13,9 +13,7 @@ from app.models.user import User
 
 
 async def _get_first_active_user(db: AsyncSession) -> User | None:
-    result = await db.execute(
-        select(User).where(User.deleted_at.is_(None)).limit(1)
-    )
+    result = await db.execute(select(User).where(User.deleted_at.is_(None)).limit(1))
     return result.scalar_one_or_none()
 
 
@@ -28,9 +26,7 @@ async def get_current_user(
     if (
         internal_token
         and settings.mcp_internal_token
-        and secrets.compare_digest(
-            internal_token.encode(), settings.mcp_internal_token.encode()
-        )
+        and secrets.compare_digest(internal_token.encode(), settings.mcp_internal_token.encode())
     ):
         user = await _get_first_active_user(db)
         if user:

@@ -113,17 +113,13 @@ async def summarize_object(
 async def extract_claims(
     db: AsyncSession, user_id: uuid.UUID, object_id: uuid.UUID
 ) -> ExtractResponse:
-    return await _extract(
-        db, user_id, object_id, "claim", "extract_claims", prompts.EXTRACT_CLAIMS
-    )
+    return await _extract(db, user_id, object_id, "claim", "extract_claims", prompts.EXTRACT_CLAIMS)
 
 
 async def extract_tasks(
     db: AsyncSession, user_id: uuid.UUID, object_id: uuid.UUID
 ) -> ExtractResponse:
-    return await _extract(
-        db, user_id, object_id, "task", "extract_tasks", prompts.EXTRACT_TASKS
-    )
+    return await _extract(db, user_id, object_id, "task", "extract_tasks", prompts.EXTRACT_TASKS)
 
 
 async def _extract(
@@ -212,8 +208,7 @@ async def suggest_links(
         linked_ids.add(str(edge.target_id))
 
     candidates = [
-        r for r in kw_results
-        if str(r.id) != str(object_id) and str(r.id) not in linked_ids
+        r for r in kw_results if str(r.id) != str(object_id) and str(r.id) not in linked_ids
     ][:15]
 
     if not candidates:
@@ -232,8 +227,7 @@ async def suggest_links(
         return SuggestLinksResponse(suggestions=[], agent_run_id=noop_run.id)
 
     candidate_text = "\n".join(
-        f"id={r.id} title={r.title} kind={r.kind} snippet={r.snippet or ''}"
-        for r in candidates
+        f"id={r.id} title={r.title} kind={r.kind} snippet={r.snippet or ''}" for r in candidates
     )
     messages = [
         {
@@ -295,9 +289,7 @@ async def answer_question(
         results_kw = await keyword_search(db, user_id, q, kind=kind, limit=limit)
         results = results_kw  # type: ignore[assignment]
 
-    context_parts = [
-        f"[{r.id}] {r.title}\n{r.snippet or ''}" for r in results[:limit]
-    ]
+    context_parts = [f"[{r.id}] {r.title}\n{r.snippet or ''}" for r in results[:limit]]
     context = "\n\n".join(context_parts)
 
     messages = [
@@ -347,9 +339,7 @@ async def triage_object(
     messages = [
         {
             "role": "user",
-            "content": prompts.TRIAGE_OBJECT.format(
-                title=obj.title, content=content[:4000]
-            ),
+            "content": prompts.TRIAGE_OBJECT.format(title=obj.title, content=content[:4000]),
         }
     ]
     raw, run = await call_ai(
