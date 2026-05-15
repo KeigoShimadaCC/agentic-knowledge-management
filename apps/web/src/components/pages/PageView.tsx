@@ -130,7 +130,7 @@ export function PageView({ pageId, initialTitle, initialContent }: PageViewProps
           <PageTitle initialTitle={initialTitle} onTitleChange={handleTitleChange} />
           <EditorContent editor={editor} />
         </div>
-        <div className="w-72 border-l border-gray-800 overflow-y-auto flex-shrink-0">
+        <div className="h-full w-72 flex-shrink-0 overflow-y-auto border-l border-gray-800">
           <GraphPanel objectId={pageId} refreshKey={refreshKey} />
         </div>
       </div>

@@ -259,6 +259,8 @@ export interface EdgeWithObjectsOut {
   weight: number;
   source_id: string;
   target_id: string;
+  source?: { id: string; kind: string; title: string } | null;
+  target?: { id: string; kind: string; title: string } | null;
   source_object: { id: string; kind: string; title: string } | null;
   target_object: { id: string; kind: string; title: string } | null;
   created_at: string;

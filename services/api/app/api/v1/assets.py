@@ -122,7 +122,7 @@ async def upload_asset(
             asset_id=obj.id,
             title=obj.title,
         )
-        src_obj, src = await source_service.create_source(db, user.id, source_data)
+        src_obj, src, job = await source_service.create_source(db, user.id, source_data)
         db.add(
             Edge(
                 user_id=user.id,
@@ -134,6 +134,10 @@ async def upload_asset(
         await db.commit()
         await db.refresh(src_obj)
         await db.refresh(src)
+        try:
+            await source_service.enqueue_source_ingestion(job.id)
+        except Exception:
+            pass
 
         return AssetSourceUploadResponse(
             object=AssetOut.model_validate(asset),

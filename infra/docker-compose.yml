@@ -108,7 +108,7 @@ services:
     restart: unless-stopped
     env_file: .env
     environment:
-      DATABASE_URL: postgresql://${POSTGRES_USER:-kos}:${POSTGRES_PASSWORD:-kospass}@postgres:5432/${POSTGRES_DB:-knowledgeos}
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-kos}:${POSTGRES_PASSWORD:-kospass}@postgres:5432/${POSTGRES_DB:-knowledgeos}
       REDIS_URL: redis://redis:6379/0
       QDRANT_URL: http://qdrant:6333
       LIBRARY_ROOT: /library
@@ -140,7 +140,8 @@ services:
       API_URL: http://api:8000
     volumes:
       - ../apps/web:/app/apps/web
-    command: ["pnpm", "dev"]
+      - /app/apps/web/node_modules
+    command: ["pnpm", "exec", "next", "dev", "--port", "3000", "--hostname", "0.0.0.0"]
     ports:
       - "127.0.0.1:3000:3000"
     depends_on:

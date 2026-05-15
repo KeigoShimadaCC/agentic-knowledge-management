@@ -9,6 +9,7 @@ FROM base AS development
 COPY pyproject.toml uv.lock* ./
 COPY services/api/pyproject.toml ./services/api/
 COPY services/worker/pyproject.toml ./services/worker/
+COPY services/mcp/pyproject.toml ./services/mcp/
 # Sync all workspace deps (worker needs api models via PYTHONPATH)
 RUN uv sync --frozen --no-install-project
 # Source is provided by volume mounts at runtime

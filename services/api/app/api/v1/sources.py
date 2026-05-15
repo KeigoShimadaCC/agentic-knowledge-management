@@ -47,10 +47,14 @@ async def create_source(
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> SourceOut:
-    obj, source = await source_service.create_source(db, user.id, body)
+    obj, source, job = await source_service.create_source(db, user.id, body)
     await db.commit()
     await db.refresh(obj)
     await db.refresh(source)
+    try:
+        await source_service.enqueue_source_ingestion(job.id)
+    except Exception:
+        pass
     return build_source_out(obj, source)
 
 

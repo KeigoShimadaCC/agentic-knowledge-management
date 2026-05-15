@@ -26,9 +26,19 @@ async def ensure_source_dir(source_id: str) -> Path:
     return path
 
 
+async def enqueue_source_ingestion(job_id: uuid.UUID | str) -> None:
+    redis_conn = Redis.from_url(settings.redis_url)
+    queue = Queue(INGEST_QUEUE_NAME, connection=redis_conn)
+    await asyncio.to_thread(
+        queue.enqueue,
+        "kos_worker.tasks.ingest_source",
+        str(job_id),
+    )
+
+
 async def create_source(
     db: AsyncSession, user_id: uuid.UUID, data: SourceCreate
-) -> tuple[KosObject, Source]:
+) -> tuple[KosObject, Source, IngestionJob]:
     obj = KosObject(
         user_id=user_id,
         kind="source",
@@ -59,18 +69,7 @@ async def create_source(
     db.add(job)
     await db.flush()
 
-    try:
-        redis_conn = Redis.from_url(settings.redis_url)
-        queue = Queue(INGEST_QUEUE_NAME, connection=redis_conn)
-        await asyncio.to_thread(
-            queue.enqueue,
-            "kos_worker.tasks.ingest_source",
-            str(job.id),
-        )
-    except Exception:
-        logger.warning("Failed to enqueue source ingestion job", exc_info=True)
-
-    return obj, source
+    return obj, source, job
 
 
 async def get_source_or_404(

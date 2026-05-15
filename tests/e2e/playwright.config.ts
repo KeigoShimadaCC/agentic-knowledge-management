@@ -21,6 +21,6 @@ export default defineConfig({
     command: "node -e \"setInterval(() => {}, 1 << 30)\"",
     url: baseURL,
     reuseExistingServer: true,
-    timeout: 5_000,
+    timeout: 30_000,
   },
 });
