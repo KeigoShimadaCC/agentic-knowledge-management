@@ -9,13 +9,26 @@ import type {
   EdgeCreate,
   EdgeWithObjectsOut,
   EdgeOut,
+  ExtractProjectRequest,
+  ExtractProjectResponse,
   ExtractResponse,
+  GenerateInterviewStoryRequest,
+  GenerateInterviewStoryResponse,
+  GenerateResumeBulletsRequest,
+  GenerateResumeBulletsResponse,
+  InterviewStoryOut,
   ObjectOut,
   PageCreateResponse,
   PageOut,
   PaginatedResponse,
   HybridSearchResponse,
+  ProjectCreate,
+  ProjectOut,
+  ProjectUpdate,
   RelatedObjectOut,
+  ResumeBulletSetOut,
+  SaveInterviewStoryRequest,
+  SaveResumeBulletSetRequest,
   SourceCreate,
   SourceOut,
   SearchResponse,
@@ -459,4 +472,129 @@ export async function restoreWorkspace(id: string): Promise<WorkspaceOut> {
   return request<WorkspaceOut>(`/api/v1/workspaces/${id}/restore`, {
     method: "POST",
   });
+}
+
+// ── Career memory API ───────────────────────────────────────────────────────
+
+export async function listProjects(params?: {
+  limit?: number;
+  offset?: number;
+  status?: string;
+  skill?: string;
+  include_archived?: boolean;
+}): Promise<PaginatedResponse<ProjectOut>> {
+  const qs = new URLSearchParams();
+  if (params?.limit !== undefined) qs.set("limit", String(params.limit));
+  if (params?.offset !== undefined) qs.set("offset", String(params.offset));
+  if (params?.status) qs.set("status", params.status);
+  if (params?.skill) qs.set("skill", params.skill);
+  if (params?.include_archived !== undefined) {
+    qs.set("include_archived", String(params.include_archived));
+  }
+  const query = qs.toString();
+  return request<PaginatedResponse<ProjectOut>>(`/api/v1/projects${query ? `?${query}` : ""}`);
+}
+
+export async function createProject(data: ProjectCreate): Promise<ProjectOut> {
+  return request<ProjectOut>("/api/v1/projects", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
+export async function getProject(id: string): Promise<ProjectOut> {
+  return request<ProjectOut>(`/api/v1/projects/${id}`);
+}
+
+export async function updateProject(id: string, data: ProjectUpdate): Promise<ProjectOut> {
+  return request<ProjectOut>(`/api/v1/projects/${id}`, {
+    method: "PATCH",
+    body: JSON.stringify(data),
+  });
+}
+
+export async function deleteProject(id: string): Promise<void> {
+  await request<void>(`/api/v1/projects/${id}`, { method: "DELETE" });
+}
+
+export async function extractProject(
+  payload: ExtractProjectRequest
+): Promise<ExtractProjectResponse> {
+  return request<ExtractProjectResponse>("/api/v1/ai/extract-project", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function generateResumeBullets(
+  payload: GenerateResumeBulletsRequest
+): Promise<GenerateResumeBulletsResponse> {
+  return request<GenerateResumeBulletsResponse>("/api/v1/ai/generate-resume-bullets", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function generateInterviewStory(
+  payload: GenerateInterviewStoryRequest
+): Promise<GenerateInterviewStoryResponse> {
+  return request<GenerateInterviewStoryResponse>("/api/v1/ai/generate-interview-story", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function listResumeBulletSets(
+  projectId: string,
+  params?: { limit?: number; offset?: number }
+): Promise<ResumeBulletSetOut[]> {
+  const qs = new URLSearchParams();
+  if (params?.limit !== undefined) qs.set("limit", String(params.limit));
+  if (params?.offset !== undefined) qs.set("offset", String(params.offset));
+  const query = qs.toString();
+  return request<ResumeBulletSetOut[]>(
+    `/api/v1/projects/${projectId}/resume-bullet-sets${query ? `?${query}` : ""}`
+  );
+}
+
+export async function saveResumeBulletSet(
+  projectId: string,
+  payload: SaveResumeBulletSetRequest
+): Promise<ResumeBulletSetOut> {
+  return request<ResumeBulletSetOut>(`/api/v1/projects/${projectId}/resume-bullet-sets`, {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function deleteResumeBulletSet(id: string): Promise<void> {
+  await request<void>(`/api/v1/resume-bullet-sets/${id}`, { method: "DELETE" });
+}
+
+export async function listInterviewStories(
+  projectId: string,
+  params?: { question_type?: string; limit?: number; offset?: number }
+): Promise<InterviewStoryOut[]> {
+  const qs = new URLSearchParams();
+  if (params?.question_type) qs.set("question_type", params.question_type);
+  if (params?.limit !== undefined) qs.set("limit", String(params.limit));
+  if (params?.offset !== undefined) qs.set("offset", String(params.offset));
+  const query = qs.toString();
+  return request<InterviewStoryOut[]>(
+    `/api/v1/projects/${projectId}/interview-stories${query ? `?${query}` : ""}`
+  );
+}
+
+export async function saveInterviewStory(
+  projectId: string,
+  payload: SaveInterviewStoryRequest
+): Promise<InterviewStoryOut> {
+  return request<InterviewStoryOut>(`/api/v1/projects/${projectId}/interview-stories`, {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function deleteInterviewStory(id: string): Promise<void> {
+  await request<void>(`/api/v1/interview-stories/${id}`, { method: "DELETE" });
 }

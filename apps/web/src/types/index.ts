@@ -14,7 +14,10 @@ export type ObjectKind =
   | "source"
   | "chat"
   | "claim"
-  | "task";
+  | "task"
+  | "project"
+  | "resume_bullet_set"
+  | "interview_story";
 
 export interface ObjectOut {
   id: string;
@@ -429,4 +432,179 @@ export interface WorkspaceUpdate {
   description?: string | null;
   layout?: WorkspaceLayoutAPI;
   is_pinned?: boolean;
+}
+
+// ── Career memory types ─────────────────────────────────────────────────────
+
+export type ProjectStatus = "active" | "paused" | "completed" | "archived";
+export type ProjectConfidence = "manual" | "ai_extracted" | "verified";
+
+export interface ProjectOut {
+  id: string;
+  user_id: string;
+  kind: "project";
+  title: string;
+  description: string | null;
+  tags: string[];
+  is_pinned: boolean;
+  is_archived: boolean;
+  period_start: string | null;
+  period_end: string | null;
+  role: string | null;
+  organization: string | null;
+  problem: string | null;
+  actions: string | null;
+  results: string | null;
+  metrics: Record<string, string | number | boolean | null>;
+  skills: string[];
+  status: ProjectStatus;
+  confidence: ProjectConfidence;
+  extracted_from: string | null;
+  extracted_by_agent_run_id: string | null;
+  created_at: string;
+  updated_at: string;
+  deleted_at: string | null;
+}
+
+export interface ProjectCreate {
+  title: string;
+  description?: string;
+  tags?: string[];
+  period_start?: string;
+  period_end?: string;
+  role?: string;
+  organization?: string;
+  problem?: string;
+  actions?: string;
+  results?: string;
+  metrics?: Record<string, string | number | boolean | null>;
+  skills?: string[];
+  status?: ProjectStatus;
+  extracted_from?: string;
+  confidence?: ProjectConfidence;
+}
+
+export interface ProjectUpdate extends Partial<ProjectCreate> {}
+
+export interface ResumeBullet {
+  text: string;
+  evidence_object_ids: string[];
+  confidence: "high" | "medium" | "low";
+  metrics_cited: string[];
+}
+
+export interface StarStory {
+  situation: string;
+  task: string;
+  action: string;
+  result: string;
+  evidence_object_ids: string[];
+}
+
+export interface ResumeBulletSetOut {
+  id: string;
+  user_id: string;
+  project_id: string;
+  target_role: string | null;
+  emphasis: string | null;
+  count: number;
+  bullets: ResumeBullet[];
+  agent_run_id: string | null;
+  prompt_version: string | null;
+  created_at: string;
+  updated_at: string;
+  deleted_at: string | null;
+}
+
+export interface InterviewStoryOut {
+  id: string;
+  user_id: string;
+  project_id: string;
+  question_type: "behavioral" | "technical" | "leadership";
+  target_role: string | null;
+  max_words: number;
+  word_count: number;
+  story: StarStory;
+  agent_run_id: string | null;
+  prompt_version: string | null;
+  created_at: string;
+  updated_at: string;
+  deleted_at: string | null;
+}
+
+export interface SaveResumeBulletSetRequest {
+  target_role?: string;
+  emphasis?: string;
+  count: number;
+  bullets: ResumeBullet[];
+  agent_run_id?: string;
+  prompt_version?: string;
+}
+
+export interface SaveInterviewStoryRequest {
+  question_type: "behavioral" | "technical" | "leadership";
+  target_role?: string;
+  max_words: number;
+  word_count: number;
+  story: StarStory;
+  agent_run_id?: string;
+  prompt_version?: string;
+}
+
+export interface GenerateResumeBulletsRequest {
+  project_id: string;
+  target_role?: string;
+  emphasis?: string;
+  count?: number;
+  max_evidence_objects?: number;
+}
+
+export interface GenerateResumeBulletsResponse {
+  project_id: string;
+  bullets: ResumeBullet[];
+  agent_run_id: string;
+  evidence_count: number;
+}
+
+export interface GenerateInterviewStoryRequest {
+  project_id: string;
+  question_type?: "behavioral" | "technical" | "leadership";
+  target_role?: string;
+  max_words?: number;
+  max_evidence_objects?: number;
+}
+
+export interface GenerateInterviewStoryResponse {
+  project_id: string;
+  story: StarStory;
+  agent_run_id: string;
+  word_count: number;
+}
+
+export interface ExtractProjectRequest {
+  source_id: string;
+  create?: boolean;
+  period_hint?: [string | null, string | null];
+}
+
+export interface ExtractedProjectDraft {
+  title: string;
+  description: string | null;
+  period_start: string | null;
+  period_end: string | null;
+  role: string | null;
+  organization: string | null;
+  problem: string | null;
+  actions: string | null;
+  results: string | null;
+  metrics: Record<string, unknown>;
+  skills: string[];
+  confidence: number;
+}
+
+export interface ExtractProjectResponse {
+  draft: ExtractedProjectDraft;
+  project_id: string | null;
+  agent_run_id: string;
+  source_id: string;
 }
