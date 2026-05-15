@@ -49,6 +49,15 @@ async def update_page(
 ) -> Page:
     page = await get_page_or_404(db, page_id, user_id)
 
+    if data.expected_version is not None and page.version != data.expected_version:
+        raise HTTPException(
+            status_code=409,
+            detail=(
+                f"Version conflict: expected {data.expected_version},"
+                f" current is {page.version}."
+            ),
+        )
+
     if data.title is not None:
         obj_result = await db.execute(select(KosObject).where(KosObject.id == page_id))
         obj = obj_result.scalar_one()

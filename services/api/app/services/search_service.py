@@ -149,6 +149,7 @@ async def hybrid_search(
     embeddings_enabled = provider.is_enabled
     kw_results = await keyword_search(db, user_id, q, kind, source_type, limit * 2)
 
+    kw_results = await keyword_search(db, user_id, q, kind, source_type, limit * 2)
     if embeddings_enabled:
         try:
             vec_results = await vector_search(db, user_id, q, kind, source_type, limit * 2)

@@ -90,6 +90,123 @@ class KosApiClient:
         r.raise_for_status()
         return r.json()
 
+    # --- Write methods (Phase 7B) ---
+
+    async def create_page(
+        self,
+        title: str,
+        content_text: str | None = None,
+        tags: list[str] | None = None,
+    ) -> dict:
+        body: dict = {"title": title}
+        if content_text is not None:
+            body["content_text"] = content_text
+        if tags:
+            body["tags"] = tags
+        r = await self._client.post("/api/v1/pages", json=body)
+        r.raise_for_status()
+        return r.json()
+
+    async def update_page(
+        self,
+        page_id: str,
+        title: str | None = None,
+        content_text: str | None = None,
+        tags: list[str] | None = None,
+        expected_version: int | None = None,
+    ) -> dict:
+        body: dict = {}
+        if title is not None:
+            body["title"] = title
+        if content_text is not None:
+            body["content_text"] = content_text
+        if tags is not None:
+            body["tags"] = tags
+        if expected_version is not None:
+            body["expected_version"] = expected_version
+        r = await self._client.patch(f"/api/v1/pages/{page_id}", json=body)
+        r.raise_for_status()
+        return r.json()
+
+    async def create_edge(
+        self,
+        source_id: str,
+        target_id: str,
+        kind: str,
+        weight: float | None = None,
+        metadata: dict | None = None,
+    ) -> dict:
+        body: dict = {"source_id": source_id, "target_id": target_id, "kind": kind}
+        if weight is not None:
+            body["weight"] = weight
+        if metadata is not None:
+            body["metadata"] = metadata
+        r = await self._client.post("/api/v1/edges", json=body)
+        r.raise_for_status()
+        return r.json()
+
+    async def archive_object(self, object_id: str, reason: str | None = None) -> dict:
+        body: dict = {}
+        if reason is not None:
+            body["reason"] = reason
+        r = await self._client.post(f"/api/v1/objects/{object_id}/archive", json=body)
+        r.raise_for_status()
+        return r.json()
+
+    async def ingest_url(
+        self,
+        url: str,
+        source_type: str | None = None,
+        title: str | None = None,
+        tags: list[str] | None = None,
+    ) -> dict:
+        body: dict = {"url": url}
+        if source_type is not None:
+            body["source_type"] = source_type
+        if title is not None:
+            body["title"] = title
+        if tags:
+            body["tags"] = tags
+        r = await self._client.post("/api/v1/sources", json=body)
+        r.raise_for_status()
+        return r.json()
+
+    async def ingest_file(
+        self,
+        file_path: str,
+        source_type: str | None = None,
+        title: str | None = None,
+        tags: list[str] | None = None,
+    ) -> dict:
+        from pathlib import Path
+
+        path = Path(file_path)
+        with path.open("rb") as fh:
+            content = fh.read()
+
+        # Step 1: upload binary to assets, create a linked source in one shot
+        upload_resp = await self._client.post(
+            "/api/v1/assets/upload",
+            params={"create_source": "true"},
+            files={"file": (path.name, content)},
+        )
+        upload_resp.raise_for_status()
+        upload_data = upload_resp.json()
+
+        # Step 2: if caller supplied title/tags/source_type, patch the source
+        src_id = upload_data.get("source", {}).get("id")
+        if src_id and (title or tags or source_type):
+            patch: dict = {}
+            if title:
+                patch["title"] = title
+            if tags:
+                patch["tags"] = tags
+            patch_resp = await self._client.patch(f"/api/v1/sources/{src_id}", json=patch)
+            if patch_resp.is_success:
+                return patch_resp.json()
+
+        return upload_data.get("source", upload_data)
+
     async def aclose(self) -> None:
         await self._client.aclose()
 

@@ -57,3 +57,21 @@ async def finish_agent_run(
     run.finished_at = datetime.now(UTC)
     await db.flush()
     return run
+
+
+async def complete(
+    db: AsyncSession,
+    run: AgentRun,
+    output: dict[str, Any] | None = None,
+) -> AgentRun:
+    """Mark run as success with optional output payload."""
+    return await finish_agent_run(db, run, status="success", output=output)
+
+
+async def fail(
+    db: AsyncSession,
+    run: AgentRun,
+    error: str,
+) -> AgentRun:
+    """Mark run as failed with error message."""
+    return await finish_agent_run(db, run, status="failed", error=error)

@@ -1,8 +1,6 @@
-# MCP Tools — Phase 7A (Read/Search)
+# MCP Tools — Phases 7A + 7B
 
-KnowledgeOS exposes a local stdio MCP server (`kos-mcp`) that gives AI agents (Claude Desktop, Claude Code, Cursor, Codex) safe read and search access to the knowledge base.
-
-**Phase 7A: read/search tools only.** Write tools are planned for Phase 7B.
+KnowledgeOS exposes a local stdio MCP server (`kos-mcp`) that gives AI agents (Claude Desktop, Claude Code, Cursor, Codex) safe read/search access and optional audited write access to the knowledge base.
 
 ---
 
@@ -12,7 +10,7 @@ KnowledgeOS exposes a local stdio MCP server (`kos-mcp`) that gives AI agents (C
 |---|---|
 | Transport | stdio (subprocess) — no open port |
 | Enabled by default | No (`MCP_ENABLED=false`) |
-| Write tools | None in Phase 7A |
+| Write tools | 6 (gated by `MCP_ALLOW_WRITE_TOOLS=true`) |
 | Shell execution | Never |
 | Filesystem access | Never (outside of LIBRARY_ROOT paths returned in metadata) |
 | Secret fields | Redacted in all tool responses |
@@ -197,21 +195,171 @@ Delegates to `POST /api/v1/ai/answer`. Requires `OPENAI_API_KEY` on the API serv
 
 ---
 
-## Phase 7B — Write Tools (Planned)
+## Phase 7B — Write Tools
 
-Phase 7B is unblocked now that Phase 5 `object_revisions` ships. The implementation plan is [`project-phases/PHASE-7B-MCP-WRITE.md`](../project-phases/PHASE-7B-MCP-WRITE.md).
+Enable by setting `MCP_ALLOW_WRITE_TOOLS=true` in `infra/.env`. All write tools are rate-limited and audited.
 
-| Tool | Endpoint | Phase |
-|---|---|---|
-| `create_page` | `POST /api/v1/pages` | 7B |
-| `update_page` | `PUT /api/v1/pages/{id}` | 7B |
-| `create_edge` | `POST /api/v1/edges` | 7B |
-| `archive_object` | `DELETE /api/v1/objects/{id}` | 7B |
-| `import_chat` | `POST /api/v1/chats/import` | 7B |
-| `ingest_url` | `POST /api/v1/sources` | 7B |
-| `ingest_file` | `POST /api/v1/assets/upload?create_source=true` | 7B |
+| Tool | Endpoint | Rate-limited | Audit row | Revision row |
+|---|---|---|---|---|
+| `create_page` | `POST /api/v1/pages` | Yes | Yes | No |
+| `update_page` | `PATCH /api/v1/pages/{id}` | Yes | Yes | Yes |
+| `create_edge` | `POST /api/v1/edges` | Yes | Yes | No |
+| `archive_object` | `POST /api/v1/objects/{id}/archive` | Yes | Yes | Yes |
+| `ingest_url` | `POST /api/v1/sources` | Yes | Yes | No |
+| `ingest_file` | `POST /api/v1/sources` (file-backed) | Yes | Yes | No |
 
-All Phase 7B write tools will validate agent identity, write `agent_runs` audit rows, and require `object_revisions` history.
+### `create_page`
+
+Create a new page in the knowledge base.
+
+**Input:**
+```json
+{
+  "title": "string (required)",
+  "content_text": "string (optional)",
+  "tags": ["string"] 
+}
+```
+
+**Output:** `{id, kind, title, tags, created_at, updated_at}`
+
+**Errors:** 400 if title is empty.
+
+---
+
+### `update_page`
+
+Update title, content, or tags of an existing page.
+
+**Input:**
+```json
+{
+  "page_id": "uuid",
+  "title": "string (optional)",
+  "content_text": "string (optional)",
+  "tags": ["string"],
+  "expected_version": 3
+}
+```
+
+`expected_version` is optional but strongly recommended — if the page has been modified since you read it, the server returns **409 Conflict**.
+
+**Output:** `{id, version, word_count, updated_at, ...}`
+
+**Errors:** 404 not found; 409 version conflict.
+
+---
+
+### `create_edge`
+
+Link two objects with a typed relationship.
+
+**Input:**
+```json
+{
+  "source_id": "uuid",
+  "target_id": "uuid",
+  "kind": "related_to",
+  "weight": 1.0,
+  "metadata": {}
+}
+```
+
+Valid `kind` values: `links_to`, `cites`, `derives_from`, `mentions`, `supports`, `contradicts`, `related_to`, `summarizes`, `belongs_to_project`, `evidence_for`, `created_from`.
+
+**Output:** `{id, source_id, target_id, kind, weight, created_at}`
+
+**Errors:** 400 if kind is invalid.
+
+---
+
+### `archive_object`
+
+Soft-archive an object (sets `is_archived=true`). Idempotent — calling twice is a no-op.
+
+**Input:**
+```json
+{
+  "object_id": "uuid",
+  "reason": "string (optional)"
+}
+```
+
+**Output:** `{id, title, is_archived: true, ...}`
+
+**Note:** Archived objects are hidden from default searches but not deleted. Use `GET /api/v1/objects?include_archived=true` to find them.
+
+---
+
+### `ingest_url`
+
+Ingest a URL as a new source object (starts background extraction).
+
+**Input:**
+```json
+{
+  "url": "https://example.com/article",
+  "source_type": "web",
+  "title": "string (optional)",
+  "tags": ["string"]
+}
+```
+
+`source_type` must be `"web"` or `"youtube"`.
+
+**URL safety rules (enforced in MCP layer before API call):**
+- Scheme must be `https://` or `http://` (no `file://`, `ftp://`, etc.)
+- Host must not be `localhost`, `127.0.0.1`, `0.0.0.0`, or any loopback/link-local IP
+
+**Output:** `{id, url, ingestion_status: "pending", ...}`
+
+---
+
+### `ingest_file`
+
+Ingest a file from the local library as a new source object.
+
+**Input:**
+```json
+{
+  "file_path": "/Users/you/KnowledgeOS/library/papers/paper.pdf",
+  "source_type": "pdf",
+  "title": "string (optional)",
+  "tags": ["string"]
+}
+```
+
+**Path safety rules (enforced in MCP layer):**
+- Path must resolve under `LIBRARY_ROOT` (symlinks checked for escape)
+- File must exist and be readable
+
+**Output:** `{id, source_type, ingestion_status: "pending", ...}`
+
+---
+
+### Audit trail
+
+Every write tool call creates an `agent_runs` row recording:
+- `agent_type`: the value of `X-KOS-Agent-Id` header (or hash of token)
+- `tool_name`: which write tool was invoked
+- `input_payload`: a summary of the call (secrets and full content stripped)
+- `status`: `success` or `failed`
+- `created_at` / `completed_at`
+
+Mutating tools (`update_page`, `archive_object`) additionally create an `object_revisions` row with `before_snapshot` and `after_snapshot` of the object state, linked to the `agent_runs` row.
+
+---
+
+### Rate limits
+
+Both rate limit windows use a Redis sliding-window counter keyed by `X-KOS-Agent-Id` (or hash of internal token for unidentified callers):
+
+| Bucket | Default | Env var |
+|--------|---------|---------|
+| Per minute | 60 | `MCP_RATE_LIMIT_PER_MINUTE` |
+| Per hour | 600 | `MCP_RATE_LIMIT_PER_HOUR` |
+
+When either limit is exceeded the tool returns an error text and no database writes occur.
 
 ---
 
