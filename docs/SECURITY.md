@@ -34,7 +34,7 @@ Sessions are DB-backed opaque tokens — not signed cookies.
 
 ## API Key Storage
 
-- OpenAI and other keys stored in `infra/.env` (gitignored)
+- `OPENAI_API_KEY` stored in `infra/.env` (gitignored). Used for vector embeddings (`text-embedding-3-small`) and all LLM calls. No Anthropic key is currently in use — Anthropic is a planned future option behind the `EmbeddingProvider`/`call_ai()` abstraction.
 - Never committed to the repository
 - Never exposed through MCP tools or API responses (redacted before any return value)
 
@@ -135,7 +135,7 @@ Additional notes specific to career tools:
 - **No new secrets** — career tools use the same `X-KOS-Internal-Token` auth. No extra credentials are introduced.
 - **AI generation + save atomicity** — `generate_and_save_*` tools call the AI endpoint then save only if generation succeeds. A 503 from the AI endpoint is caught client-side and returned as an error dict; no audit row is written for the failed generation.
 - **Edge idempotency** — `link_to_project` calls `POST /api/v1/edges` which is idempotent on `(source_id, target_id, kind)`. Repeated links to the same project produce one edge row.
-- **Project mutations** — `create_project` and `update_project` call `POST/PATCH /api/v1/projects`. Phase 9A's project service does not yet write `object_revisions` rows (planned follow-up). Revision history for pages and sources is unaffected.
+- **Project mutations** — `create_project` and `update_project` call `POST/PATCH /api/v1/projects`. Project mutations are audited via `agent_runs` rows; `object_revisions` rows are written for mutations on pages and sources but not yet for projects (planned follow-up). Revision history for pages and sources is unaffected.
 
 ## Search Output Encoding (XSS Mitigation)
 

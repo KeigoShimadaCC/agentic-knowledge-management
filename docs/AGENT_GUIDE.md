@@ -61,6 +61,7 @@ See `docs/MCP_TOOLS.md` for full setup instructions. In brief:
 | `get_page` | Page title + plain-text content (≤50k chars) |
 | `get_source` | Source metadata + extracted text |
 | `get_related_objects` | Graph traversal, depth 1–2 |
+| `answer_from_kb` | Semantic Q&A over the knowledge base; returns answer + citations; requires `OPENAI_API_KEY` |
 
 ### Usage patterns
 
@@ -343,15 +344,14 @@ End-to-end flow:
 
 Evidence should be linked with `belongs_to_project` edges from pages, sources, chats, or claims to the project. Saved bullets and stories are first-class objects and cite their evidence with `cites` edges.
 
-## Workspace Lite State
+## Workspaces
 
-`WorkspaceLiteProvider` manages which object is shown in the side pane. This state is local React UI state — it is **not** persisted to Postgres, Redis, or any API. Do not:
+Named multi-pane workspaces are fully built (Phase 8B + 8C). Key facts for agents:
 
-- Add a `workspaces` table or API endpoint in the `phase8a-workspace-lite` branch.
-- Store side-pane state in the URL or localStorage.
-- Attempt to restore the side pane from a previous session.
-
-Workspace persistence belongs to Phase 8 proper. The provider is isolated in `components/workspace/` so its internals can be swapped without breaking consumers.
+- **Named workspaces API**: `GET/POST /api/v1/workspaces`, `GET/PATCH/DELETE /api/v1/workspaces/{id}`. Each workspace stores a `layout_json` blob (pane configuration, split direction, active pane ID).
+- **Active side-pane object** is local React state in `WorkspaceLiteProvider` — it is not persisted separately. Opening a workspace restores all panes from `layout_json`; the focused pane tracks which object is "active" but this resets on navigation.
+- Agents should not write `layout_json` directly; use the workspace API endpoints.
+- Workspace objects are **not** rows in `objects` — they live only in the `workspaces` table and are not searchable or linkable via graph edges.
 
 ---
 

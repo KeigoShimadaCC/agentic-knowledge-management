@@ -42,13 +42,16 @@ The API remains the write boundary for interactive clients. The worker is truste
 
 ## Source Types and Extractors
 
-| Source type | Input | Phase 2 extractor |
+| Source type | Input | Extractor |
 | --- | --- | --- |
 | `pdf` | Uploaded PDF asset | `pypdf` for text and document metadata |
 | `image` | Uploaded image asset | `Pillow` for dimensions, format, EXIF where available, and thumbnails |
 | `csv` | Uploaded CSV asset | Python standard library `csv` module for headers, row counts, and previews |
 | `youtube` | YouTube URL | oEmbed for metadata and `youtube-transcript-api` for captions when available |
 | `web` | HTTP or HTTPS URL | `httpx` fetch plus `BeautifulSoup` parsing for title, metadata, and readable text |
+| `video` | Uploaded video asset | Duration and metadata extraction; thumbnail generation |
+| `audio` | Uploaded audio asset | Duration and audio metadata extraction |
+| `file` | Any uploaded file | Generic handler: copies bytes, records MIME type; no text extraction |
 
 Extractors should be deterministic where possible, store their outputs as files, and write compact metadata to Postgres. Large extracted text should not be embedded directly into arbitrary JSON fields when a derivative file is more appropriate.
 
@@ -132,6 +135,14 @@ PYTHONPATH=services/api:services/worker uv run python scripts/reindex.py \
 ```
 
 Requires `REDIS_URL` and `DATABASE_URL` in the environment (or `infra/.env` sourced). The worker service must be running to process the queued jobs. Check index status via `GET /api/v1/objects/{id}/index-status`.
+
+### Multilingual keyword search — pg_trgm GIN index
+
+Keyword search uses Postgres FTS (`plainto_tsquery`) as the primary path. For languages FTS cannot tokenize (e.g. Japanese), `search_service.py` falls back to `ILIKE` on `objects.title` and `objects.description`.
+
+Migration `0010` enables the `pg_trgm` extension and creates GIN trigram indexes on both columns, making `ILIKE` run in O(log n) rather than a sequential scan. No code change is required — Postgres uses the GIN index automatically when the query planner sees an `ILIKE` on an indexed column.
+
+Large text columns (`pages.content_text`, `sources.extracted_text`) are intentionally **not** indexed with pg_trgm because GIN trigram indexes on multi-kilobyte bodies would be prohibitively large and slow to maintain. FTS covers those columns adequately for the languages it supports.
 
 ## Phase 6A: Chat Import Lite
 

@@ -10,7 +10,7 @@ KnowledgeOS exposes a local stdio MCP server (`kos-mcp`) that gives AI agents (C
 |---|---|
 | Transport | stdio (subprocess) — no open port |
 | Enabled by default | No (`MCP_ENABLED=false`) |
-| Write tools | 6 (gated by `MCP_ALLOW_WRITE_TOOLS=true`) |
+| Write tools | 14 (6 core + 8 career; gated by `MCP_ALLOW_WRITE_TOOLS=true`) |
 | Shell execution | Never |
 | Filesystem access | Never (outside of LIBRARY_ROOT paths returned in metadata) |
 | Secret fields | Redacted in all tool responses |
