@@ -5,6 +5,7 @@ dist/
 .next/
 .turbo/
 tsconfig.tsbuildinfo
+apps/web/coverage/
 
 # Python
 __pycache__/
