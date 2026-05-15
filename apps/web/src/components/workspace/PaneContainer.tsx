@@ -1,9 +1,11 @@
 "use client";
 
+import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, X } from "lucide-react";
+import { Link2, Plus, X } from "lucide-react";
 import { objectRoute, objectKindLabel } from "@/lib/objectRouting";
 import { ObjectPaneViewer } from "./ObjectPaneViewer";
+import { LinkPaneModal } from "./LinkPaneModal";
 import { useWorkspaceLite, type PaneState } from "./WorkspaceLiteProvider";
 
 function KindBadge({ kind }: { kind: string }) {
@@ -29,8 +31,15 @@ export function PaneContainer({ pane, isLast }: PaneContainerProps) {
   const router = useRouter();
   const { removePane, addPane, panes, setActivePaneId } = useWorkspaceLite();
   const canAddPane = panes.length < 4;
+  const [linkModalOpen, setLinkModalOpen] = useState(false);
+
+  const otherPanesWithObjects = panes.filter(
+    (p) => p.id !== pane.id && p.objectId !== null
+  );
+  const canLink = pane.objectId !== null && otherPanesWithObjects.length > 0;
 
   return (
+    <>
     <div
       className="flex h-full flex-col border-l border-gray-800 bg-gray-950"
       onClick={() => setActivePaneId(pane.id)}
@@ -49,6 +58,17 @@ export function PaneContainer({ pane, isLast }: PaneContainerProps) {
             className="shrink-0 rounded p-1 text-gray-500 hover:bg-gray-800 hover:text-gray-200"
           >
             <Plus className="h-3.5 w-3.5" />
+          </button>
+        )}
+        {canLink && (
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); setLinkModalOpen(true); }}
+            title="Link to another pane"
+            aria-label="Link to another pane"
+            className="shrink-0 rounded p-1 text-gray-500 hover:bg-gray-800 hover:text-gray-200"
+          >
+            <Link2 className="h-3.5 w-3.5" />
           </button>
         )}
         {pane.objectId && pane.objectKind && (
@@ -87,5 +107,11 @@ export function PaneContainer({ pane, isLast }: PaneContainerProps) {
         )}
       </div>
     </div>
+    <LinkPaneModal
+      sourcePaneId={pane.id}
+      open={linkModalOpen}
+      onClose={() => setLinkModalOpen(false)}
+    />
+    </>
   );
 }
