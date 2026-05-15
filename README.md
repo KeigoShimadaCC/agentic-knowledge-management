@@ -46,9 +46,12 @@ See [`PROGRESS.md`](PROGRESS.md) for the canonical progress tracker.
 | Phase 9 — Career & Project Memory | ⬜ Planned |
 
 **Test counts (as of 2026-05-15):**
-- API integration tests: 112 across `tests/api/` (auth 10, objects 10, pages 5, assets 3, sources 17, edges 13, search 13, chats 21, ai 14, mcp_auth 5, health 1)
-- Unit tests: 16 in `tests/unit/`
-- MCP package tests: 19 in `services/mcp/tests/`
+- Frontend unit/component tests: 27 in `apps/web/src/**/__tests__/`
+- API integration + backend unit tests: 134 across `tests/api/` and `tests/unit/`
+- Worker extractor tests: 19 in `tests/worker/`
+- MCP package tests: 20 in `services/mcp/tests/`
+- Playwright E2E tests: 10 in `tests/e2e/specs/`
+- Total: 210 tests across all local suites
 
 See each phase's plan in [`project-phases/`](project-phases/) for the full subtask spec.
 
@@ -156,13 +159,41 @@ Tests run against a live `knowledgeos_test` Postgres database (auto-created and 
 
 ```bash
 cd tests
-uv run pytest api/ -v                          # all 112 integration tests
-uv run pytest unit/ -v                         # 16 unit tests (parsers, URL safety)
+uv run pytest api/ unit/ -v                    # API integration + backend unit tests
+uv run pytest worker/ -v                       # worker extractor tests
 uv run pytest api/test_pages.py -v             # single file
 uv run pytest api/test_pages.py::test_create_page  # single test
 
 # MCP package tests (separate project)
-cd ../services/mcp && uv run pytest tests/ -v   # 19 MCP tool + config tests
+cd ../services/mcp && uv run pytest tests/ -v   # MCP tool + config tests
+```
+
+### End-to-end Tests
+
+Playwright E2E tests live in `tests/e2e` and run against the local Compose stack. Use a sandbox library root so tests never write to the real `~/KnowledgeOS/library`:
+
+```bash
+LIBRARY_ROOT=$PWD/tests/e2e/.tmp/library docker compose -f infra/docker-compose.yml up -d
+pnpm test:e2e
+pnpm --dir tests/e2e report
+```
+
+### Testing Matrix
+
+| Layer | Command |
+|---|---|
+| Frontend unit/component | `make test-unit` or `pnpm test:web` |
+| API + unit pytest | `make test-api` |
+| Worker extractors | `make test-worker` |
+| MCP package | `make test-mcp` |
+| Playwright E2E | `make test-e2e` or `pnpm test:e2e` |
+| Everything | `make test-all` or `pnpm test:all` |
+
+`make test-e2e` expects the Compose stack to be running with a sandbox library root:
+
+```bash
+LIBRARY_ROOT=$PWD/tests/e2e/.tmp/library docker compose -f infra/docker-compose.yml up -d --build
+make test-e2e
 ```
 
 ### Alembic Migrations

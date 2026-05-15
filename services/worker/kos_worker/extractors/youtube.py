@@ -40,9 +40,7 @@ def extract(source, db) -> dict:
     }
 
     try:
-        oembed_url = (
-            f"https://www.youtube.com/oembed?url={quote(source.url, safe='')}&format=json"
-        )
+        oembed_url = f"https://www.youtube.com/oembed?url={quote(source.url, safe='')}&format=json"
         validate_safe_http_url(oembed_url)
         resp = safe_http_get(oembed_url, headers=headers, timeout=10.0, max_body_bytes=256 * 1024)
         if resp.status_code == 200:

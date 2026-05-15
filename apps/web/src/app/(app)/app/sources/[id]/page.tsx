@@ -10,8 +10,12 @@ function isStringArray(value: unknown): value is string[] {
   return Array.isArray(value) && value.every((item) => typeof item === "string");
 }
 
-function isPreviewRows(value: unknown): value is unknown[][] {
-  return Array.isArray(value) && value.every((row) => Array.isArray(row));
+function isPreviewRows(value: unknown): value is Array<unknown[] | Record<string, unknown>> {
+  return Array.isArray(value) && value.every((row) => Array.isArray(row) || Boolean(row && typeof row === "object"));
+}
+
+function previewCell(row: unknown[] | Record<string, unknown>, header: string, cellIndex: number) {
+  return Array.isArray(row) ? row[cellIndex] : row[header];
 }
 
 function CsvPreview({ previewData }: { previewData: Record<string, unknown> | null }) {
@@ -42,7 +46,7 @@ function CsvPreview({ previewData }: { previewData: Record<string, unknown> | nu
               <tr key={rowIndex} className="border-b border-gray-800 last:border-0">
                 {headers.map((header, cellIndex) => (
                   <td key={`${header}-${cellIndex}`} className="px-3 py-2">
-                    {String(row[cellIndex] ?? "")}
+                    {String(previewCell(row, header, cellIndex) ?? "")}
                   </td>
                 ))}
               </tr>

@@ -373,16 +373,20 @@ async def test_apply_structured_summary_creates_claim_task_edges_and_revision(
 
     async with AsyncSessionLocal() as db:
         objects = (
-            await db.execute(
-                select(KosObject).where(KosObject.kind.in_(["claim", "task"]))
-            )
-        ).scalars().all()
+            (await db.execute(select(KosObject).where(KosObject.kind.in_(["claim", "task"]))))
+            .scalars()
+            .all()
+        )
         edges = (await db.execute(select(Edge))).scalars().all()
         revisions = (
-            await db.execute(
-                select(ObjectRevision).where(ObjectRevision.object_id == created["id"])
+            (
+                await db.execute(
+                    select(ObjectRevision).where(ObjectRevision.object_id == created["id"])
+                )
             )
-        ).scalars().all()
+            .scalars()
+            .all()
+        )
 
     assert {obj.metadata_["turn_refs"][0] for obj in objects} == {0, 1}
     assert {edge.kind for edge in edges} >= {"derives_from", "created_from"}

@@ -1,4 +1,5 @@
 """Shared helper factories for worker extractor unit tests."""
+
 from __future__ import annotations
 
 from unittest.mock import MagicMock

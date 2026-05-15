@@ -280,9 +280,12 @@ async def _fts_pages(
             tags=list(row.tags) if row.tags else [],
             score=float(row.score),
             updated_at=row.updated_at,
-            snippet=_parse_snippet(row.snippet) if row.snippet else (
+            snippet=_parse_snippet(row.snippet)
+            if row.snippet
+            else (
                 SearchSnippet(text=row.content_text[:200], highlights=[])
-                if row.content_text else None
+                if row.content_text
+                else None
             ),
         )
         for row in rows
@@ -362,9 +365,12 @@ async def _fts_sources(
             tags=list(row.tags) if row.tags else [],
             score=float(row.score),
             updated_at=row.updated_at,
-            snippet=_parse_snippet(row.snippet) if row.snippet else (
+            snippet=_parse_snippet(row.snippet)
+            if row.snippet
+            else (
                 SearchSnippet(text=row.extracted_text[:200], highlights=[])
-                if row.extracted_text else None
+                if row.extracted_text
+                else None
             ),
             source_type=row.source_type,
             ingestion_status=row.ingestion_status,
@@ -448,9 +454,12 @@ async def _fts_chats(
             tags=list(row.tags) if row.tags else [],
             score=float(row.score),
             updated_at=row.updated_at,
-            snippet=_parse_snippet(row.snippet) if row.snippet else (
+            snippet=_parse_snippet(row.snippet)
+            if row.snippet
+            else (
                 SearchSnippet(text=row.content_text[:200], highlights=[])
-                if row.content_text else None
+                if row.content_text
+                else None
             ),
         )
         for row in rows
@@ -523,9 +532,12 @@ async def _fts_assets(
             tags=list(row.tags) if row.tags else [],
             score=float(row.score),
             updated_at=row.updated_at,
-            snippet=_parse_snippet(row.snippet) if row.snippet else (
+            snippet=_parse_snippet(row.snippet)
+            if row.snippet
+            else (
                 SearchSnippet(text=row.description[:200], highlights=[])
-                if row.description else None
+                if row.description
+                else None
             ),
         )
         for row in rows
@@ -604,9 +616,12 @@ async def _fts_generic_objects(
             tags=list(row.tags) if row.tags else [],
             score=float(row.score),
             updated_at=row.updated_at,
-            snippet=_parse_snippet(row.snippet) if row.snippet else (
+            snippet=_parse_snippet(row.snippet)
+            if row.snippet
+            else (
                 SearchSnippet(text=row.description[:200], highlights=[])
-                if row.description else None
+                if row.description
+                else None
             ),
         )
         for row in rows

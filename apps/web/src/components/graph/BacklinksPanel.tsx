@@ -79,7 +79,7 @@ export function BacklinksPanel({ objectId }: BacklinksPanelProps) {
   return (
     <div className="divide-y divide-gray-900">
       {backlinks.map((edge) => {
-        const source = edge.source_object;
+        const source = edge.source ?? edge.source_object;
         if (!source) return null;
 
         return (

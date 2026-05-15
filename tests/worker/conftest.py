@@ -2,12 +2,12 @@
 
 All fixtures are fully in-memory or tmp_path based — no DB, no Redis, no network.
 """
+
 from __future__ import annotations
 
 import csv
 import pathlib
 import sys
-import uuid
 
 import pytest
 from PIL import Image

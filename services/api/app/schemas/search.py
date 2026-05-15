@@ -8,6 +8,7 @@ from pydantic import BaseModel
 
 class SearchSnippet(BaseModel):
     """Plain-text snippet with character ranges marking highlighted terms."""
+
     text: str
     highlights: list[tuple[int, int]] = []
 
