@@ -20,6 +20,7 @@ import { logout } from "@/lib/api";
 import { useAuth } from "@/lib/hooks/useAuth";
 import { useSidebarState } from "@/lib/hooks/useSidebarState";
 import { useShortcut } from "@/lib/hooks/useShortcut";
+import { ThemeToggle } from "@/components/theme/ThemeToggle";
 
 const navItems = [
   { href: "/app", label: "All Objects", icon: Files },
@@ -101,6 +102,9 @@ export function Sidebar() {
       </nav>
 
       <div className="shrink-0 space-y-2 border-t border-gray-800 p-3">
+        <div className={clsx("flex", collapsed ? "justify-center" : "justify-end px-1")}>
+          <ThemeToggle />
+        </div>
         {!isLoading && user ? (
           <>
             {!collapsed && (
