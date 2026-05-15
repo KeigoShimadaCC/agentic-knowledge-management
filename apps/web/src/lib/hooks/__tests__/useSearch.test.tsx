@@ -1,10 +1,18 @@
-import { act, renderHook, waitFor } from "@testing-library/react";
+import { act, renderHook } from "@testing-library/react";
 import { http, HttpResponse } from "msw";
 import { useSearch } from "@/lib/hooks/useSearch";
 import { API_BASE } from "@/test/msw/handlers";
 import { server } from "@/test/msw/server";
 
 describe("useSearch", () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   it("debounces queries and returns paginated results", async () => {
     let searchCalls = 0;
     server.use(
@@ -45,7 +53,11 @@ describe("useSearch", () => {
     });
     expect(searchCalls).toBe(0);
 
-    await waitFor(() => expect(result.current.results).toHaveLength(1));
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(300);
+    });
+
+    expect(result.current.results).toHaveLength(1);
     expect(searchCalls).toBe(1);
     expect(result.current.error).toBeNull();
   });
@@ -55,7 +67,11 @@ describe("useSearch", () => {
 
     act(() => result.current.setQuery("a"));
 
-    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(300);
+    });
+
     expect(result.current.results).toEqual([]);
+    expect(result.current.isLoading).toBe(false);
   });
 });
