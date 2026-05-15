@@ -205,14 +205,25 @@ See [`project-phases/PHASE-7A-MCP.md`](project-phases/PHASE-7A-MCP.md) for the f
 
 ---
 
-## Phase 7B — MCP Write Tools ⬜ Planned
+## Phase 7B — MCP Write Tools 🚧 In Progress
 
-**Goal:** Add create/update/archive write tools to MCP. Requires Phase 5 `object_revisions` table.
+**Goal:** Add 6 audited, rate-limited, reversible write tools to MCP: `create_page`, `update_page`, `create_edge`, `archive_object`, `ingest_url`, `ingest_file`. Every write produces an `agent_runs` row and (for mutations) an `object_revisions` row.
 
-- [ ] **v2 — Create Tools:** `create_page`, `create_edge`, `ingest_url`, `ingest_file`; validates agent identity + writes `agent_runs`
-- [ ] **v3 — Update/Archive Tools:** `update_page`, `archive_object`; before/after diff logged; rollback supported
-- [ ] **MCP resources:** `knowledgeos://objects/{id}`, `knowledgeos://pages/{id}`, `knowledgeos://sources/{id}`
-- [ ] **Tests + docs**
+See [`project-phases/PHASE-7B-MCP-WRITE.md`](project-phases/PHASE-7B-MCP-WRITE.md) for the full subtask spec.
+
+- [x] **Subtask 0** — Branch + PROGRESS update (this entry)
+- [ ] **Subtask 1** — Rate limiter (`core/rate_limit.py`) + Redis test fixture
+- [ ] **Subtask 2** — Audit + revision wrapper (`audited_write_service.py`)
+- [ ] **Subtask 3** — `POST /objects/{id}/archive` + `POST /objects/{id}/revisions/{rev_id}/restore` endpoints
+- [ ] **Subtask 4** — `MCP_ALLOW_WRITE_TOOLS` gating + per-tool registration filter
+- [ ] **Subtask 5** — `create_page` MCP tool + client method + tests
+- [ ] **Subtask 6** — `create_edge` MCP tool + client method + tests
+- [ ] **Subtask 7** — `update_page` MCP tool + revision write + tests
+- [ ] **Subtask 8** — `archive_object` MCP tool + tests
+- [ ] **Subtask 9** — `ingest_url` MCP tool + URL safety re-check + tests
+- [ ] **Subtask 10** — `ingest_file` MCP tool + LIBRARY_ROOT validation + tests
+- [ ] **Subtask 11** — Docs (`MCP_TOOLS.md`, `SECURITY.md`, `AGENT_GUIDE.md`, `REVISION_HISTORY.md`) + PROGRESS flip
+- [ ] **Subtask 12** — End-to-end smoke harness
 
 ---
 
@@ -260,7 +271,7 @@ See [`project-phases/PHASE-7A-MCP.md`](project-phases/PHASE-7A-MCP.md) for the f
 | 6B | Structured Chat Import | ✅ Complete | 9 / 9 subtasks |
 | 7A | MCP Read/Search | ✅ Complete | 10 / 10 subtasks |
 | Hardening | Search Quality + Multilingual | 🚧 Partial | 2 / 7 subtasks |
-| 7B | MCP Write Tools | ⬜ Planned | 0 / 4 subtasks |
+| 7B | MCP Write Tools | 🚧 In Progress | 1 / 13 subtasks |
 | 8 | Multi-Pane Workspaces | ⬜ Planned | 0 / 8 subtasks |
 | 9 | Career & Project Memory | ⬜ Planned | 0 / 8 subtasks |
 
