@@ -1,6 +1,6 @@
 # KnowledgeOS — Progress Tracker
 
-> Last updated: 2026-05-15 (PHASE-ENHANCE-03 UX Polish all 6 PRs complete and merged to main; PHASE-ENHANCE-02 testing infra complete; Phase 9A backend complete)
+> Last updated: 2026-05-15 (Phase 8B workspaces backend complete and validated; PHASE-ENHANCE-03 UX Polish all 6 PRs complete and merged to main; PHASE-ENHANCE-02 testing infra complete; Phase 9A backend complete)
 
 ---
 
@@ -121,6 +121,24 @@ See [`project-phases/PHASE-8A-WORKSPACE-LITE.md`](project-phases/PHASE-8A-WORKSP
 - [x] **Subtask 4** — Open in side pane from search results (`SearchResultCard` + `SearchModal`)
 - [x] **Subtask 5** — Open in side pane from graph panels (`BacklinksPanel`, `RelatedPanel`)
 - [x] **Subtask 6** — Polish (ESC key, responsive behavior, smooth transition) + docs
+
+---
+
+## Phase 8B — Workspaces Backend Foundation ✅ Complete
+
+**Goal:** Persist named multi-pane workspaces with validated layout JSON, user-owned CRUD endpoints, soft delete/restore, and docs. Backend-only; no frontend, MCP, worker, object-kind, or `KosObject` changes.
+
+Working branch: `phase-8b` (worktree: `/Users/keigoshimada/Documents/phase-8b`)
+
+See [`project-phases/PHASE-8B-WORKSPACES-BACKEND.md`](project-phases/PHASE-8B-WORKSPACES-BACKEND.md) for the full contract.
+
+- [x] **Subtask 0** — Audit + Phase 8B plan review + progress tracker start
+- [x] **Subtask 1** — `workspaces` Alembic migration, ORM model, and model export
+- [x] **Subtask 2** — Pydantic workspace schemas with layout validation
+- [x] **Subtask 3** — Workspace service layer with CRUD, soft delete, restore, and last-used tracking
+- [x] **Subtask 4** — Authenticated workspace REST endpoints wired into API router
+- [x] **Subtask 5** — Workspace CRUD, validation, ownership, and restore integration tests
+- [x] **Subtask 6** — API/data model/architecture docs and final validation
 
 ---
 
