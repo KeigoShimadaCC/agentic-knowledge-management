@@ -115,7 +115,11 @@ FastAPI accepts an `X-KOS-Internal-Token` header as an alternative to the sessio
 - **No write tools** registered in Phase 7A regardless of config flags.
 - **No shell execution** — no tools that run commands or access the filesystem arbitrarily.
 - **Secret redaction** — `redact_dict()` applied to every tool response. Keys: `api_key`, `openai_api_key`, `session_secret`, `mcp_internal_token`, `token`, `token_hash`, `password`, `password_hash`, `secret`.
-- **`answer_from_kb`** — registered as a disabled stub. It calls the Phase 5 AI endpoint when that becomes available; until then it returns a clear error.
+- **`answer_from_kb`** — wired to `POST /api/v1/ai/answer`. Returns a structured `{error: "ai_disabled"}` dict (not an exception) when the server has no `OPENAI_API_KEY` (503 from the API layer). All other `httpx` errors propagate normally.
+
+## Search Output Encoding (XSS Mitigation)
+
+The keyword and hybrid search endpoints return snippets as a structured `{text, highlights}` object — not raw HTML. `ts_headline` output is parsed with sentinel characters (`\x01` / `\x02`) server-side; the resulting plain text and character ranges are delivered as JSON. The frontend renders highlighted segments via React text nodes (not `dangerouslySetInnerHTML`), so user-supplied `<script>` or other HTML in page content cannot execute in the browser. Regression tests verify this with a `<script>` payload in page content.
 
 ## Backups
 
