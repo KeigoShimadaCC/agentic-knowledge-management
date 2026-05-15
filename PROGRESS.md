@@ -433,6 +433,7 @@ See [`project-phases/PHASE-8C-MULTI-PANE-WORKSPACES.md`](project-phases/PHASE-8C
 | 7B | MCP Write Tools | ✅ Complete | 13 / 13 subtasks |
 | 8C | Multi-Pane Workspaces | ✅ Complete | 7 / 7 subtasks |
 | 9 | Career & Project Memory | 🚧 In progress (9A+9B backend shipped) | 2 / 8 subtasks |
+| 9C | Career Memory Frontend | 🚧 Phase 9C — In Progress | 0 / 20 subtasks |
 | Enhance-03 | UX/UI Polish | ✅ Complete | 6 / 6 PRs |
 
 **Total:** 89 / 103 subtasks complete
