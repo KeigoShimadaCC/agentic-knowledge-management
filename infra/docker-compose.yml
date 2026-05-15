@@ -99,6 +99,33 @@ services:
       start_period: 90s
     logging: *default-logging
 
+  worker:
+    build:
+      context: ..
+      dockerfile: infra/Dockerfile.worker
+      target: development
+    container_name: kos-worker
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-kos}:${POSTGRES_PASSWORD:-kospass}@postgres:5432/${POSTGRES_DB:-knowledgeos}
+      REDIS_URL: redis://redis:6379/0
+      QDRANT_URL: http://qdrant:6333
+      LIBRARY_ROOT: /library
+    volumes:
+      - ../services/api:/app/services/api
+      - ../services/worker:/app/services/worker
+      - library-data:/library
+    command:
+      - sh
+      - -c
+      - "exec .venv/bin/rq worker kos-ingest --url $$REDIS_URL"
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis: { condition: service_healthy }
+      qdrant: { condition: service_healthy }
+    logging: *default-logging
+
   web:
     build:
       context: ..

@@ -691,6 +691,33 @@ Response items include object summary, traversal distance, score, and the edge p
 
 Status codes: `200`, `401`, `404`, `422`.
 
+### `GET /api/v1/objects/{id}/index-status`
+
+Returns the chunk and embedding status for an object. Useful for diagnosing why an object does not appear in vector or hybrid search results.
+
+Response:
+
+```json
+{
+  "object_id": "uuid",
+  "total_chunks": 12,
+  "embedded_count": 12,
+  "status": "done",
+  "last_embedded_at": "2026-05-15T09:12:00Z"
+}
+```
+
+`status` values:
+
+| Value | Meaning |
+| --- | --- |
+| `not_indexed` | No chunks found; object has never been chunked |
+| `pending` | Chunks exist but none are embedded yet |
+| `partial` | Some chunks embedded; worker may still be running |
+| `done` | All chunks have embeddings in Qdrant |
+
+Status codes: `200`, `401`, `404`.
+
 ## Search Endpoints
 
 Search requires the same `kos_session` cookie as other KnowledgeOS endpoints. Keyword search is always available offline. Vector search requires embeddings to be enabled with `OPENAI_API_KEY`; hybrid search falls back to keyword-only when embeddings are disabled.
@@ -702,7 +729,10 @@ Search results share this shape:
   "id": "uuid",
   "kind": "page",
   "title": "Quantum Computing",
-  "snippet": "Optional highlighted text",
+  "snippet": {
+    "text": "Quantum entanglement and superposition appear in this research note",
+    "highlights": [[0, 7], [23, 35]]
+  },
   "tags": [],
   "score": 0.42,
   "updated_at": "2026-05-14T00:00:00Z",
@@ -710,6 +740,10 @@ Search results share this shape:
   "ingestion_status": null
 }
 ```
+
+`snippet` is `null` when no content is available. When present, `text` is a plain string (no HTML) and `highlights` is a list of `[start, end]` character-index pairs marking matched terms. The frontend renders highlights as `<mark>` elements via React nodes — no `dangerouslySetInnerHTML` is used.
+
+Hybrid search accepts an optional `debug: true` body parameter. When set, each result includes `keyword_score` and `vector_score` breakdowns for diagnostic use.
 
 ## Chats
 
@@ -919,7 +953,7 @@ Response:
       "id": "uuid",
       "kind": "page",
       "title": "Research Notes",
-      "snippet": "Optional highlighted text",
+      "snippet": { "text": "combined search results with highlights", "highlights": [[0, 8]] },
       "tags": [],
       "score": 0.55,
       "updated_at": "2026-05-14T00:00:00Z",

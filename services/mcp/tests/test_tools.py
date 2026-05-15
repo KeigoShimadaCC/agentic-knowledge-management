@@ -8,6 +8,7 @@ import pytest
 from kos_mcp.client import KosApiClient
 from kos_mcp.redaction import redact_dict
 from kos_mcp.tools import (
+    _answer_from_kb,
     _get_object,
     _get_page,
     _get_related_objects,
@@ -225,14 +226,34 @@ async def test_get_related_objects_compact_output(mock_client: KosApiClient) -> 
     assert "deleted_at" not in result[0]
 
 
-# ── answer_from_kb stub ──────────────────────────────────────────────────────
+# ── answer_from_kb ───────────────────────────────────────────────────────────
 
 @pytest.mark.asyncio
-async def test_answer_from_kb_raises(mock_client: KosApiClient) -> None:
-    from kos_mcp.tools import _dispatch
+async def test_answer_from_kb_happy_path(mock_client: KosApiClient) -> None:
+    mock_client.answer_from_kb.return_value = {
+        "answer": "KnowledgeOS is a local-first AI knowledge base.",
+        "citations": ["uuid-1", "uuid-2"],
+        "context_count": 5,
+        "agent_run_id": "run-abc",
+    }
+    result = await _answer_from_kb(mock_client, question="What is KnowledgeOS?")
+    assert result["answer"] == "KnowledgeOS is a local-first AI knowledge base."
+    assert result["citations"] == ["uuid-1", "uuid-2"]
+    assert result["context_count"] == 5
+    assert result["agent_run_id"] == "run-abc"
 
-    with pytest.raises(RuntimeError, match="not available"):
-        await _dispatch("answer_from_kb", {"question": "q"}, mock_client)
+
+@pytest.mark.asyncio
+async def test_answer_from_kb_503_returns_error_dict(mock_client: KosApiClient) -> None:
+    response = MagicMock()
+    response.status_code = 503
+    response.text = "AI disabled"
+    mock_client.answer_from_kb.side_effect = httpx.HTTPStatusError(
+        "503", request=MagicMock(), response=response
+    )
+    result = await _answer_from_kb(mock_client, question="q")
+    assert result["error"] == "ai_disabled"
+    assert "OPENAI_API_KEY" in result["message"]
 
 
 # ── redact_dict ──────────────────────────────────────────────────────────────

@@ -300,11 +300,16 @@ export async function vectorSearch(
 
 export async function hybridSearch(
   q: string,
-  opts?: { kind?: string; limit?: number }
+  opts?: { kind?: string; limit?: number; debug?: boolean }
 ): Promise<HybridSearchResponse> {
   return request<HybridSearchResponse>("/api/v1/search/hybrid", {
     method: "POST",
-    body: JSON.stringify({ q, kind: opts?.kind ?? null, limit: opts?.limit ?? 10 }),
+    body: JSON.stringify({
+      q,
+      kind: opts?.kind ?? null,
+      limit: opts?.limit ?? 10,
+      debug: opts?.debug ?? false,
+    }),
   });
 }
 

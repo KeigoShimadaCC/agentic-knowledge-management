@@ -60,7 +60,7 @@ Turn KnowledgeOS into an AI-augmented knowledge base. Users can summarize pages/
 - [ ] `POST /api/v1/ai/suggest-links` — returns suggestions, no auto-write
 - [ ] `POST /api/v1/ai/answer` — KB Q&A with citations
 - [ ] `POST /api/v1/ai/triage` — suggest tags/title/summary for inbox item
-- [ ] `GET /api/v1/objects/inbox` — recently added untagged/undescribed objects
+- [ ] `GET /api/v1/ai/inbox` — recently added untagged/undescribed objects
 - [ ] AI Sidebar in PageView (AiPanel, tabbed with Backlinks/Related/AI)
 - [ ] Inbox page at `/inbox` with TriageModal
 - [ ] All AI endpoints return 503 when `OPENAI_API_KEY` is empty
@@ -260,7 +260,7 @@ LLM prompt instructs model to end with `\nSources: [id1], [id2]` for citation pa
 
 **Goal**: Surface unorganized objects; AI suggests tags/title/summary.
 
-**Inbox query** (`GET /objects/inbox`):
+**Inbox query** (`GET /api/v1/ai/inbox`):
 ```sql
 WHERE user_id = :user_id AND deleted_at IS NULL
   AND (tags = '{}' OR tags IS NULL)
@@ -372,7 +372,7 @@ objects: +ai_generated BOOLEAN DEFAULT false
 | POST | /api/v1/ai/suggest-links | Suggest connections (read-only) |
 | POST | /api/v1/ai/answer | KB Q&A with citations |
 | POST | /api/v1/ai/triage | Suggest tags/title/summary (read-only) |
-| GET | /api/v1/objects/inbox | Untagged/undescribed objects, last 30 days |
+| GET | /api/v1/ai/inbox | Untagged/undescribed objects, last 30 days |
 
 ---
 

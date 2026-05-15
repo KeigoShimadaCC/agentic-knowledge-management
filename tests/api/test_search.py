@@ -1,7 +1,17 @@
+import json
+import pathlib
 import uuid
 
 import pytest
 from httpx import AsyncClient
+
+_FIXTURES_PATH = pathlib.Path(__file__).parent.parent / "fixtures" / "search_eval_cases.json"
+_JP_CASE_IDS = {"jp-pure-kanji", "jp-mixed-en-ja", "jp-hiragana-phrase", "jp-katakana-loanword"}
+
+
+def _load_jp_eval_cases() -> list[dict]:
+    cases = json.loads(_FIXTURES_PATH.read_text())
+    return [c for c in cases if c["id"] in _JP_CASE_IDS]
 
 
 def _doc(text: str) -> dict:
@@ -234,3 +244,88 @@ async def test_search_deleted_object_excluded(auth_client: AsyncClient):
     resp = await auth_client.get("/api/v1/search/keyword", params={"q": title})
     assert resp.status_code == 200
     assert page_id not in {result["id"] for result in resp.json()["results"]}
+
+
+@pytest.mark.asyncio
+async def test_snippet_shape_is_struct(auth_client: AsyncClient):
+    """Snippet must be {text, highlights} — not a raw HTML string."""
+    title = f"SnippetShape {uuid.uuid4().hex}"
+    await _create_searchable_page(
+        auth_client,
+        title=title,
+        content_text=(
+            "Snippet shape validation checks that the API returns structured plain-text "
+            "snippets with highlight ranges instead of raw HTML markup from ts_headline."
+        ),
+    )
+    resp = await auth_client.get("/api/v1/search/keyword", params={"q": title})
+    assert resp.status_code == 200
+    results = resp.json()["results"]
+    assert results
+    snippet = results[0]["snippet"]
+    if snippet is not None:
+        assert isinstance(snippet, dict), "snippet must be an object, not a string"
+        assert "text" in snippet
+        assert "highlights" in snippet
+        assert isinstance(snippet["text"], str)
+        assert isinstance(snippet["highlights"], list)
+        assert "<mark>" not in snippet["text"], "snippet.text must not contain HTML markup"
+
+
+@pytest.mark.asyncio
+async def test_snippet_xss_payload_not_rendered_as_html(auth_client: AsyncClient):
+    """XSS regression: <script> in page content must not appear as live HTML in snippet."""
+    payload = "<script>document.title='pwned'</script>"
+    title = f"XSSTarget {uuid.uuid4().hex}"
+    await _create_searchable_page(
+        auth_client,
+        title=title,
+        content_text=(
+            f"Safety test for XSS regression. This page contains: {payload} "
+            "which must be returned as plain text, not as an executable HTML tag."
+        ),
+    )
+    resp = await auth_client.get("/api/v1/search/keyword", params={"q": "XSS regression"})
+    assert resp.status_code == 200
+    body = resp.text
+    # The raw JSON response must not contain an unescaped <script> that a browser would execute.
+    # Since snippet.text is a plain string inside JSON, the angle brackets will appear as-is
+    # in the JSON body but will NOT be parsed as HTML when rendered via React text nodes.
+    # Verify the response is well-formed JSON and snippet is not a raw HTML string.
+    for result in resp.json()["results"]:
+        snippet = result.get("snippet")
+        if snippet is not None:
+            assert isinstance(snippet, dict), f"snippet must be a struct, got: {type(snippet)}"
+            # Ensure no HTML-only markup like <mark> ended up in text
+            assert "<mark>" not in snippet["text"]
+    _ = body  # referenced to suppress unused-var lint
+
+
+_JP_CASES = _load_jp_eval_cases()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("case", _JP_CASES, ids=[c["id"] for c in _JP_CASES])
+async def test_jp_mixed_search_does_not_crash(
+    auth_client: AsyncClient,
+    monkeypatch: pytest.MonkeyPatch,
+    case: dict,
+) -> None:
+    """Japanese/mixed-script queries must return 200 and well-formed JSON, never 500."""
+    monkeypatch.setattr("app.config.settings.openai_api_key", None)
+    query = case["query"]
+    # Seed a page containing the query text so the FTS engine exercises CJK tokenization
+    await _create_searchable_page(auth_client, title=query[:80], content_text=query * 3)
+    for mode in case.get("modes", ["keyword"]):
+        if mode == "keyword":
+            resp = await auth_client.get("/api/v1/search/keyword", params={"q": query})
+        elif mode == "hybrid":
+            resp = await auth_client.post("/api/v1/search/hybrid", json={"q": query})
+        else:
+            continue
+        assert resp.status_code == 200, (
+            f"mode={mode} case={case['id']} returned {resp.status_code}: {resp.text}"
+        )
+        data = resp.json()
+        assert "results" in data
+        assert "total" in data

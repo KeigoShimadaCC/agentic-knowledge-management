@@ -1,7 +1,7 @@
 "use client";
 
 import { Columns2 } from "lucide-react";
-import type { SearchResult } from "@/types";
+import type { HybridSearchResult, SearchResult, SearchSnippet } from "@/types";
 import type { SidePaneObject } from "@/components/workspace/WorkspaceLiteProvider";
 
 const KIND_COLORS: Record<string, string> = {
@@ -11,16 +11,37 @@ const KIND_COLORS: Record<string, string> = {
   asset: "bg-gray-700 text-gray-300",
 };
 
+function SnippetView({ snippet }: { snippet: SearchSnippet }) {
+  if (!snippet.text) return null;
+  if (snippet.highlights.length === 0) {
+    return <span>{snippet.text}</span>;
+  }
+  const nodes: React.ReactNode[] = [];
+  let cursor = 0;
+  for (const [start, end] of snippet.highlights) {
+    if (start > cursor) nodes.push(<span key={cursor}>{snippet.text.slice(cursor, start)}</span>);
+    nodes.push(
+      <mark key={start} className="rounded bg-yellow-700 text-yellow-100">
+        {snippet.text.slice(start, end)}
+      </mark>
+    );
+    cursor = end;
+  }
+  if (cursor < snippet.text.length) nodes.push(<span key={cursor}>{snippet.text.slice(cursor)}</span>);
+  return <>{nodes}</>;
+}
+
 interface SearchResultCardProps {
   result: SearchResult;
   isSelected: boolean;
+  showDebug?: boolean;
   onSelect: () => void;
   onOpenInPane?: (obj: SidePaneObject) => void;
 }
 
-export function SearchResultCard({ result, isSelected, onSelect, onOpenInPane }: SearchResultCardProps) {
+export function SearchResultCard({ result, isSelected, showDebug, onSelect, onOpenInPane }: SearchResultCardProps) {
+  const hybrid = result as HybridSearchResult;
   const kindColor = KIND_COLORS[result.kind] ?? "bg-gray-700 text-gray-300";
-  const snippetHtml = result.snippet ?? "";
 
   return (
     <div
@@ -43,11 +64,10 @@ export function SearchResultCard({ result, isSelected, onSelect, onOpenInPane }:
           )}
           <span className="min-w-0 flex-1 truncate text-sm font-medium text-gray-100">{result.title}</span>
         </div>
-        {snippetHtml && (
-          <p
-            className="line-clamp-2 text-xs text-gray-400 [&_mark]:rounded [&_mark]:bg-yellow-700 [&_mark]:text-yellow-100"
-            dangerouslySetInnerHTML={{ __html: snippetHtml }}
-          />
+        {result.snippet && (
+          <p className="line-clamp-2 text-xs text-gray-400">
+            <SnippetView snippet={result.snippet} />
+          </p>
         )}
         {result.tags.length > 0 && (
           <div className="mt-1 flex gap-1">
@@ -56,6 +76,17 @@ export function SearchResultCard({ result, isSelected, onSelect, onOpenInPane }:
                 #{tag}
               </span>
             ))}
+          </div>
+        )}
+        {showDebug && (
+          <div className="mt-1 flex gap-3 font-mono text-[10px] text-yellow-600">
+            <span>score: {result.score.toFixed(4)}</span>
+            {hybrid.keyword_score !== undefined && (
+              <span>kw: {hybrid.keyword_score.toFixed(4)}</span>
+            )}
+            {hybrid.vector_score !== undefined && (
+              <span>vec: {hybrid.vector_score.toFixed(4)}</span>
+            )}
           </div>
         )}
       </button>

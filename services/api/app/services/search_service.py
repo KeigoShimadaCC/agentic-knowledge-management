@@ -6,7 +6,36 @@ from datetime import UTC, datetime, timedelta
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.schemas.search import HybridSearchResult, SearchResult
+from app.schemas.search import HybridSearchResult, SearchResult, SearchSnippet
+
+# Sentinels chosen to never appear in user content; used with ts_headline so
+# we can parse highlight ranges without injecting HTML into API responses.
+_SNIPPET_OPTS = f"MaxWords=30, MinWords=10, StartSel={chr(1)}, StopSel={chr(2)}"
+
+
+def _parse_snippet(raw: str) -> SearchSnippet:
+    """Convert sentinel-delimited ts_headline output to plain text + ranges."""
+    text_parts: list[str] = []
+    highlights: list[tuple[int, int]] = []
+    pos = 0
+    i = 0
+    while i < len(raw):
+        if raw[i] == "\x01":
+            try:
+                j = raw.index("\x02", i + 1)
+            except ValueError:
+                text_parts.append(raw[i + 1 :])
+                break
+            word = raw[i + 1 : j]
+            highlights.append((pos, pos + len(word)))
+            text_parts.append(word)
+            pos += len(word)
+            i = j + 1
+        else:
+            text_parts.append(raw[i])
+            pos += 1
+            i += 1
+    return SearchSnippet(text="".join(text_parts), highlights=highlights)
 
 
 async def keyword_search(
@@ -88,12 +117,13 @@ async def vector_search(
             continue
         seen.add(oid)
         source = source_map.get(oid)
+        raw_content = hit["payload"].get("content", "")[:300]
         results.append(
             SearchResult(
                 id=obj.id,
                 kind=obj.kind,
                 title=obj.title,
-                snippet=hit["payload"].get("content", "")[:300] or None,
+                snippet=SearchSnippet(text=raw_content, highlights=[]) if raw_content else None,
                 tags=obj.tags or [],
                 score=hit["score"],
                 updated_at=obj.updated_at,
@@ -202,8 +232,7 @@ async def _fts_pages(
                 o.updated_at,
                 p.content_text,
                 to_tsvector(
-                    'english',
-                    coalesce(o.title,'') || ' ' || coalesce(p.content_text,'')
+                    'english', coalesce(o.title,'') || ' ' || coalesce(p.content_text,'')
                 ) as vector,
                 plainto_tsquery('english', :q) as query
             FROM objects o
@@ -222,12 +251,12 @@ async def _fts_pages(
                 'english',
                 coalesce(content_text,''),
                 query,
-                'MaxWords=30, MinWords=10, StartSel=<mark>, StopSel=</mark>'
+                :snippet_opts
             ) AS snippet,
             content_text
         FROM matches
-        WHERE vector @@ query 
-           OR title ILIKE :q_like 
+        WHERE vector @@ query
+           OR title ILIKE :q_like
            OR content_text ILIKE :q_like
         ORDER BY score DESC
         LIMIT :limit OFFSET :offset
@@ -239,6 +268,7 @@ async def _fts_pages(
         "user_id": str(user_id),
         "limit": limit,
         "offset": offset,
+        "snippet_opts": _SNIPPET_OPTS,
     }
     result = await db.execute(sql, params)
     rows = result.fetchall()
@@ -250,9 +280,10 @@ async def _fts_pages(
             tags=list(row.tags) if row.tags else [],
             score=float(row.score),
             updated_at=row.updated_at,
-            snippet=row.snippet
-            if row.snippet
-            else (row.content_text[:200] if row.content_text else None),
+            snippet=_parse_snippet(row.snippet) if row.snippet else (
+                SearchSnippet(text=row.content_text[:200], highlights=[])
+                if row.content_text else None
+            ),
         )
         for row in rows
     ]
@@ -280,8 +311,7 @@ async def _fts_sources(
                 s.ingestion_status,
                 s.extracted_text,
                 to_tsvector(
-                    'english',
-                    coalesce(o.title,'') || ' ' || coalesce(s.extracted_text,'')
+                    'english', coalesce(o.title,'') || ' ' || coalesce(s.extracted_text,'')
                 ) as vector,
                 plainto_tsquery('english', :q) as query
             FROM objects o
@@ -301,12 +331,12 @@ async def _fts_sources(
                 'english',
                 coalesce(extracted_text,''),
                 query,
-                'MaxWords=30, MinWords=10, StartSel=<mark>, StopSel=</mark>'
+                :snippet_opts
             ) AS snippet,
             extracted_text
         FROM matches
-        WHERE vector @@ query 
-           OR title ILIKE :q_like 
+        WHERE vector @@ query
+           OR title ILIKE :q_like
            OR extracted_text ILIKE :q_like
         ORDER BY score DESC
         LIMIT :limit OFFSET :offset
@@ -318,6 +348,7 @@ async def _fts_sources(
         "user_id": str(user_id),
         "limit": limit,
         "offset": offset,
+        "snippet_opts": _SNIPPET_OPTS,
     }
     if source_type:
         params["source_type"] = source_type
@@ -331,9 +362,10 @@ async def _fts_sources(
             tags=list(row.tags) if row.tags else [],
             score=float(row.score),
             updated_at=row.updated_at,
-            snippet=row.snippet
-            if row.snippet
-            else (row.extracted_text[:200] if row.extracted_text else None),
+            snippet=_parse_snippet(row.snippet) if row.snippet else (
+                SearchSnippet(text=row.extracted_text[:200], highlights=[])
+                if row.extracted_text else None
+            ),
             source_type=row.source_type,
             ingestion_status=row.ingestion_status,
         )
@@ -386,7 +418,7 @@ async def _fts_chats(
                 'english',
                 coalesce(content_text,'') || ' ' || coalesce(structured_summary::text,''),
                 query,
-                'MaxWords=30, MinWords=10, StartSel=<mark>, StopSel=</mark>'
+                :snippet_opts
             ) AS snippet,
             content_text
         FROM matches
@@ -404,6 +436,7 @@ async def _fts_chats(
         "user_id": str(user_id),
         "limit": limit,
         "offset": offset,
+        "snippet_opts": _SNIPPET_OPTS,
     }
     result = await db.execute(sql, params)
     rows = result.fetchall()
@@ -415,9 +448,10 @@ async def _fts_chats(
             tags=list(row.tags) if row.tags else [],
             score=float(row.score),
             updated_at=row.updated_at,
-            snippet=row.snippet
-            if row.snippet
-            else (row.content_text[:200] if row.content_text else None),
+            snippet=_parse_snippet(row.snippet) if row.snippet else (
+                SearchSnippet(text=row.content_text[:200], highlights=[])
+                if row.content_text else None
+            ),
         )
         for row in rows
     ]
@@ -441,8 +475,7 @@ async def _fts_assets(
                 o.tags,
                 o.updated_at,
                 to_tsvector(
-                    'english',
-                    coalesce(o.title,'') || ' ' || coalesce(o.description,'')
+                    'english', coalesce(o.title,'') || ' ' || coalesce(o.description,'')
                 ) as vector,
                 plainto_tsquery('english', :q) as query
             FROM objects o
@@ -461,12 +494,12 @@ async def _fts_assets(
                 'english',
                 coalesce(description,''),
                 query,
-                'MaxWords=30, MinWords=10, StartSel=<mark>, StopSel=</mark>'
+                :snippet_opts
             ) AS snippet,
             description
         FROM matches
-        WHERE vector @@ query 
-           OR title ILIKE :q_like 
+        WHERE vector @@ query
+           OR title ILIKE :q_like
            OR description ILIKE :q_like
         ORDER BY score DESC
         LIMIT :limit OFFSET :offset
@@ -478,6 +511,7 @@ async def _fts_assets(
         "user_id": str(user_id),
         "limit": limit,
         "offset": offset,
+        "snippet_opts": _SNIPPET_OPTS,
     }
     result = await db.execute(sql, params)
     rows = result.fetchall()
@@ -489,9 +523,10 @@ async def _fts_assets(
             tags=list(row.tags) if row.tags else [],
             score=float(row.score),
             updated_at=row.updated_at,
-            snippet=row.snippet
-            if row.snippet
-            else (row.description[:200] if row.description else None),
+            snippet=_parse_snippet(row.snippet) if row.snippet else (
+                SearchSnippet(text=row.description[:200], highlights=[])
+                if row.description else None
+            ),
         )
         for row in rows
     ]
@@ -538,13 +573,13 @@ async def _fts_generic_objects(
                 'english',
                 coalesce(description,'') || ' ' || coalesce(metadata::text,''),
                 query,
-                'MaxWords=30, MinWords=10, StartSel=<mark>, StopSel=</mark>'
+                :snippet_opts
             ) AS snippet,
             description,
             metadata
         FROM matches
-        WHERE vector @@ query 
-           OR title ILIKE :q_like 
+        WHERE vector @@ query
+           OR title ILIKE :q_like
            OR description ILIKE :q_like
         ORDER BY score DESC
         LIMIT :limit OFFSET :offset
@@ -557,6 +592,7 @@ async def _fts_generic_objects(
         "kinds": kinds,
         "limit": limit,
         "offset": offset,
+        "snippet_opts": _SNIPPET_OPTS,
     }
     result = await db.execute(sql, params)
     rows = result.fetchall()
@@ -568,9 +604,10 @@ async def _fts_generic_objects(
             tags=list(row.tags) if row.tags else [],
             score=float(row.score),
             updated_at=row.updated_at,
-            snippet=row.snippet
-            if row.snippet
-            else (row.description[:200] if row.description else None),
+            snippet=_parse_snippet(row.snippet) if row.snippet else (
+                SearchSnippet(text=row.description[:200], highlights=[])
+                if row.description else None
+            ),
         )
         for row in rows
     ]
@@ -605,7 +642,7 @@ async def _fts_generic_objects(
                 'english',
                 coalesce(o.description,'') || ' ' || coalesce(o.metadata::text,''),
                 plainto_tsquery('english', :q),
-                'MaxWords=30, MinWords=10, StartSel=<mark>, StopSel=</mark>'
+                :snippet_opts
             ) AS snippet
         FROM objects o
         WHERE o.deleted_at IS NULL
@@ -628,6 +665,7 @@ async def _fts_generic_objects(
         "kinds": kinds,
         "limit": limit,
         "offset": offset,
+        "snippet_opts": _SNIPPET_OPTS,
     }
     result = await db.execute(sql, params)
     rows = result.fetchall()
@@ -639,7 +677,7 @@ async def _fts_generic_objects(
             tags=list(row.tags) if row.tags else [],
             score=float(row.score),
             updated_at=row.updated_at,
-            snippet=row.snippet or None,
+            snippet=_parse_snippet(row.snippet) if row.snippet else None,
         )
         for row in rows
     ]

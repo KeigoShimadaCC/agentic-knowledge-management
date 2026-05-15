@@ -77,6 +77,19 @@ class KosApiClient:
         r.raise_for_status()
         return r.json()
 
+    async def answer_from_kb(
+        self,
+        q: str,
+        kind: str | None = None,
+        limit: int = 10,
+    ) -> dict:
+        body: dict = {"q": q, "limit": limit}
+        if kind:
+            body["kind"] = kind
+        r = await self._client.post("/api/v1/ai/answer", json=body)
+        r.raise_for_status()
+        return r.json()
+
     async def aclose(self) -> None:
         await self._client.aclose()
 

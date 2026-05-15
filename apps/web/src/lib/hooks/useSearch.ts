@@ -13,6 +13,8 @@ interface UseSearchReturn {
   setQuery: (q: string) => void;
   mode: SearchMode;
   setMode: (m: SearchMode) => void;
+  debug: boolean;
+  setDebug: (d: boolean) => void;
 }
 
 export function useSearch(): UseSearchReturn {
@@ -21,9 +23,18 @@ export function useSearch(): UseSearchReturn {
   const [results, setResults] = useState<SearchResult[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [debug, setDebugState] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return localStorage.getItem("kos:search:debug") === "true";
+  });
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const doSearch = useCallback(async (q: string, m: SearchMode) => {
+  const setDebug = useCallback((d: boolean) => {
+    localStorage.setItem("kos:search:debug", String(d));
+    setDebugState(d);
+  }, []);
+
+  const doSearch = useCallback(async (q: string, m: SearchMode, dbg: boolean) => {
     if (q.length < 2) {
       setResults([]);
       return;
@@ -31,7 +42,7 @@ export function useSearch(): UseSearchReturn {
     setIsLoading(true);
     setError(null);
     try {
-      const opts = { limit: 10 };
+      const opts = { limit: 10, debug: dbg };
       let resp;
       if (m === "keyword") {
         resp = await keywordSearch(q, opts);
@@ -62,12 +73,12 @@ export function useSearch(): UseSearchReturn {
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => {
-      doSearch(query, mode);
+      doSearch(query, mode, debug);
     }, 300);
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current);
     };
-  }, [query, mode, doSearch]);
+  }, [query, mode, debug, doSearch]);
 
-  return { results, isLoading, error, query, setQuery, mode, setMode };
+  return { results, isLoading, error, query, setQuery, mode, setMode, debug, setDebug };
 }

@@ -224,6 +224,24 @@ KnowledgeOS provides three search modes:
 
 If `OPENAI_API_KEY` is not set, vector search returns 503 and hybrid search falls back to keyword-only.
 
+### Snippet shape
+
+Search snippets are returned as a structured object — not raw HTML:
+
+```json
+{ "text": "plain string", "highlights": [[0, 7], [23, 35]] }
+```
+
+`ts_headline` uses sentinel characters (`\x01`/`\x02`) to mark matched terms. The `_parse_snippet()` helper in `search_service.py` converts these into character index ranges. The frontend renders highlights as React `<mark>` nodes with no `dangerouslySetInnerHTML`.
+
+### Multilingual fallback
+
+When Postgres FTS (`plainto_tsquery`) returns no hits, keyword search falls back to `ILIKE '%query%'` over `title` and `content_text`. This covers Japanese, Chinese, and other scripts not tokenised by the `english` text-search config.
+
+### Index observability
+
+`GET /api/v1/objects/{id}/index-status` returns chunk count, embedded count, aggregated status (`not_indexed` / `pending` / `partial` / `done`), and `last_embedded_at`. Use `scripts/reindex.py` to enqueue reindex jobs manually.
+
 ## Phase 8A: Workspace Lite (frontend-only)
 
 Workspace Lite adds a split-pane side panel to the app shell. It is implemented entirely as React client state — no backend schema changes, no new API endpoints.

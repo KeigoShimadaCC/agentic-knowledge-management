@@ -120,6 +120,19 @@ Reindex triggers:
 
 Reindex jobs use deterministic RQ job IDs (`reindex-{object_id}`; UUID text uses only letters, digits, and dashes per RQ rules) to avoid flooding the queue during repeated saves.
 
+### `scripts/reindex.py` — CLI helper
+
+```bash
+# Reindex all objects (enqueues jobs via RQ)
+PYTHONPATH=services/api:services/worker uv run python scripts/reindex.py --all
+
+# Reindex specific objects by UUID
+PYTHONPATH=services/api:services/worker uv run python scripts/reindex.py \
+  3f7d1a2b-... f82c9e01-...
+```
+
+Requires `REDIS_URL` and `DATABASE_URL` in the environment (or `infra/.env` sourced). The worker service must be running to process the queued jobs. Check index status via `GET /api/v1/objects/{id}/index-status`.
+
 ## Phase 6A: Chat Import Lite
 
 Chat imports are synchronous API operations. `POST /api/v1/chats/import` accepts either multipart upload (`.json`, `.md`, `.markdown`, `.txt`) or JSON paste content. ChatGPT multi-conversation exports create one `chat` object per conversation.

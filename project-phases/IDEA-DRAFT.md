@@ -1543,4 +1543,26 @@ Build the full product as:
 
 A local browser-based AI knowledge OS with Postgres + filesystem as canonical storage, Qdrant for semantic search, Kùzu for graph traversal, Tiptap for rich editing, FastAPI/Python for ingestion and AI workflows, and an embedded MCP server for agentic access.
 
+---
+
+## Appendix A — Phase 7B (MCP Write Tools) plan pointer
+
+Added 2026-05-15. This vision doc deliberately stays product-level; the tactical implementation plan for Phase 7B lives next to the other phase plans.
+
+**Canonical plan:** [`project-phases/PHASE-7B-MCP-WRITE.md`](./PHASE-7B-MCP-WRITE.md)
+
+Phase 7B turns this vision document's promise — *"agents may directly write, but all actions are audited"* (section 1.1) — into shipping code by adding six write tools to the MCP server (`create_page`, `update_page`, `create_edge`, `archive_object`, `ingest_url`, `ingest_file`).
+
+Highlights from the linked plan:
+
+- **Unblocked:** Phase 5 shipped `object_revisions`, so agent mutations can produce reversible before/after snapshots. Phase 7A shipped `X-KOS-Internal-Token` auth, redaction, and the stdio server. The only remaining infra prerequisite is `PHASE-FIX-01` F2 (RQ worker container) for `ingest_url`/`ingest_file` to actually extract content.
+- **Hard safety contract:** every write goes through one transaction that creates an `agent_runs` row and (if mutating) an `object_revisions` row. Roll back atomically on any failure. Soft-delete only — no hard deletes through MCP, ever.
+- **Rate limiting:** new Redis-backed sliding-window limiter, default 60 writes/minute and 600/hour per agent identity.
+- **Reversibility:** new `POST /api/v1/objects/{id}/revisions/{rev_id}/restore` endpoint lets the user (or another agent) roll any object back to a prior revision.
+- **Gating:** `MCP_ALLOW_WRITE_TOOLS=false` is the default. With the flag off, `tools/list` advertises only the read surface from Phase 7A.
+- **Scope discipline:** no bulk operations, no edge deletion, no source/chat/asset update tools. Those are explicitly Phase 7B v2/v3 territory.
+- **12 subtasks, ~13 commits, target +18 tests** (~165 total after landing).
+
+Refer to the linked plan for the full subtask checklist, file lists, tool input schemas, audit shape, rate-limit design, risks/mitigations, validation commands, and commit sequence.
+
 This is substantially more ambitious than a note app, but still realistic because you are not doing multiplayer, cloud sync, mobile native apps, or public deployment yet.

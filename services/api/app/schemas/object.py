@@ -1,5 +1,6 @@
 import uuid
 from datetime import datetime
+from typing import Literal
 
 from pydantic import BaseModel, Field, field_validator
 
@@ -48,3 +49,11 @@ class ObjectOut(BaseModel):
     deleted_at: datetime | None
 
     model_config = {"from_attributes": True, "populate_by_name": True}
+
+
+class IndexStatusOut(BaseModel):
+    object_id: uuid.UUID
+    total_chunks: int
+    embedded_count: int
+    status: Literal["not_indexed", "pending", "partial", "done"]
+    last_embedded_at: datetime | None
