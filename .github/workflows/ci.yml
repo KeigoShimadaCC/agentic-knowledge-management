@@ -104,7 +104,7 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: uv sync --all-packages --all-extras
       - run: pnpm --dir tests/e2e exec playwright install chromium --with-deps
-      - run: bash scripts/setup.sh
+      - run: cp infra/.env.example infra/.env && sed -i "s|/Users/YOUR_USERNAME|$HOME|g" infra/.env
       - run: LIBRARY_ROOT=$PWD/tests/e2e/.tmp/library docker compose -f infra/docker-compose.yml up -d --build
       - run: make test-e2e
       - if: failure()
