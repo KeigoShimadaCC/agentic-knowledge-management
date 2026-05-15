@@ -108,4 +108,4 @@ When implementing, consider:
 
 ## Future: Revision Viewer UI
 
-Phase 8 (Multi-Pane Workspaces) is a good candidate for a first revision viewer: a timeline panel that shows when a page was edited, by whom (user vs. which agent), and lets you restore a previous version with one click. This pairs well with the audit/accountability requirements of MCP write tools.
+A revision viewer UI has not yet been built. Phase 8C (multi-pane workspaces) shipped without one. It remains a planned enhancement for a future phase — a timeline panel that shows when a page was edited, by whom (user vs. which agent), and lets you restore a previous version with one click. This pairs well with the audit/accountability requirements of MCP write tools.

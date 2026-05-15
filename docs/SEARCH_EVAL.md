@@ -65,7 +65,7 @@ The `seeded_db` fixture creates representative pages and sources before each tes
 
 ## Connection to Phase 5 AI Q&A
 
-These same eval cases will become the ground-truth inputs for Phase 5 RAG evaluation. When the AI assistant answers from the knowledge base, the eval cases verify that the retrieval stage finds the right context before the LLM generates an answer. Adding high-quality eval cases now pays dividends in Phase 5.
+These same eval cases are the ground-truth inputs for Phase 5 RAG evaluation. When the AI assistant answers from the knowledge base, the eval cases verify that the retrieval stage finds the right context before the LLM generates an answer. Adding high-quality eval cases pays dividends in all AI-backed search and Q&A flows.
 
 ## Offline/Keyword-Only Behavior
 
