@@ -192,35 +192,32 @@ async def update_project(
     obj, proj = row
     now = datetime.now(UTC)
 
-    if payload.title is not None:
-        obj.title = payload.title
-    if payload.description is not None:
-        obj.description = payload.description
-    if payload.tags is not None:
-        obj.tags = list(payload.tags)
+    updates = payload.model_dump(exclude_unset=True)
+    if "title" in updates:
+        obj.title = updates["title"]
+    if "description" in updates:
+        obj.description = updates["description"]
+    if "tags" in updates:
+        obj.tags = list(updates["tags"] or [])
 
-    if payload.period_start is not None:
-        proj.period_start = payload.period_start
-    if payload.period_end is not None:
-        proj.period_end = payload.period_end
-    if payload.role is not None:
-        proj.role = payload.role
-    if payload.organization is not None:
-        proj.organization = payload.organization
-    if payload.problem is not None:
-        proj.problem = payload.problem
-    if payload.actions is not None:
-        proj.actions = payload.actions
-    if payload.results is not None:
-        proj.results = payload.results
-    if payload.metrics is not None:
-        proj.metrics = dict(payload.metrics)
-    if payload.skills is not None:
-        proj.skills = list(payload.skills)
-    if payload.status is not None:
-        proj.status = payload.status
-    if payload.confidence is not None:
-        proj.confidence = payload.confidence
+    for fld in (
+        "period_start",
+        "period_end",
+        "role",
+        "organization",
+        "problem",
+        "actions",
+        "results",
+        "status",
+    ):
+        if fld in updates:
+            setattr(proj, fld, updates[fld])
+    if "metrics" in updates:
+        proj.metrics = dict(updates["metrics"] or {})
+    if "skills" in updates:
+        proj.skills = list(updates["skills"] or [])
+    if "confidence" in updates:
+        proj.confidence = updates["confidence"]
 
     obj.updated_at = now
     proj.updated_at = now
@@ -361,6 +358,7 @@ Source content (truncated to 12k chars):
     except Exception as exc:
         await finish_agent_run(db, run, status="error", error=str(exc))
         await db.flush()
+        await db.commit()
         raise
 
     try:
@@ -377,6 +375,7 @@ Source content (truncated to 12k chars):
             cost_usd=Decimal("0"),
         )
         await db.flush()
+        await db.commit()
         raise HTTPException(status_code=502, detail="AI returned malformed JSON") from None
 
     if not isinstance(data, dict):
@@ -391,6 +390,7 @@ Source content (truncated to 12k chars):
             cost_usd=Decimal("0"),
         )
         await db.flush()
+        await db.commit()
         raise HTTPException(status_code=502, detail="AI returned malformed JSON")
 
     try:
@@ -426,6 +426,7 @@ Source content (truncated to 12k chars):
             cost_usd=Decimal("0"),
         )
         await db.flush()
+        await db.commit()
         raise HTTPException(status_code=502, detail="AI returned malformed JSON") from exc
 
     await finish_agent_run(
