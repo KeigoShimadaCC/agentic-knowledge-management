@@ -317,9 +317,19 @@ async def test_structured_summary_preview_returns_schema(
 
 @pytest.mark.asyncio
 async def test_structured_summary_ai_disabled_returns_clear_error(auth_client: AsyncClient):
+    import app.ai.client as client_module
+    from types import SimpleNamespace
+    from unittest.mock import patch
+
     created = await _import_plain(auth_client)
 
-    resp = await auth_client.post(f"/api/v1/chats/{created['id']}/structured-summary")
+    fake_settings = SimpleNamespace(
+        openai_api_key="",
+        openai_chat_model="gpt-4o-mini",
+        openai_max_tokens=2000,
+    )
+    with patch.object(client_module, "settings", fake_settings):
+        resp = await auth_client.post(f"/api/v1/chats/{created['id']}/structured-summary")
 
     assert resp.status_code == 503
     assert resp.json()["detail"] == "ai_disabled"

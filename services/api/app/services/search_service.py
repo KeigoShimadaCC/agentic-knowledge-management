@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import asyncio
 import uuid
 from datetime import UTC, datetime, timedelta
 
@@ -49,23 +48,21 @@ async def keyword_search(
     offset: int = 0,
 ) -> list[SearchResult]:
     kinds = _resolve_kinds(kind)
-    tasks = []
+    rows: list[SearchResult] = []
 
     if not kind or "page" in kinds:
-        tasks.append(_fts_pages(db, user_id, q, limit, offset))
+        rows.extend(await _fts_pages(db, user_id, q, limit, offset))
     if not kind or "source" in kinds:
-        tasks.append(_fts_sources(db, user_id, q, source_type, limit, offset))
+        rows.extend(await _fts_sources(db, user_id, q, source_type, limit, offset))
     if not kind or "chat" in kinds:
-        tasks.append(_fts_chats(db, user_id, q, limit, offset))
+        rows.extend(await _fts_chats(db, user_id, q, limit, offset))
     if not kind or "asset" in kinds:
-        tasks.append(_fts_assets(db, user_id, q, limit, offset))
+        rows.extend(await _fts_assets(db, user_id, q, limit, offset))
 
     generic_kinds = sorted(kinds.intersection({"claim", "task"}))
     if generic_kinds:
-        tasks.append(_fts_generic_objects(db, user_id, q, generic_kinds, limit, offset))
+        rows.extend(await _fts_generic_objects(db, user_id, q, generic_kinds, limit, offset))
 
-    results = await asyncio.gather(*tasks)
-    rows = [row for sublist in results for row in sublist]
     rows.sort(key=lambda r: r.score, reverse=True)
     return rows[:limit]
 
@@ -149,12 +146,14 @@ async def hybrid_search(
     provider = get_embedding_provider()
     embeddings_enabled = provider.is_enabled
 
+    kw_results = await keyword_search(db, user_id, q, kind, source_type, limit * 2)
     if embeddings_enabled:
-        kw_task = keyword_search(db, user_id, q, kind, source_type, limit * 2)
-        vec_task = vector_search(db, user_id, q, kind, source_type, limit * 2)
-        kw_results, vec_results = await asyncio.gather(kw_task, vec_task)
+        try:
+            vec_results = await vector_search(db, user_id, q, kind, source_type, limit * 2)
+        except Exception:
+            vec_results = []
+            embeddings_enabled = False
     else:
-        kw_results = await keyword_search(db, user_id, q, kind, source_type, limit * 2)
         vec_results = []
 
     merged = _merge_results(kw_results, vec_results, limit)

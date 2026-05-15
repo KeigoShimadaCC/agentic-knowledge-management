@@ -41,7 +41,20 @@ _ensure_test_db()
 
 @pytest_asyncio.fixture(autouse=True)
 async def setup_db():
+    from sqlalchemy import text
+
+    # Terminate any stale connections owned by this user that could hold table locks.
+    async with engine.connect() as conn:
+        await conn.execute(
+            text(
+                "SELECT pg_terminate_backend(pid) FROM pg_stat_activity"
+                " WHERE datname = current_database()"
+                " AND usename = current_user"
+                " AND pid != pg_backend_pid()"
+            )
+        )
     async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.drop_all)
         await conn.run_sync(Base.metadata.create_all)
     yield
     async with engine.begin() as conn:
