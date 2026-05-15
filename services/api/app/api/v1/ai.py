@@ -84,17 +84,6 @@ async def triage(
     return await ai_service.triage_object(db, user.id, body.object_id)
 
 
-@router.post("/extract-project", response_model=ExtractProjectResponse)
-async def extract_project_endpoint(
-    body: ExtractProjectRequest,
-    user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db),
-) -> ExtractProjectResponse:
-    result = await project_service.extract_project(db, user_id=user.id, payload=body)
-    await db.commit()
-    return result
-
-
 @router.get("/inbox", response_model=PaginatedResponse[ObjectOut])
 async def inbox(
     limit: int = Query(20, ge=1, le=100),
@@ -126,3 +115,14 @@ async def inbox(
     return PaginatedResponse(
         items=items, total=total, page=offset // limit + 1, limit=limit, pages=pages
     )
+
+
+@router.post("/extract-project", response_model=ExtractProjectResponse)
+async def extract_project_endpoint(
+    body: ExtractProjectRequest,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> ExtractProjectResponse:
+    result = await project_service.extract_project(db, user_id=user.id, payload=body)
+    await db.commit()
+    return result

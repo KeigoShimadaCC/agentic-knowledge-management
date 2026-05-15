@@ -7,7 +7,6 @@ settings.openai_api_key is non-empty for all tests.
 
 from __future__ import annotations
 
-import json
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -255,6 +254,8 @@ async def test_extract_creates_edges(auth_client: AsyncClient, mock_openai_json:
 
 
 def _extract_project_json() -> str:
+    import json
+
     return json.dumps(
         {
             "title": "Shipped Feature X",
@@ -334,16 +335,16 @@ async def test_extract_project_dry_run(auth_client: AsyncClient, mock_openai_ext
 async def test_extract_project_invalid_kind(
     auth_client: AsyncClient, mock_openai_extract: MagicMock
 ):
-    r = await auth_client.post(
-        "/api/v1/objects",
-        json={"kind": "note", "title": "Not a project source"},
+    upload = await auth_client.post(
+        "/api/v1/assets/upload",
+        files={"file": ("blob.bin", b"not a project source", "application/octet-stream")},
     )
-    assert r.status_code == 201
-    note_id = r.json()["id"]
+    assert upload.status_code == 201
+    asset_id = upload.json()["object"]["id"]
 
     resp = await auth_client.post(
         "/api/v1/ai/extract-project",
-        json={"source_id": note_id, "create": True},
+        json={"source_id": asset_id, "create": True},
     )
     assert resp.status_code == 400
     assert "page, chat, or source" in resp.json()["detail"].lower()

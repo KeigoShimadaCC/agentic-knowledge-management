@@ -1,6 +1,6 @@
 # Phase 9A — Career Memory (Backend Foundation)
 
-> **Status:** Plan
+> **Status:** Complete (backend shipped to `main`)
 > **Owner:** Backend
 > **Audience:** AI coder (Codex / Claude). Read end-to-end before writing code.
 > **Estimated effort:** 1 PR, ~10 commits, ~600–800 LOC including tests.
@@ -471,7 +471,7 @@ async def extract_project_endpoint(
 3. Truncate to 12k chars (model context budget).
 4. Build a prompt (see Section 7.5) and call OpenAI via the existing helper used by `extract-claims` / `triage` (look at how `services/api/app/ai/extractor.py` or the inline call in `api/v1/ai.py` already does it — match that pattern; do not introduce a new client).
 5. Parse the model's JSON response into `ExtractedProjectDraft`.
-6. Write an `AgentRun` row (status=`succeeded`, agent_type=`extract-project`, input/output/model recorded).
+6. Write an `AgentRun` row (status=`success`, agent_type=`extract-project`, input/output/model recorded; matches existing `agent_runs` values from `call_ai`).
 7. If `payload.create == True`, call `project_service.create_project` with `confidence='ai_extracted'`, `extracted_from=source_id`, `extracted_by_agent_run_id=agent_run.id`, and the draft fields.
 8. Return the response.
 
@@ -650,7 +650,7 @@ Add to `tests/api/test_ai.py` (do not modify existing tests):
 
 | # | Test | What it asserts |
 |---|---|---|
-| 13 | `test_extract_project_from_page` | With OpenAI mocked to return a valid JSON draft, POST `/ai/extract-project` with a page source → 200, draft fields populated, `project_id` populated, an `agent_runs` row exists with `agent_type='extract-project'` and `status='succeeded'`. |
+| 13 | `test_extract_project_from_page` | With OpenAI mocked to return a valid JSON draft, POST `/ai/extract-project` with a page source → 200, draft fields populated, `project_id` populated, an `agent_runs` row exists with `agent_type='extract-project'` and `status='success'` (canonical `agent_runs.status` value; same as other AI endpoints). |
 | 14 | `test_extract_project_dry_run` | Same as above with `create=False` → response has `project_id=None`, no row in `projects` table. |
 | 15 | `test_extract_project_invalid_kind` | source object is an asset → 400 with descriptive detail. |
 | 16 | `test_extract_project_ai_disabled` | `OPENAI_API_KEY` env unset → 503. |

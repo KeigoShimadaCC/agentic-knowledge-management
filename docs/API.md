@@ -1018,3 +1018,71 @@ Analyze an inbox item and suggest tags/title/summary (read-only).
 ### GET /api/v1/ai/inbox
 
 Objects from last 30 days with no tags and no description. **Query**: `limit` (default 20), `offset` (default 0). Returns `PaginatedResponse<ObjectOut>`.
+
+### POST /api/v1/ai/extract-project
+
+Draft (and optionally persist) a **project** object from an existing **page**, **chat**, or **source** object. Uses OpenAI JSON mode; writes an `agent_runs` row (`agent_type`: `extract-project`). Requires `OPENAI_API_KEY`; returns `503` with detail `AI features disabled — set OPENAI_API_KEY` when unset.
+
+**Request** (JSON):
+
+```json
+{
+  "source_id": "uuid",
+  "create": true,
+  "period_hint": ["2023-01-01", null]
+}
+```
+
+- `source_id` (required): object id whose `kind` is `page`, `chat`, or `source`.
+- `create` (default `true`): when `true`, inserts `objects` + `projects` rows with `confidence` `ai_extracted` and lineage fields; when `false`, returns the draft only (`project_id` is `null`).
+- `period_hint` (optional): two ISO dates or `null` entries `[start, end]` to steer extraction.
+
+**Response** (200):
+
+```json
+{
+  "draft": {
+    "title": "...",
+    "description": null,
+    "period_start": null,
+    "period_end": null,
+    "role": null,
+    "organization": null,
+    "problem": null,
+    "actions": null,
+    "results": null,
+    "metrics": {},
+    "skills": [],
+    "confidence": 0.85
+  },
+  "project_id": "uuid-or-null",
+  "agent_run_id": "uuid",
+  "source_id": "uuid"
+}
+```
+
+**Errors**: `400` if `source_id` is not a page/chat/source; `404` if the object is missing or not owned by the user; `502` if the model returns non-JSON or malformed payload (failed `agent_run` is persisted); `503` if AI is disabled.
+
+## Projects (career memory)
+
+Projects are `KosObject` rows with `kind="project"` plus a row in the `projects` table (migration `0007`). Soft-delete uses `objects.deleted_at`; restore with `POST /api/v1/objects/{id}/restore` (same as other objects).
+
+### POST /api/v1/projects
+
+Create a project. **Body**: `ProjectCreate` — required `title`; optional `description`, `period_start`, `period_end`, `role`, `organization`, `problem`, `actions`, `results`, `metrics` (flat primitives only), `skills` (normalized to unique lowercase strings), `status` (`active` \| `paused` \| `completed` \| `archived`), `tags`, `extracted_from`, `confidence` (`manual` \| `ai_extracted` \| `verified`). Returns `ProjectOut` (`201`).
+
+### GET /api/v1/projects
+
+List projects for the current user. **Query**: `limit` (1–200, default 50), `offset` (default 0), optional `status`, optional `skill` (substring match against `skills` containment), `include_archived` (default `false` — when `true`, includes rows with `objects.deleted_at` set, i.e. soft-deleted projects; does not filter on `objects.is_archived`). Returns `PaginatedResponse[ProjectOut]` (`items`, `total`, `page`, `limit`, `pages`).
+
+### GET /api/v1/projects/{project_id}
+
+Fetch one project (`200`). `404` if missing, deleted (unless listed via `include_archived` and not applicable here), or not owned by the user.
+
+### PATCH /api/v1/projects/{project_id}
+
+Partial update (`ProjectUpdate`). Omitted fields are unchanged; explicit `null` clears nullable object/project fields where supported. `404` if not found.
+
+### DELETE /api/v1/projects/{project_id}
+
+Soft-delete the project (`204`). Subsequent `GET` returns `404` until `POST /api/v1/objects/{id}/restore`.

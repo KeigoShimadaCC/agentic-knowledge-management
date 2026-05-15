@@ -1,6 +1,6 @@
 # KnowledgeOS — Progress Tracker
 
-> Last updated: 2026-05-15 (Phase 9A career memory backend on branch `phase-9a-career-memory-backend`)
+> Last updated: 2026-05-15 (Phase 9A merged to main; PHASE-ENHANCE-03 UX-T1 shipped; PHASE-FIX-01/02 complete)
 
 ---
 
@@ -205,6 +205,23 @@ See [`project-phases/PHASE-7A-MCP.md`](project-phases/PHASE-7A-MCP.md) for the f
 
 ---
 
+## Phase Enhance 03 — UX/UI Polish 🚧 In Progress
+
+**Goal:** Lift KnowledgeOS to a polished daily-driver: design system tokens, UI primitives, toast system, keyboard shortcuts overlay, responsive layouts, light theme, and accessibility baseline. All changes purely additive; no existing files renamed or removed.
+
+Working branch: `phase-enhance-03-ux-polish` (worktree: `/private/tmp/akm-enhance-03`)
+
+See [`project-phases/PHASE-ENHANCE-03-UX-POLISH.md`](project-phases/PHASE-ENHANCE-03-UX-POLISH.md) for the full spec.
+
+- [x] **UX-T1** — Design tokens (`tokens.css`), Tailwind extension, Inter + JetBrains Mono fonts, 20 UI primitives (`components/ui/`), 3 layout primitives, `cn()` helper, 7 `data-testid` additions on contractual components, feature flag stubs in `.env.example`. `typecheck ✓  lint ✓  build ✓` — commit `d969ef8`
+- [ ] **UX-T2** — Toast system, route error boundaries, mobile drawer, sidebar collapse (Cmd+\), inline save-status feedback
+- [ ] **UX-T3** — cmdk search palette + Tiptap bubble/slash menus (both flag-gated; default off)
+- [ ] **UX-T4** — Unified list page shell with filters, sort, keyboard nav (j/k), bulk actions
+- [ ] **UX-T5** — Light theme support, auth screen redesign, ThemeProvider
+- [ ] **UX-T6** — Accessibility baseline (axe audit), shortcut overlay (?), a11y + UX docs
+
+---
+
 ## Phase 7B — MCP Write Tools ⬜ Planned
 
 **Goal:** Add create/update/archive write tools to MCP. Phase 5 `object_revisions` now ships, so this phase is unblocked and planned in [`project-phases/PHASE-7B-MCP-WRITE.md`](project-phases/PHASE-7B-MCP-WRITE.md).
@@ -278,6 +295,7 @@ See [`project-phases/PHASE-7A-MCP.md`](project-phases/PHASE-7A-MCP.md) for the f
 | 7B | MCP Write Tools | ⬜ Planned | 0 / 4 subtasks |
 | 8 | Multi-Pane Workspaces | ⬜ Planned | 0 / 8 subtasks |
 | 9 | Career & Project Memory | 🚧 In progress (9A backend shipped) | 1 / 8 (9A scope) |
+| Enhance-03 | UX/UI Polish | 🚧 In Progress | 1 / 6 PRs (UX-T1 shipped) |
 
 **Total:** 79 / 103 subtasks complete (77 phase subtasks + 2 hardening subtasks of 7)
 

@@ -64,7 +64,13 @@ async def list_projects_endpoint(
     offset: int = Query(0, ge=0),
     status: ProjectStatus | None = Query(None),
     skill: str | None = Query(None, min_length=1, max_length=64),
-    include_archived: bool = Query(False),
+    include_archived: bool = Query(
+        False,
+        description=(
+            "When true, include soft-deleted projects (no filter on objects.deleted_at). "
+            "Does not change filtering on objects.is_archived."
+        ),
+    ),
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> PaginatedResponse[ProjectOut]:
