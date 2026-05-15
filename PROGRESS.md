@@ -1,6 +1,6 @@
 # KnowledgeOS — Progress Tracker
 
-> Last updated: 2026-05-15 (PHASE-FIX-03: routing unified, docs aligned, repo hygiene)
+> Last updated: 2026-05-15 (PHASE-FIX-03 routing plus Phase Fix 02 cleanup merged to main)
 
 ---
 
@@ -207,10 +207,10 @@ See [`project-phases/PHASE-7A-MCP.md`](project-phases/PHASE-7A-MCP.md) for the f
 
 ## Phase 7B — MCP Write Tools ⬜ Planned
 
-**Goal:** Add create/update/archive write tools to MCP. Requires Phase 5 `object_revisions` table.
+**Goal:** Add create/update/archive write tools to MCP. Phase 5 `object_revisions` now ships, so this phase is unblocked and planned in [`project-phases/PHASE-7B-MCP-WRITE.md`](project-phases/PHASE-7B-MCP-WRITE.md).
 
-- [ ] **v2 — Create Tools:** `create_page`, `create_edge`, `ingest_url`, `ingest_file`; validates agent identity + writes `agent_runs`
-- [ ] **v3 — Update/Archive Tools:** `update_page`, `archive_object`; before/after diff logged; rollback supported
+- [ ] **v2 — Create Tools:** `create_page`, `create_edge`, `ingest_url`, `ingest_file`; validates agent identity + writes `agent_runs` and `object_revisions`
+- [ ] **v3 — Update/Archive Tools:** `update_page`, `archive_object`; before/after snapshots logged; rollback supported
 - [ ] **MCP resources:** `knowledgeos://objects/{id}`, `knowledgeos://pages/{id}`, `knowledgeos://sources/{id}`
 - [ ] **Tests + docs**
 
@@ -269,10 +269,24 @@ See [`project-phases/PHASE-7A-MCP.md`](project-phases/PHASE-7A-MCP.md) for the f
 **Key cross-cutting concepts to track:**
 - Inbox/Triage (Phase 5): AI-classified staging area for unprocessed items
 - Search evaluation (Phase 3+): `tests/fixtures/search_eval_cases.json` as regression anchors
-- Revision history (Phase 5 prerequisite): required before MCP write tools go live — see `docs/REVISION_HISTORY.md`
+- Revision history: implemented for Phase 5/6B and required for MCP write tools — see `docs/REVISION_HISTORY.md`
 - Offline/degradation contract: keyword search always works; AI features degrade gracefully — see `docs/ARCHITECTURE.md`
 
 **Current repo state notes (2026-05-15 audit):**
+
+*Phase Fix 02 cleanup completed on branch `phase-fix-02-forgotten-undocumented`:*
+- Completed F8-F10: `infra/.env.example` has one `MCP_INTERNAL_TOKEN`, host-side MCP defaults point to `http://127.0.0.1:8001`, local published ports are documented, and host-side Postgres examples/tests use `127.0.0.1:5433`.
+- Completed F11: `scripts/backup.sh` ships a local Postgres dump, library tarball, and best-effort Qdrant snapshot flow; verified against running Compose services with output under `~/KnowledgeOS/backups/20260515-021801/`.
+- Completed F12: `tests/dummy_pkg` now has a README, with references in `tests/pyproject.toml` and `AGENTS.md`.
+- Completed F13: `project-phases/PHASE-7B-MCP-WRITE.md` exists, Phase 7B is marked unblocked, and `docs/MCP_TOOLS.md` links to the write-tools plan.
+- Completed F14: docs were swept for shipped Phase 5/6B/7A/8A state; validation also fixed a structured-summary prompt formatting bug and search/test harness issues uncovered by the full suite.
+
+*Verification on Phase Fix 02 branch:*
+- Static checks: `grep -c "^MCP_INTERNAL_TOKEN=" infra/.env.example` => `1`; no host-side `localhost:5432` / `127.0.0.1:5432` matches in `README.md`, `docs`, `project-phases`, `tests`, or `scripts`; no stale host-side `MCP_API_BASE_URL=http://127.0.0.1:8000` defaults in `docs`, `infra`, or `README.md`; `bash -n scripts/backup.sh` passed.
+- Frontend: `pnpm lint`, `pnpm typecheck`, and `pnpm build` passed.
+- Backend/API: `uv run --project services/api --extra dev ruff check services/api` passed; `PYTHONPATH=../services/api uv run --project ../services/api --extra dev pytest api/ unit/ -v` passed with 128 tests and one Qdrant client/server version warning.
+- MCP: `uv run --project services/mcp --extra dev pytest services/mcp/tests/ -v` passed with 19 tests.
+- Branch state: pushed to `origin/phase-fix-02-forgotten-undocumented`.
 
 *Verified complete and matching the phase plans:*
 - Phase 1 Foundation, Phase 2 Sources, Phase 3 Search (incl. multilingual ILIKE fallback), Phase 4 Graph Lite, Phase 5 AI Assistant + Inbox, Phase 6A Chat Import, Phase 6B Structured Chat Import, Phase 7A MCP Read/Search, and Phase 8A Workspace Lite are all implemented and exercised by tests.
@@ -292,6 +306,6 @@ See [`project-phases/PHASE-7A-MCP.md`](project-phases/PHASE-7A-MCP.md) for the f
 - `objectRouting.ts`, `Sidebar.tsx`, `SourceCard.tsx` updated to match.
 
 *Infrastructure oddities:*
-- `infra/.env.example` defines `MCP_INTERNAL_TOKEN=` twice and `MCP_API_BASE_URL=http://127.0.0.1:8000`, but the dockerized API is published on `127.0.0.1:8001` (compose maps `8001 → api:8000`). A host-side `kos-mcp` run against the dockerized API will need `MCP_API_BASE_URL=http://127.0.0.1:8001`.
-- Postgres in `docker-compose.yml` is published on `127.0.0.1:5433` (not 5432). Tests and scripts that assume 5432 should target 5433 or use the Docker network DNS.
+- ✅ Phase Fix 02 resolved MCP env drift: `infra/.env.example` now has one `MCP_INTERNAL_TOKEN`, and host-side `kos-mcp` defaults to the dockerized API at `http://127.0.0.1:8001`.
+- ✅ Phase Fix 02 resolved host-side Postgres port drift: docs and tests now use `127.0.0.1:5433`; `postgres:5432` remains the Docker-network address.
 - `test_output*.txt` files: `.gitignore` already excludes them; not tracked.

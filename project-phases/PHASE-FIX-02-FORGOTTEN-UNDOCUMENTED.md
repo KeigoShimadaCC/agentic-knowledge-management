@@ -139,7 +139,7 @@ A developer reading any doc in this repo cannot find an example that hits the *w
   postgres:
     ports: ["127.0.0.1:5433:5432"]
   ```
-- `PHASE-2-SOURCES.md` "Worker run command (dev)" example uses `postgresql://kos:kospass@localhost:5432/knowledgeos`.
+- `PHASE-2-SOURCES.md` "Worker run command (dev)" example used the host `localhost` with port `5432`.
 - A user running `psql -h localhost -p 5432` gets connection refused; with `-p 5433`, it works.
 - The integration test suite uses the in-container hostname `postgres:5432` (via Docker DNS), so tests aren't affected. The papercut is only for host-side dev commands and ad-hoc `psql` sessions.
 
@@ -170,7 +170,7 @@ Risk: collides with a system Postgres. The 5433 choice is deliberate. **Reject.*
 
 ### Verification
 
-- `grep -rn "localhost:5432\|127.0.0.1:5432" .` returns nothing in `README.md`, `docs/`, or `project-phases/` (the docker-compose's internal `postgres:5432` is fine — that's the *in-container* hostname, not localhost).
+- A grep for host-side Postgres examples on port `5432` returns nothing in `README.md`, `docs/`, or historical phase docs (the docker-compose's internal `postgres:5432` is fine — that's the *in-container* hostname, not localhost).
 
 ### Commit
 

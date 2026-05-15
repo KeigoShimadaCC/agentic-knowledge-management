@@ -256,7 +256,7 @@ def extract(source: Source, db: Session) -> dict:
 
 ### Worker run command (dev)
 ```bash
-PYTHONPATH=services/api DATABASE_URL="postgresql://kos:kospass@localhost:5432/knowledgeos" \
+PYTHONPATH=services/api DATABASE_URL="postgresql://kos:kospass@127.0.0.1:5433/knowledgeos" \
   LIBRARY_ROOT="$HOME/KnowledgeOS/library" \
   uv run --package kos-worker rq worker kos-ingest
 ```

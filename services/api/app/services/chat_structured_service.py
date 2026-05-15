@@ -6,6 +6,7 @@ import re
 import uuid
 from datetime import UTC, datetime
 from decimal import Decimal
+from string import Template
 from typing import Any
 
 from fastapi import HTTPException
@@ -89,15 +90,15 @@ STRUCTURED_CHAT_SUMMARY_USER_TEMPLATE = """Analyze this chat and return JSON wit
 If there is insufficient content, return empty arrays and a warning instead of guessing.
 
 Chat metadata:
-- object_id: {chat_id}
-- title: {title}
-- provider: {provider}
-- turn_count: {turn_count}
-- started_at: {started_at}
-- ended_at: {ended_at}
+- object_id: $chat_id
+- title: $title
+- provider: $provider
+- turn_count: $turn_count
+- started_at: $started_at
+- ended_at: $ended_at
 
 Turns:
-{turns}
+$turns
 """
 
 MAX_STRUCTURED_PROMPT_CHARS = 60000
@@ -324,13 +325,13 @@ def build_structured_summary_messages(obj: KosObject, chat: Chat) -> list[dict[s
         turns = turns[:MAX_STRUCTURED_PROMPT_CHARS]
         warning = "\n\nThe transcript was truncated for context length; include this in warnings."
 
-    user_prompt = STRUCTURED_CHAT_SUMMARY_USER_TEMPLATE.format(
-        chat_id=obj.id,
+    user_prompt = Template(STRUCTURED_CHAT_SUMMARY_USER_TEMPLATE).substitute(
+        chat_id=str(obj.id),
         title=obj.title,
         provider=chat.provider,
-        turn_count=chat.turn_count,
-        started_at=chat.started_at.isoformat() if chat.started_at else None,
-        ended_at=chat.ended_at.isoformat() if chat.ended_at else None,
+        turn_count=str(chat.turn_count),
+        started_at=chat.started_at.isoformat() if chat.started_at else "None",
+        ended_at=chat.ended_at.isoformat() if chat.ended_at else "None",
         turns=f"{turns}{warning}",
     )
     return [

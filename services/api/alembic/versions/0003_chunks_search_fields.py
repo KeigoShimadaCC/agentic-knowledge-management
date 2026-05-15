@@ -43,9 +43,7 @@ def upgrade() -> None:
         ),
     )
     op.add_column("chunks", sa.Column("embedding_model", sa.Text(), nullable=True))
-    op.add_column(
-        "chunks", sa.Column("embedded_at", sa.DateTime(timezone=True), nullable=True)
-    )
+    op.add_column("chunks", sa.Column("embedded_at", sa.DateTime(timezone=True), nullable=True))
     op.add_column("chunks", sa.Column("qdrant_point_id", sa.Text(), nullable=True))
     op.add_column(
         "chunks",

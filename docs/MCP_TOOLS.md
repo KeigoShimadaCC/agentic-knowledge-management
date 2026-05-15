@@ -43,9 +43,11 @@ MCP_INTERNAL_TOKEN=<your-random-token>
 
 ```dotenv
 MCP_ENABLED=true
-MCP_API_BASE_URL=http://127.0.0.1:8000
+MCP_API_BASE_URL=http://127.0.0.1:8001
 MCP_INTERNAL_TOKEN=<same-token-as-above>
 ```
+
+`127.0.0.1:8001` is the host-side default for Docker Compose (`8001 -> api:8000`). If you run the API natively with `uvicorn --port 8000`, point `MCP_API_BASE_URL` at `http://127.0.0.1:8000`. If a future MCP process runs inside the Docker network, use `http://api:8000`.
 
 ### 4. Start the API
 
@@ -71,7 +73,7 @@ Add to your MCP client config (e.g., `claude_desktop_config.json`):
       "args": ["run", "--project", "/path/to/agentic-knowledge-management/services/mcp", "kos-mcp"],
       "env": {
         "MCP_ENABLED": "true",
-        "MCP_API_BASE_URL": "http://127.0.0.1:8000",
+        "MCP_API_BASE_URL": "http://127.0.0.1:8001",
         "MCP_INTERNAL_TOKEN": "<your-token>"
       }
     }
@@ -178,11 +180,13 @@ Traverse the knowledge graph from a given object.
 
 ### `answer_from_kb` (disabled stub)
 
-**Status: UNAVAILABLE** — requires the Phase 5 AI endpoint (`POST /api/v1/ai/answer`), which is currently not wired to MCP. Calling this tool returns an error.
+**Status: UNAVAILABLE** — `POST /api/v1/ai/answer` is shipped, but MCP wiring is still pending. Calling this tool returns an error.
 
 ---
 
 ## Phase 7B — Write Tools (Planned)
+
+Phase 7B is unblocked now that Phase 5 `object_revisions` ships. The implementation plan is [`project-phases/PHASE-7B-MCP-WRITE.md`](../project-phases/PHASE-7B-MCP-WRITE.md).
 
 | Tool | Endpoint | Phase |
 |---|---|---|
@@ -192,6 +196,7 @@ Traverse the knowledge graph from a given object.
 | `archive_object` | `DELETE /api/v1/objects/{id}` | 7B |
 | `import_chat` | `POST /api/v1/chats/import` | 7B |
 | `ingest_url` | `POST /api/v1/sources` | 7B |
+| `ingest_file` | `POST /api/v1/assets/upload?create_source=true` | 7B |
 
 All Phase 7B write tools will validate agent identity, write `agent_runs` audit rows, and require `object_revisions` history.
 

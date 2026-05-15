@@ -49,6 +49,4 @@ class Source(Base):
         DateTime(timezone=True), server_default=text("now()")
     )
 
-    __table_args__ = (
-        sa.Index("ix_sources_ingestion_status", "ingestion_status"),
-    )
+    __table_args__ = (sa.Index("ix_sources_ingestion_status", "ingestion_status"),)

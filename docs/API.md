@@ -3,8 +3,10 @@
 Base URL:
 
 ```text
-http://localhost:8000
+http://127.0.0.1:8001
 ```
+
+`127.0.0.1:8001` is the Docker Compose host port. If you run FastAPI natively with `uvicorn --port 8000`, use `http://127.0.0.1:8000` instead. Inside the Docker network, services use `http://api:8000`.
 
 Versioned API prefix:
 
@@ -317,13 +319,7 @@ Soft-deletes an object by setting `deleted_at`.
 
 Request body: none.
 
-Response:
-
-```json
-{
-  "ok": true
-}
-```
+Response: object shape with `deleted_at` set.
 
 Status codes: `200`, `401`, `403`, `404`.
 
@@ -508,13 +504,7 @@ Soft-deletes the asset object. The stored original is retained so the asset can 
 
 Request body: none.
 
-Response:
-
-```json
-{
-  "ok": true
-}
-```
+Response: object shape with `deleted_at` set.
 
 Status codes: `200`, `401`, `403`, `404`.
 

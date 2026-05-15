@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import asyncio
 import uuid
 from datetime import UTC, datetime, timedelta
 
@@ -20,23 +19,21 @@ async def keyword_search(
     offset: int = 0,
 ) -> list[SearchResult]:
     kinds = _resolve_kinds(kind)
-    tasks = []
+    rows: list[SearchResult] = []
 
     if not kind or "page" in kinds:
-        tasks.append(_fts_pages(db, user_id, q, limit, offset))
+        rows.extend(await _fts_pages(db, user_id, q, limit, offset))
     if not kind or "source" in kinds:
-        tasks.append(_fts_sources(db, user_id, q, source_type, limit, offset))
+        rows.extend(await _fts_sources(db, user_id, q, source_type, limit, offset))
     if not kind or "chat" in kinds:
-        tasks.append(_fts_chats(db, user_id, q, limit, offset))
+        rows.extend(await _fts_chats(db, user_id, q, limit, offset))
     if not kind or "asset" in kinds:
-        tasks.append(_fts_assets(db, user_id, q, limit, offset))
+        rows.extend(await _fts_assets(db, user_id, q, limit, offset))
 
     generic_kinds = sorted(kinds.intersection({"claim", "task"}))
     if generic_kinds:
-        tasks.append(_fts_generic_objects(db, user_id, q, generic_kinds, limit, offset))
+        rows.extend(await _fts_generic_objects(db, user_id, q, generic_kinds, limit, offset))
 
-    results = await asyncio.gather(*tasks)
-    rows = [row for sublist in results for row in sublist]
     rows.sort(key=lambda r: r.score, reverse=True)
     return rows[:limit]
 
@@ -76,7 +73,9 @@ async def vector_search(
 
     object_ids = list({h["payload"]["object_id"] for h in hits})
     obj_map = await _load_objects_by_ids(db, user_id, object_ids)
-    source_map = await _load_sources_by_ids(db, [oid for oid in object_ids if obj_map.get(oid) and obj_map[oid].kind == "source"])  # noqa: E501
+    source_map = await _load_sources_by_ids(
+        db, [oid for oid in object_ids if obj_map.get(oid) and obj_map[oid].kind == "source"]
+    )  # noqa: E501
 
     results: list[SearchResult] = []
     seen: set[str] = set()
@@ -118,13 +117,15 @@ async def hybrid_search(
 
     provider = get_embedding_provider()
     embeddings_enabled = provider.is_enabled
+    kw_results = await keyword_search(db, user_id, q, kind, source_type, limit * 2)
 
     if embeddings_enabled:
-        kw_task = keyword_search(db, user_id, q, kind, source_type, limit * 2)
-        vec_task = vector_search(db, user_id, q, kind, source_type, limit * 2)
-        kw_results, vec_results = await asyncio.gather(kw_task, vec_task)
+        try:
+            vec_results = await vector_search(db, user_id, q, kind, source_type, limit * 2)
+        except Exception:
+            vec_results = []
+            embeddings_enabled = False
     else:
-        kw_results = await keyword_search(db, user_id, q, kind, source_type, limit * 2)
         vec_results = []
 
     merged = _merge_results(kw_results, vec_results, limit)
@@ -157,7 +158,9 @@ def _merge_results(
         r = data["result"]
         kw_score = data["kw"]
         vec_score = data["vec"]
-        age = (now - r.updated_at.replace(tzinfo=UTC)) if r.updated_at.tzinfo else timedelta(days=999)  # noqa: E501
+        age = (
+            (now - r.updated_at.replace(tzinfo=UTC)) if r.updated_at.tzinfo else timedelta(days=999)
+        )  # noqa: E501
         recency = 1.0 if age < timedelta(days=7) else (0.5 if age < timedelta(days=30) else 0.0)
         final = 0.45 * kw_score + 0.45 * vec_score + 0.10 * recency
         combined.append(
@@ -198,7 +201,10 @@ async def _fts_pages(
                 o.tags,
                 o.updated_at,
                 p.content_text,
-                to_tsvector('english', coalesce(o.title,'') || ' ' || coalesce(p.content_text,'')) as vector,
+                to_tsvector(
+                    'english',
+                    coalesce(o.title,'') || ' ' || coalesce(p.content_text,'')
+                ) as vector,
                 plainto_tsquery('english', :q) as query
             FROM objects o
             JOIN pages p ON p.id = o.id
@@ -244,7 +250,9 @@ async def _fts_pages(
             tags=list(row.tags) if row.tags else [],
             score=float(row.score),
             updated_at=row.updated_at,
-            snippet=row.snippet if row.snippet else (row.content_text[:200] if row.content_text else None),
+            snippet=row.snippet
+            if row.snippet
+            else (row.content_text[:200] if row.content_text else None),
         )
         for row in rows
     ]
@@ -271,7 +279,10 @@ async def _fts_sources(
                 s.source_type,
                 s.ingestion_status,
                 s.extracted_text,
-                to_tsvector('english', coalesce(o.title,'') || ' ' || coalesce(s.extracted_text,'')) as vector,
+                to_tsvector(
+                    'english',
+                    coalesce(o.title,'') || ' ' || coalesce(s.extracted_text,'')
+                ) as vector,
                 plainto_tsquery('english', :q) as query
             FROM objects o
             JOIN sources s ON s.id = o.id
@@ -320,7 +331,9 @@ async def _fts_sources(
             tags=list(row.tags) if row.tags else [],
             score=float(row.score),
             updated_at=row.updated_at,
-            snippet=row.snippet if row.snippet else (row.extracted_text[:200] if row.extracted_text else None),
+            snippet=row.snippet
+            if row.snippet
+            else (row.extracted_text[:200] if row.extracted_text else None),
             source_type=row.source_type,
             ingestion_status=row.ingestion_status,
         )
@@ -402,7 +415,9 @@ async def _fts_chats(
             tags=list(row.tags) if row.tags else [],
             score=float(row.score),
             updated_at=row.updated_at,
-            snippet=row.snippet if row.snippet else (row.content_text[:200] if row.content_text else None),
+            snippet=row.snippet
+            if row.snippet
+            else (row.content_text[:200] if row.content_text else None),
         )
         for row in rows
     ]
@@ -425,7 +440,10 @@ async def _fts_assets(
                 o.description,
                 o.tags,
                 o.updated_at,
-                to_tsvector('english', coalesce(o.title,'') || ' ' || coalesce(o.description,'')) as vector,
+                to_tsvector(
+                    'english',
+                    coalesce(o.title,'') || ' ' || coalesce(o.description,'')
+                ) as vector,
                 plainto_tsquery('english', :q) as query
             FROM objects o
             WHERE o.deleted_at IS NULL
@@ -471,7 +489,9 @@ async def _fts_assets(
             tags=list(row.tags) if row.tags else [],
             score=float(row.score),
             updated_at=row.updated_at,
-            snippet=row.snippet if row.snippet else (row.description[:200] if row.description else None),
+            snippet=row.snippet
+            if row.snippet
+            else (row.description[:200] if row.description else None),
         )
         for row in rows
     ]
@@ -548,7 +568,9 @@ async def _fts_generic_objects(
             tags=list(row.tags) if row.tags else [],
             score=float(row.score),
             updated_at=row.updated_at,
-            snippet=row.snippet if row.snippet else (row.description[:200] if row.description else None),
+            snippet=row.snippet
+            if row.snippet
+            else (row.description[:200] if row.description else None),
         )
         for row in rows
     ]
@@ -647,9 +669,7 @@ async def _load_sources_by_ids(db: AsyncSession, ids: list[str]) -> dict:
 
     from app.models.source import Source
 
-    result = await db.execute(
-        select(Source).where(Source.id.in_([uuid.UUID(oid) for oid in ids]))
-    )
+    result = await db.execute(select(Source).where(Source.id.in_([uuid.UUID(oid) for oid in ids])))
     return {str(s.id): s for s in result.scalars().all()}
 
 

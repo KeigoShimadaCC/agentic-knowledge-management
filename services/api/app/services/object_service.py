@@ -58,14 +58,14 @@ async def list_objects(
         stmt = stmt.where(KosObject.kind == kind)
     if tag:
         from sqlalchemy import any_
+
         stmt = stmt.where(tag == any_(KosObject.tags))
     if q:
         stmt = stmt.where(
             func.to_tsvector(
                 "english",
                 KosObject.title + " " + func.coalesce(KosObject.description, ""),
-            )
-            .op("@@")(func.plainto_tsquery("english", q))
+            ).op("@@")(func.plainto_tsquery("english", q))
         )
 
     count_result = await db.execute(select(func.count()).select_from(stmt.subquery()))

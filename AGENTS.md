@@ -2,7 +2,7 @@
 
 ## Project Structure & Module Organization
 
-KnowledgeOS is a local-first monorepo. The web UI lives in `apps/web/src`, with routes in `app/`, UI in `components/`, hooks/API helpers in `lib/`, and shared types in `types/`. The FastAPI backend is in `services/api/app`, organized by `api/v1`, `models`, `schemas`, `services`, `core`, `db`, and `search`. Worker ingestion code is in `services/worker/kos_worker`; MCP code is in `services/mcp/kos_mcp`. Tests are in `tests/api`, fixtures in `tests/fixtures`, infrastructure in `infra`, and design docs in `docs`.
+KnowledgeOS is a local-first monorepo. The web UI lives in `apps/web/src`, with routes in `app/`, UI in `components/`, hooks/API helpers in `lib/`, and shared types in `types/`. The FastAPI backend is in `services/api/app`, organized by `api/v1`, `models`, `schemas`, `services`, `core`, `db`, and `search`. Worker ingestion code is in `services/worker/kos_worker`; MCP code is in `services/mcp/kos_mcp`. Tests are in `tests/api`, fixtures in `tests/fixtures`, infrastructure in `infra`, and design docs in `docs`. `tests/dummy_pkg` is a Hatchling placeholder documented in `tests/dummy_pkg/README.md`; do not import from it or add code there.
 
 ## Build, Test, and Development Commands
 

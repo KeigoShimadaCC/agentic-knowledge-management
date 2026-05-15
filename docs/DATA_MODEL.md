@@ -217,6 +217,24 @@ store `source_chat_id`, `turn_refs`, `confidence`, `agent_run_id`, and an `extra
 | `created_at` | timestamptz | Required |
 | `updated_at` | timestamptz | Required |
 
+### `object_revisions`
+
+Phase 5 adds `object_revisions` for auditable user and agent writes. Phase 6B uses it for structured chat summary preview/apply changes; Phase 7B MCP write tools must link every modified object to a revision row.
+
+| Field | Type | Constraints / Notes |
+| --- | --- | --- |
+| `id` | UUID | Primary key |
+| `object_id` | UUID | Required FK to `objects.id` (`ON DELETE CASCADE`) |
+| `user_id` | UUID | Required FK to `users.id` (`ON DELETE CASCADE`) |
+| `rev_num` | integer | Monotonic per object; unique with `object_id` |
+| `changed_by` | varchar(64) | `user:<id>`, `agent:<name>`, or another explicit actor label |
+| `agent_run_id` | UUID | Optional FK to `agent_runs.id` (`ON DELETE SET NULL`) |
+| `before_snapshot` | JSONB | Required object snapshot before the change; `{}` for create-like changes |
+| `after_snapshot` | JSONB | Required object snapshot after the change; `{}` for terminal changes if ever needed |
+| `created_at` | timestamptz | Required |
+
+Indexes exist on `object_id`, `user_id`, and `agent_run_id`.
+
 ## Soft Deletes
 
 KnowledgeOS uses soft deletes for objects and edges. Deleting a record sets `deleted_at` instead of removing the row. Normal application queries must include:

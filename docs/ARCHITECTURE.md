@@ -1,6 +1,6 @@
 # KnowledgeOS Architecture
 
-KnowledgeOS is a local-first personal AI knowledge base designed to run on a Mac with Docker Compose. Phase 1 establishes the durable core: a browser UI, an authenticated API, relational metadata in Postgres, Redis-backed background jobs, and content-addressed files on the local filesystem.
+KnowledgeOS is a local-first personal AI knowledge base designed to run on a Mac with Docker Compose. The current shipped stack includes the browser UI, authenticated FastAPI API, Postgres source of truth, Redis-backed background jobs, content-addressed local files, search, graph traversal, AI assistant routes, chat import, read-only MCP, and Workspace Lite.
 
 ## System Diagram
 
@@ -13,14 +13,21 @@ Next.js web (:3000)
   |
   | /api/v1/* requests
   v
-FastAPI api (:8000)
+FastAPI api (host :8001 -> container :8000)
   |\
-  | \-- Postgres (:5432)  users, sessions, objects, pages, assets, edges,
+  | \-- Postgres (host :5433 -> container :5432)
+  |                        users, sessions, objects, pages, assets, edges,
   |                        chunks, ingestion_jobs, agent_runs
   |
   |---- Redis (:6379)     RQ queue and job coordination
   |
   \---- Filesystem        ~/KnowledgeOS/library/assets/{prefix}/{sha}/original{ext}
+
+MCP client
+  |
+  | stdio -> kos-mcp -> X-KOS-Internal-Token
+  v
+FastAPI api
 
 RQ worker
   |\
@@ -28,18 +35,20 @@ RQ worker
   |
   \---- Filesystem        read originals, write extracted derivatives
 
-Qdrant (:6333)           reserved for vector search in a later phase
+Qdrant (host/container :6333)  vector search index
 ```
 
 ## Services
 
-| Service | Port | Purpose |
-| --- | ---: | --- |
-| `web` | `3000` | Next.js 14 App Router frontend. Provides the editor and object browsing UI. |
-| `api` | `8000` | FastAPI application. Owns authentication, object CRUD, page content, asset upload/download, and future ingestion endpoints. |
-| `postgres` | `5432` | Primary durable database. Stores users, sessions, universal object records, specialization tables, edges, chunks, jobs, and agent audit records. |
-| `redis` | `6379` | Queue backend for RQ. Used by the API to enqueue jobs and by the worker to claim work. |
-| `qdrant` | `6333` | Vector database reserved for semantic search in Phase 3+. It is part of the local stack but not central to Phase 1 behavior. |
+| Service | Host port | Container port | Purpose |
+| --- | ---: | ---: | --- |
+| `web` | `3000` | `3000` | Next.js 14 App Router frontend. Provides the editor and object browsing UI. |
+| `api` | `8001` | `8000` | FastAPI application. Owns authentication, object CRUD, page content, asset upload/download, ingestion endpoints, AI routes, and internal MCP auth. |
+| `postgres` | `5433` | `5432` | Primary durable database. Stores users, sessions, universal object records, specialization tables, edges, chunks, jobs, revisions, and agent audit records. |
+| `redis` | `6379` | `6379` | Queue backend for RQ. Used by the API to enqueue jobs and by the worker to claim work. |
+| `qdrant` | `6333` / `6334` | `6333` / `6334` | Rebuildable vector database for semantic search. |
+
+All published ports bind to `127.0.0.1`. Use container hostnames such as `api:8000` or `postgres:5432` only from inside the Docker network; host-side tools should use `127.0.0.1:8001` for the API and `127.0.0.1:5433` for Postgres.
 
 ## Runtime Responsibilities
 
@@ -49,7 +58,17 @@ The API is the system boundary for all application state changes. It validates r
 
 The worker (`services/worker/kos_worker/`) runs as a separate process via `rq worker kos-ingest`. It is responsible for slow ingestion tasks: extracting text from PDFs, generating thumbnails, reading CSV previews, fetching YouTube transcripts, scraping web articles, and updating source status after asynchronous work completes.
 
-Postgres is the source of truth for identity, object metadata, page documents, asset records, graph edges, ingestion status, and agent run records. The filesystem is the source of truth for large original files and later extracted derivatives. Redis is transient coordination state and should not be treated as durable storage.
+Postgres is the source of truth for identity, object metadata, page documents, asset records, graph edges, chat imports, revisions, ingestion status, and agent run records. The filesystem is the source of truth for large original files and later extracted derivatives. Redis is transient coordination state and should not be treated as durable storage.
+
+## Backup and Restore Boundary
+
+The supported local backup entry point is `bash scripts/backup.sh`. It writes timestamped backups under `~/KnowledgeOS/backups/`:
+
+- `postgres.dump` from `pg_dump -Fc` against the Compose Postgres service.
+- `library.tar.gz`, a compressed copy of `~/KnowledgeOS/library/` excluding `tmp/`.
+- `qdrant-snapshot.json` when the local Qdrant collection can create a snapshot, or a skipped marker when Qdrant is unavailable.
+
+Postgres and the library directory are canonical. Redis, Qdrant, and future graph indexes are derived or transient state and can be rebuilt from canonical data.
 
 ## Phase 1 Data Flow
 

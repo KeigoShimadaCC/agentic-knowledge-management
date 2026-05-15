@@ -49,13 +49,9 @@ def upgrade() -> None:
         sa.PrimaryKeyConstraint("id"),
         sa.UniqueConstraint("object_id", "rev_num"),
     )
-    op.create_index(
-        "ix_object_revisions_object_id", "object_revisions", ["object_id"]
-    )
+    op.create_index("ix_object_revisions_object_id", "object_revisions", ["object_id"])
     op.create_index("ix_object_revisions_user_id", "object_revisions", ["user_id"])
-    op.create_index(
-        "ix_object_revisions_agent_run_id", "object_revisions", ["agent_run_id"]
-    )
+    op.create_index("ix_object_revisions_agent_run_id", "object_revisions", ["agent_run_id"])
     op.add_column(
         "objects",
         sa.Column("ai_generated", sa.Boolean(), nullable=False, server_default="false"),
