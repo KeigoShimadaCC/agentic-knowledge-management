@@ -289,3 +289,45 @@ Side pane hides below the `md` breakpoint (< 768px). ESC key closes it.
 ### Notes for agents
 
 Workspace state is local UI state only. Do not add persistence for workspace layouts in this branch — that belongs to Phase 8 proper. The `WorkspaceLiteProvider` is intentionally isolated in `components/workspace/`; its internals can be replaced without touching consumers.
+
+## Phase 8C: Multi-Pane Workspaces
+
+Phase 8C extends the Workspace Lite frontend with a full multi-pane layout engine, save/restore, cross-pane drag-to-quote, pane linking, workspace-scoped AI, and workspace-scoped search.
+
+### Layout Engine
+
+`WorkspaceLiteProvider` now manages `PaneState[]` (up to 4 panes). The legacy `openSidePane` / `closeSidePane` / `sidePaneObject` API is preserved as backward-compatible aliases.
+
+`AppShell` renders a `react-resizable-panels` `Group` (renamed from `PanelGroup`) with one `Panel` per pane. Each side pane is wrapped in `PaneContainer` which provides the header (kind badge, title, Open link, close/add/link buttons) and delegates to `ObjectPaneViewer`.
+
+```
+AppShell
+  └─ <Group orientation="horizontal|vertical">
+       <Panel>  ← main content (router children)
+       <Separator>  ← drag handle
+       <Panel>  ← PaneContainer (side pane 1)
+         └─ ObjectPaneViewer → PagePaneView | SourcePaneView
+       <Separator>
+       <Panel>  ← PaneContainer (side pane 2, optional)
+       ...
+```
+
+### Save/Restore
+
+`WorkspaceLiteProvider.saveWorkspace(name, description?)` serializes current `PaneState[]` → `WorkspaceLayoutAPI` and calls `POST /api/v1/workspaces`. `loadWorkspace(id)` calls `GET /api/v1/workspaces/{id}` and restores panes + split + activePaneId from the saved layout.
+
+The workspace toolbar (shown when ≥2 panes are open) provides the "Save workspace" button. The Sidebar Workspaces section lists the 5 most recent saved workspaces with load/delete actions.
+
+### Cross-Pane Drag-to-Quote
+
+`useCrossPane.ts` provides `useCrossPaneDragSource` (HTML5 `dataTransfer` with MIME type `application/kos-text`) and `useCrossPaneDragTarget`. When text is dragged from `SourcePaneView` and dropped on `PagePaneView`:
+1. A blockquote block is inserted into the page view's quote list
+2. A `cites` edge is created via `POST /api/v1/edges`
+
+### Pane Linking
+
+`LinkPaneModal` (triggered from the chain-link icon in `PaneContainer` header when ≥2 panes have objects) lets the user pick an edge kind and target pane, then calls `POST /api/v1/edges` to create the typed graph edge.
+
+### Workspace-Scoped AI and Search
+
+Both `POST /api/v1/ai/answer` and `GET /api/v1/search/keyword` / `POST /api/v1/search/hybrid` accept an optional `object_ids: list[UUID]`. When provided, results are post-filtered to only those objects. The frontend `AiPanel` scope picker and `SearchModal` / `SearchCommand` "Search workspace only" checkbox wire these filters to the open pane IDs.

@@ -398,3 +398,41 @@ async def test_extract_project_malformed_json(auth_client: AsyncClient):
         row = result.scalar_one_or_none()
     assert row is not None
     assert row.status == "failed"
+
+
+# ── Workspace-scoped AI answer test ───────────────────────────────────────
+
+@pytest.mark.asyncio
+async def test_answer_with_object_ids_scoped_to_workspace(
+    auth_client: AsyncClient,
+    mock_openai: MagicMock,
+) -> None:
+    """POST /ai/answer with object_ids only retrieves answers from scoped objects."""
+    page_data = await _make_page(auth_client, title="Scoped workspace test page")
+    object_id = page_data["object"]["id"]
+
+    with patch("openai.AsyncOpenAI", return_value=mock_openai):
+        resp = await auth_client.post(
+            "/api/v1/ai/answer",
+            json={"q": "What is in this workspace?", "object_ids": [object_id]},
+        )
+    assert resp.status_code == 200
+    data = resp.json()
+    assert "answer" in data
+    assert "citations" in data
+    assert isinstance(data["citations"], list)
+
+
+@pytest.mark.asyncio
+async def test_answer_with_empty_object_ids_returns_answer(
+    auth_client: AsyncClient,
+    mock_openai: MagicMock,
+) -> None:
+    """POST /ai/answer with object_ids=[] behaves like no filter (null)."""
+    with patch("openai.AsyncOpenAI", return_value=mock_openai):
+        resp = await auth_client.post(
+            "/api/v1/ai/answer",
+            json={"q": "Generic question", "object_ids": None},
+        )
+    assert resp.status_code == 200
+    assert "answer" in resp.json()
