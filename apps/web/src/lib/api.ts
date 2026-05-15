@@ -391,3 +391,7 @@ export async function updateObject(
     body: JSON.stringify(data),
   });
 }
+
+export async function deleteObject(id: string): Promise<ObjectOut> {
+  return request<ObjectOut>(`/api/v1/objects/${id}`, { method: "DELETE" });
+}
