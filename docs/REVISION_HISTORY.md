@@ -1,16 +1,12 @@
 # Revision History Design
 
-## Why This Matters Before Agent Writes
+## Why This Matters For Agent Writes
 
-KnowledgeOS will eventually let AI agents (via MCP write tools or the AI assistant) directly modify pages and objects. Without a revision history, an agent that overwrites a page with incorrect content leaves no way to inspect what changed or undo the damage.
+KnowledgeOS allows AI agents (via MCP write tools or the AI assistant) to directly modify pages and objects. Without a revision history, an agent that overwrites a page with incorrect content leaves no way to inspect what changed or undo the damage.
 
-**Revision history is a prerequisite for enabling MCP write tools (`update_page`, `archive_object`, etc.).**
+The `agent_runs` table records that an agent performed an action. `object_revisions` records what the state of each affected object was before and after. Together they form a complete audit trail.
 
-The `agent_runs` table already records that an agent performed an action. `object_revisions` records what the state of each affected object was before and after. Together they form a complete audit trail.
-
-Phase 6B implements the first minimal version for structured chat summaries. It records
-before/after JSON snapshots for chat summary preview/apply changes and links them to
-`agent_runs`. Full page rollback UI and broad user-edit revision coverage remain future work.
+**Phase 7B ships the first production MCP write tools.** Every call to `update_page` or `archive_object` through MCP creates both an `agent_runs` row and a linked `object_revisions` row, making all agent mutations fully auditable and reversible via `POST /objects/{id}/revisions/{rev_id}/restore`.
 
 ---
 

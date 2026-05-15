@@ -212,16 +212,16 @@ See [`project-phases/PHASE-7A-MCP.md`](project-phases/PHASE-7A-MCP.md) for the f
 See [`project-phases/PHASE-7B-MCP-WRITE.md`](project-phases/PHASE-7B-MCP-WRITE.md) for the full subtask spec.
 
 - [x] **Subtask 0** — Branch + PROGRESS update (this entry)
-- [ ] **Subtask 1** — Rate limiter (`core/rate_limit.py`) + Redis test fixture
-- [ ] **Subtask 2** — Audit + revision wrapper (`audited_write_service.py`)
-- [ ] **Subtask 3** — `POST /objects/{id}/archive` + `POST /objects/{id}/revisions/{rev_id}/restore` endpoints
-- [ ] **Subtask 4** — `MCP_ALLOW_WRITE_TOOLS` gating + per-tool registration filter
-- [ ] **Subtask 5** — `create_page` MCP tool + client method + tests
-- [ ] **Subtask 6** — `create_edge` MCP tool + client method + tests
-- [ ] **Subtask 7** — `update_page` MCP tool + revision write + tests
-- [ ] **Subtask 8** — `archive_object` MCP tool + tests
-- [ ] **Subtask 9** — `ingest_url` MCP tool + URL safety re-check + tests
-- [ ] **Subtask 10** — `ingest_file` MCP tool + LIBRARY_ROOT validation + tests
+- [x] **Subtask 1** — Rate limiter (`core/rate_limit.py`) + Redis test fixture (5 tests)
+- [x] **Subtask 2** — Audit + revision wrapper (`audited_write_service.py`) + `snapshot_object_state()` + `complete()`/`fail()` aliases
+- [x] **Subtask 3** — `POST /objects/{id}/archive` + `POST /objects/{id}/revisions/{rev_id}/restore` endpoints (4 tests)
+- [x] **Subtask 4** — `MCP_ALLOW_WRITE_TOOLS` gating + per-tool registration filter (35 MCP tests)
+- [x] **Subtask 5** — `create_page` MCP tool + client method + API test
+- [x] **Subtask 6** — `create_edge` MCP tool + client method + API test
+- [x] **Subtask 7** — `update_page` MCP tool + optimistic locking (`expected_version` 409) + API tests
+- [x] **Subtask 8** — `archive_object` MCP tool + API test
+- [x] **Subtask 9** — `ingest_url` MCP tool + URL safety validation + API tests
+- [x] **Subtask 10** — `ingest_file` MCP tool + `validate_path_under_library_root()` + MCP tests
 - [ ] **Subtask 11** — Docs (`MCP_TOOLS.md`, `SECURITY.md`, `AGENT_GUIDE.md`, `REVISION_HISTORY.md`) + PROGRESS flip
 - [ ] **Subtask 12** — End-to-end smoke harness
 
