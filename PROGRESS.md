@@ -124,6 +124,24 @@ See [`project-phases/PHASE-8A-WORKSPACE-LITE.md`](project-phases/PHASE-8A-WORKSP
 
 ---
 
+## Phase 8B — Workspaces Backend Foundation 🚧 In Progress
+
+**Goal:** Persist named multi-pane workspaces with validated layout JSON, user-owned CRUD endpoints, soft delete/restore, and docs. Backend-only; no frontend, MCP, worker, object-kind, or `KosObject` changes.
+
+Working branch: `phase-8b` (worktree: `/Users/keigoshimada/Documents/phase-8b`)
+
+See [`project-phases/PHASE-8B-WORKSPACES-BACKEND.md`](project-phases/PHASE-8B-WORKSPACES-BACKEND.md) for the full contract.
+
+- [x] **Subtask 0** — Audit + Phase 8B plan review + progress tracker start
+- [ ] **Subtask 1** — `workspaces` Alembic migration, ORM model, and model export
+- [ ] **Subtask 2** — Pydantic workspace schemas with layout validation
+- [ ] **Subtask 3** — Workspace service layer with CRUD, soft delete, restore, and last-used tracking
+- [ ] **Subtask 4** — Authenticated workspace REST endpoints wired into API router
+- [ ] **Subtask 5** — Workspace CRUD, validation, ownership, and restore integration tests
+- [ ] **Subtask 6** — API/data model/architecture docs and final validation
+
+---
+
 ## Phase 5 — AI Assistant + Inbox/Triage ✅ Complete
 
 **Goal:** Embed AI directly into the editing and research workflow. Every AI write creates an `agent_runs` row + `object_revisions` row; features degrade gracefully when `OPENAI_API_KEY` is absent.
