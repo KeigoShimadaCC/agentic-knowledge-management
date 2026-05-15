@@ -178,16 +178,34 @@ class KosApiClient:
         title: str | None = None,
         tags: list[str] | None = None,
     ) -> dict:
-        body: dict = {"file_path": file_path}
-        if source_type is not None:
-            body["source_type"] = source_type
-        if title is not None:
-            body["title"] = title
-        if tags:
-            body["tags"] = tags
-        r = await self._client.post("/api/v1/sources", json=body)
-        r.raise_for_status()
-        return r.json()
+        from pathlib import Path
+
+        path = Path(file_path)
+        with path.open("rb") as fh:
+            content = fh.read()
+
+        # Step 1: upload binary to assets, create a linked source in one shot
+        upload_resp = await self._client.post(
+            "/api/v1/assets/upload",
+            params={"create_source": "true"},
+            files={"file": (path.name, content)},
+        )
+        upload_resp.raise_for_status()
+        upload_data = upload_resp.json()
+
+        # Step 2: if caller supplied title/tags/source_type, patch the source
+        src_id = upload_data.get("source", {}).get("id")
+        if src_id and (title or tags or source_type):
+            patch: dict = {}
+            if title:
+                patch["title"] = title
+            if tags:
+                patch["tags"] = tags
+            patch_resp = await self._client.patch(f"/api/v1/sources/{src_id}", json=patch)
+            if patch_resp.is_success:
+                return patch_resp.json()
+
+        return upload_data.get("source", upload_data)
 
     async def aclose(self) -> None:
         await self._client.aclose()

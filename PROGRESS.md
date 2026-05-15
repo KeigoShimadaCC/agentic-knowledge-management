@@ -205,7 +205,7 @@ See [`project-phases/PHASE-7A-MCP.md`](project-phases/PHASE-7A-MCP.md) for the f
 
 ---
 
-## Phase 7B — MCP Write Tools 🚧 In Progress
+## Phase 7B — MCP Write Tools ✅ Complete
 
 **Goal:** Add 6 audited, rate-limited, reversible write tools to MCP: `create_page`, `update_page`, `create_edge`, `archive_object`, `ingest_url`, `ingest_file`. Every write produces an `agent_runs` row and (for mutations) an `object_revisions` row.
 
@@ -222,8 +222,8 @@ See [`project-phases/PHASE-7B-MCP-WRITE.md`](project-phases/PHASE-7B-MCP-WRITE.m
 - [x] **Subtask 8** — `archive_object` MCP tool + API test
 - [x] **Subtask 9** — `ingest_url` MCP tool + URL safety validation + API tests
 - [x] **Subtask 10** — `ingest_file` MCP tool + `validate_path_under_library_root()` + MCP tests
-- [ ] **Subtask 11** — Docs (`MCP_TOOLS.md`, `SECURITY.md`, `AGENT_GUIDE.md`, `REVISION_HISTORY.md`) + PROGRESS flip
-- [ ] **Subtask 12** — End-to-end smoke harness
+- [x] **Subtask 11** — Docs (`MCP_TOOLS.md`, `SECURITY.md`, `AGENT_GUIDE.md`, `REVISION_HISTORY.md`) + PROGRESS flip
+- [x] **Subtask 12** — End-to-end smoke harness (`scripts/mcp_smoke.py`, 11/11 checks pass)
 
 ---
 
@@ -271,7 +271,7 @@ See [`project-phases/PHASE-7B-MCP-WRITE.md`](project-phases/PHASE-7B-MCP-WRITE.m
 | 6B | Structured Chat Import | ✅ Complete | 9 / 9 subtasks |
 | 7A | MCP Read/Search | ✅ Complete | 10 / 10 subtasks |
 | Hardening | Search Quality + Multilingual | 🚧 Partial | 2 / 7 subtasks |
-| 7B | MCP Write Tools | 🚧 In Progress | 1 / 13 subtasks |
+| 7B | MCP Write Tools | ✅ Complete | 13 / 13 subtasks |
 | 8 | Multi-Pane Workspaces | ⬜ Planned | 0 / 8 subtasks |
 | 9 | Career & Project Memory | ⬜ Planned | 0 / 8 subtasks |
 
