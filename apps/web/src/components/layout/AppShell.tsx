@@ -2,10 +2,13 @@
 
 import { useEffect, useState } from "react";
 import { SearchModal } from "@/components/search/SearchModal";
+import { SearchCommand } from "@/components/search/SearchCommand";
 import { WorkspaceSidePane } from "@/components/workspace/WorkspaceSidePane";
 import { Sidebar } from "./Sidebar";
 import { MobileNav } from "./MobileNav";
 import { useSidebarState } from "@/lib/hooks/useSidebarState";
+
+const useV2Search = process.env.NEXT_PUBLIC_UX_SEARCH_V2 === "1";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const [searchOpen, setSearchOpen] = useState(false);
@@ -31,7 +34,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <main className="min-w-0 flex-1 overflow-y-auto">{children}</main>
       </div>
       <WorkspaceSidePane />
-      <SearchModal isOpen={searchOpen} onClose={() => setSearchOpen(false)} />
+      {useV2Search
+        ? <SearchCommand isOpen={searchOpen} onClose={() => setSearchOpen(false)} />
+        : <SearchModal isOpen={searchOpen} onClose={() => setSearchOpen(false)} />
+      }
     </div>
   );
 }

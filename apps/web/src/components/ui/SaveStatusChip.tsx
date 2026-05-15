@@ -2,7 +2,7 @@
 import * as React from "react";
 import { cn } from "@/lib/cn";
 
-export type SaveStatus = "saved" | "saving" | "unsaved" | "error";
+export type SaveStatus = "idle" | "saved" | "saving" | "unsaved" | "error";
 
 interface SaveStatusChipProps {
   status: SaveStatus;
@@ -24,6 +24,7 @@ export function SaveStatusChip({ status, className }: SaveStatusChipProps) {
       {status === "saving" && (
         <span className="h-3 w-3 animate-spin rounded-full border border-current border-t-transparent" />
       )}
+      {status === "idle" && null}
       {status === "saved" && "Saved"}
       {status === "saving" && "Saving…"}
       {status === "unsaved" && "Unsaved changes"}

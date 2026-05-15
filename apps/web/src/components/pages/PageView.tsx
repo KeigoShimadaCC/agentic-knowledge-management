@@ -17,6 +17,19 @@ import { ObjectPicker } from "@/components/graph/ObjectPicker";
 import { createEdge } from "@/lib/api";
 import { PageTitle } from "./PageTitle";
 import { useAutoSave } from "@/lib/hooks/useAutoSave";
+import { SaveStatusChip } from "@/components/ui/SaveStatusChip";
+import { EditorBubbleMenu } from "@/components/editor/BubbleMenu";
+import { SlashMenu } from "@/components/editor/SlashMenu";
+import { SlashMenuExtension } from "@/components/editor/extensions/SlashMenuExtension";
+import TaskList from "@tiptap/extension-task-list";
+import TaskItem from "@tiptap/extension-task-item";
+import { Table } from "@tiptap/extension-table";
+import { TableRow } from "@tiptap/extension-table-row";
+import { TableCell } from "@tiptap/extension-table-cell";
+import { TableHeader } from "@tiptap/extension-table-header";
+import HorizontalRule from "@tiptap/extension-horizontal-rule";
+
+const useV2Editor = process.env.NEXT_PUBLIC_UX_EDITOR_V2 === "1";
 
 type JsonValue = string | number | boolean | null | JsonObject | JsonValue[];
 type JsonObject = { [key: string]: JsonValue };
@@ -92,6 +105,9 @@ export function PageView({ pageId, initialTitle, initialContent }: PageViewProps
       Link.configure({ openOnClick: false }),
       Image,
       CitationExtension,
+      ...(useV2Editor
+        ? [TaskList, TaskItem.configure({ nested: true }), Table.configure({ resizable: true }), TableRow, TableCell, TableHeader, HorizontalRule, SlashMenuExtension]
+        : []),
     ],
     content: Object.keys(initialContent).length > 0 ? initialContent : undefined,
     autofocus: true,
@@ -111,15 +127,10 @@ export function PageView({ pageId, initialTitle, initialContent }: PageViewProps
     setTitle(newTitle);
   }, []);
 
-  const saveStatusLabel = {
-    idle: "",
-    saving: "Saving...",
-    saved: "Saved",
-    error: "Error saving",
-  }[status];
-
   return (
     <div className="flex flex-col h-full">
+      {useV2Editor && editor && <EditorBubbleMenu editor={editor} />}
+      {useV2Editor && editor && <SlashMenu editor={editor} />}
       <EditorToolbar
         editor={editor}
         onCite={() => setIsSourcePickerOpen(true)}
@@ -136,7 +147,7 @@ export function PageView({ pageId, initialTitle, initialContent }: PageViewProps
       </div>
       <div className="flex items-center justify-between px-8 py-2 border-t border-gray-800 text-xs text-gray-500">
         <span>{wordCount} words</span>
-        <span className={status === "error" ? "text-red-400" : ""}>{saveStatusLabel}</span>
+        <SaveStatusChip status={status} />
       </div>
       <SourcePicker
         isOpen={isSourcePickerOpen}
