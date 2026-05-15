@@ -1,15 +1,14 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { formatDistanceToNow } from "date-fns";
 import { Plus, Sparkles } from "lucide-react";
 
 import { createProject, deleteProject } from "@/lib/api";
 import { BulkActionBar } from "@/components/lists/BulkActionBar";
 import { ListPage } from "@/components/lists/ListPage";
 import { ListToolbar, type SortKey } from "@/components/lists/ListToolbar";
+import { ProjectCard } from "@/components/projects/ProjectCard";
 import { toast } from "@/components/ui/Toast";
 import { useListKeyNav } from "@/lib/hooks/useListKeyNav";
 import { useListSelection } from "@/lib/hooks/useListSelection";
@@ -59,21 +58,6 @@ function projectMatchesSkills(project: ProjectOut, skillFilter: string): boolean
     .filter(Boolean);
   if (needles.length === 0) return true;
   return needles.some((needle) => project.skills.some((skill) => skill.includes(needle)));
-}
-
-function completenessScore(project: ProjectOut): number {
-  return [
-    project.problem,
-    project.actions,
-    project.results,
-    project.skills.length > 0,
-    Object.keys(project.metrics ?? {}).length > 0,
-  ].filter(Boolean).length;
-}
-
-function periodLabel(project: ProjectOut): string {
-  if (!project.period_start && !project.period_end) return "No period";
-  return `${project.period_start ?? "Unknown"} - ${project.period_end ?? "Ongoing"}`;
 }
 
 export default function ProjectsPage() {
@@ -230,70 +214,16 @@ export default function ProjectsPage() {
         }
       >
         <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-          {filtered.map((project, i) => {
-            const score = completenessScore(project);
-            return (
-              <article
-                key={project.id}
-                onMouseEnter={() => nav.setHighlightIdx(i)}
-                className={cn(
-                  "rounded-lg border bg-gray-900 p-4 transition-colors",
-                  nav.highlightIdx === i
-                    ? "border-gray-600 bg-gray-800"
-                    : "border-gray-800 hover:border-gray-700"
-                )}
-              >
-                <div className="flex items-start gap-3">
-                  <input
-                    type="checkbox"
-                    checked={selection.has(project.id)}
-                    onChange={() => selection.toggle(project.id)}
-                    className="mt-1 h-3.5 w-3.5 shrink-0 accent-indigo-500"
-                    aria-label={`Select ${project.title}`}
-                  />
-                  <div className="min-w-0 flex-1">
-                    <Link
-                      href={`/app/projects/${project.id}`}
-                      className="line-clamp-2 text-sm font-semibold text-white hover:underline"
-                    >
-                      {project.title}
-                    </Link>
-                    <p className="mt-1 truncate text-xs text-gray-500">
-                      {[project.role, project.organization].filter(Boolean).join(" @ ") ||
-                        "No role"}
-                    </p>
-                    <p className="mt-1 text-xs text-gray-600">{periodLabel(project)}</p>
-                  </div>
-                  <span className="rounded-md border border-gray-700 px-2 py-1 text-xs capitalize text-gray-300">
-                    {project.status}
-                  </span>
-                </div>
-                <div className="mt-4 flex flex-wrap gap-1.5">
-                  {project.skills.slice(0, 5).map((skill) => (
-                    <span
-                      key={skill}
-                      className="rounded border border-gray-800 px-2 py-0.5 text-xs text-gray-400"
-                    >
-                      {skill}
-                    </span>
-                  ))}
-                </div>
-                <div className="mt-4 flex items-center justify-between text-xs text-gray-500">
-                  <span
-                    className={cn(
-                      "rounded-md px-2 py-1",
-                      score < 2 && "bg-red-500/15 text-red-300",
-                      score >= 2 && score < 4 && "bg-amber-500/15 text-amber-300",
-                      score >= 4 && "bg-emerald-500/15 text-emerald-300"
-                    )}
-                  >
-                    {score}/5 complete
-                  </span>
-                  <span>{formatDistanceToNow(new Date(project.updated_at), { addSuffix: true })}</span>
-                </div>
-              </article>
-            );
-          })}
+          {filtered.map((project, i) => (
+            <ProjectCard
+              key={project.id}
+              project={project}
+              selected={selection.has(project.id)}
+              highlighted={nav.highlightIdx === i}
+              onSelect={() => selection.toggle(project.id)}
+              onMouseEnter={() => nav.setHighlightIdx(i)}
+            />
+          ))}
         </div>
       </ListPage>
 
