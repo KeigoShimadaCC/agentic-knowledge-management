@@ -42,12 +42,11 @@ See [`PROGRESS.md`](PROGRESS.md) for the canonical progress tracker.
 | Phase 7B — MCP Write Tools | ✅ Complete |
 | Phase 8A — Workspace Lite (split pane) | ✅ Complete |
 | Hardening — Search Quality / Multilingual | 🚧 Partial (ILIKE fallback only) |
-| Phase 7B — MCP Write Tools | ⬜ Planned |
 | Phase 8 — Multi-Pane Workspaces | ⬜ Planned |
 | Phase 9 — Career & Project Memory | ⬜ Planned |
 
 **Test counts (as of 2026-05-15):**
-- API integration tests: 112 across `tests/api/` (auth 10, objects 10, pages 5, assets 3, sources 17, edges 13, search 13, chats 21, ai 14, mcp_auth 5, health 1)
+- API integration tests: 131 across `tests/api/` (auth 10, objects/archive 8, pages 5, assets 3, sources 17, edges 13, search 13, chats 21, ai 14, mcp_auth 5, rate_limit 5, mcp_writes 8, health 1, rate_limit_worker 8)
 - Unit tests: 16 in `tests/unit/`
 - MCP package tests: 35 in `services/mcp/tests/`
 
