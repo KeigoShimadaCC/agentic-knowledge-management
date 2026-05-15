@@ -11,8 +11,8 @@ interface ObjectPaneViewerProps {
 }
 
 export function ObjectPaneViewer({ id, kind, title }: ObjectPaneViewerProps) {
-  if (kind === "page") return <PagePaneView id={id} />;
-  if (kind === "source") return <SourcePaneView id={id} />;
+  if (kind === "page") return <PagePaneView id={id} objectTitle={title} />;
+  if (kind === "source") return <SourcePaneView id={id} title={title} />;
 
   return (
     <div className="p-4">
