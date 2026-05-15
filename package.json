@@ -6,7 +6,8 @@
     "build": "pnpm -r run build",
     "lint": "pnpm -r run lint",
     "typecheck": "pnpm -r run typecheck",
-    "test:web": "pnpm -F @kos/web test:run"
+    "test:web": "pnpm -F @kos/web test:run",
+    "test:e2e": "pnpm --dir tests/e2e test"
   },
   "engines": {
     "node": ">=20",

@@ -165,6 +165,16 @@ uv run pytest api/test_pages.py::test_create_page  # single test
 cd ../services/mcp && uv run pytest tests/ -v   # 19 MCP tool + config tests
 ```
 
+### End-to-end Tests
+
+Playwright E2E tests live in `tests/e2e` and run against the local Compose stack. Use a sandbox library root so tests never write to the real `~/KnowledgeOS/library`:
+
+```bash
+LIBRARY_ROOT=$PWD/tests/e2e/.tmp/library docker compose -f infra/docker-compose.yml up -d
+pnpm test:e2e
+pnpm --dir tests/e2e report
+```
+
 ### Alembic Migrations
 
 ```bash

@@ -1,0 +1,14 @@
+{
+  "name": "knowledgeos-e2e",
+  "private": true,
+  "scripts": {
+    "test": "playwright test",
+    "test:headed": "playwright test --headed",
+    "report": "playwright show-report"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.60.0",
+    "@types/node": "^20.19.41",
+    "typescript": "^5.9.3"
+  }
+}
