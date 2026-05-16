@@ -8,16 +8,19 @@ import {
   aiSuggestLinks,
   aiSummarize,
   createEdge,
+  enrichPage,
   getObject,
 } from "@/lib/api";
 import { formatDistanceToNow } from "date-fns";
 import { toast } from "@/components/ui/Toast";
 import type {
-  AnswerResponse,
+  AiAnswerResponse,
+  EnrichPageResponse,
   ExtractResponse,
   LinkSuggestion,
   SuggestLinksResponse,
   SummarizeResponse,
+  WebCitation,
 } from "@/types";
 import { useWorkspaceLite } from "@/components/workspace/WorkspaceLiteProvider";
 
@@ -71,8 +74,11 @@ export function AiPanel({ objectId, onEdgeCreated }: AiPanelProps) {
   const claims = useAiAction<ExtractResponse>();
   const tasks = useAiAction<ExtractResponse>();
   const links = useAiAction<SuggestLinksResponse>();
-  const answer = useAiAction<AnswerResponse>();
+  const answer = useAiAction<AiAnswerResponse>();
+  const enrich = useAiAction<EnrichPageResponse>();
   const [question, setQuestion] = useState("");
+  const [useWebSearch, setUseWebSearch] = useState(false);
+  const [enrichQuery, setEnrichQuery] = useState("");
   const [creatingEdge, setCreatingEdge] = useState<string | null>(null);
   const [aiScope, setAiScope] = useState<AiScope>("all");
   const { panes } = useWorkspaceLite();
@@ -306,7 +312,9 @@ export function AiPanel({ objectId, onEdgeCreated }: AiPanelProps) {
             onChange={(e) => setQuestion(e.target.value)}
             onKeyDown={(e) => {
               if (e.key === "Enter" && question.trim()) {
-                answer.run(() => aiAnswer(question.trim(), undefined, getScopeObjectIds()));
+                answer.run(() =>
+                  aiAnswer(question.trim(), undefined, getScopeObjectIds(), useWebSearch)
+                );
               }
             }}
             placeholder="Ask a question…"
@@ -315,12 +323,25 @@ export function AiPanel({ objectId, onEdgeCreated }: AiPanelProps) {
           <button
             type="button"
             disabled={!question.trim() || answer.state.status === "loading"}
-            onClick={() => answer.run(() => aiAnswer(question.trim(), undefined, getScopeObjectIds()))}
+            onClick={() =>
+              answer.run(() =>
+                aiAnswer(question.trim(), undefined, getScopeObjectIds(), useWebSearch)
+              )
+            }
             className="shrink-0 rounded bg-gray-800 px-2 py-1 text-xs text-gray-300 hover:bg-gray-700 disabled:opacity-50"
           >
             Ask
           </button>
         </div>
+        <label className="mt-2 flex cursor-pointer items-center gap-2 text-xs text-gray-400">
+          <input
+            type="checkbox"
+            checked={useWebSearch}
+            onChange={(e) => setUseWebSearch(e.target.checked)}
+            className="rounded border-gray-600"
+          />
+          Search web if KB has no match
+        </label>
         {answer.state.status === "loading" && (
           <p className="mt-1 text-xs text-gray-500">Thinking…</p>
         )}
@@ -339,12 +360,81 @@ export function AiPanel({ objectId, onEdgeCreated }: AiPanelProps) {
                 ))}
               </div>
             )}
+            {answer.state.data.web_citations.length > 0 && (
+              <div className="mt-2 space-y-1">
+                <p className="text-xs text-gray-600">Web sources:</p>
+                {answer.state.data.web_citations.map((citation: WebCitation) => (
+                  <div key={citation.url} className="rounded border border-gray-800 p-2">
+                    <a
+                      href={citation.url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="block truncate text-xs font-medium text-blue-300 hover:text-blue-200"
+                    >
+                      {citation.title}
+                    </a>
+                    {citation.snippet && (
+                      <p className="mt-0.5 line-clamp-2 text-xs text-gray-500">
+                        {citation.snippet}
+                      </p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+            {answer.state.data.warning === "web_search_unavailable" && (
+              <p className="mt-2 rounded border border-yellow-900/60 bg-yellow-950/40 px-2 py-1 text-xs text-yellow-300">
+                Web search is unavailable.
+              </p>
+            )}
           </div>
         )}
         {answer.state.status === "error" && (
           <p className="mt-1 text-xs text-red-400">{answer.state.message}</p>
         )}
       </section>
+
+      {objectId && (
+        <section>
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-medium text-gray-400">Enrich with Docs</span>
+          </div>
+          <div className="mt-1 flex gap-1">
+            <input
+              type="text"
+              value={enrichQuery}
+              onChange={(e) => setEnrichQuery(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && enrichQuery.trim()) {
+                  enrich.run(() => enrichPage(objectId, enrichQuery.trim()));
+                }
+              }}
+              placeholder="Library or topic…"
+              className="min-w-0 flex-1 rounded border border-gray-700 bg-gray-900 px-2 py-1 text-xs text-gray-200 placeholder-gray-600 focus:outline-none focus:ring-1 focus:ring-blue-700"
+            />
+            <button
+              type="button"
+              disabled={!enrichQuery.trim() || enrich.state.status === "loading"}
+              onClick={() => enrich.run(() => enrichPage(objectId, enrichQuery.trim()))}
+              className="shrink-0 rounded bg-gray-800 px-2 py-1 text-xs text-gray-300 hover:bg-gray-700 disabled:opacity-50"
+            >
+              Fetch & Link Docs
+            </button>
+          </div>
+          {enrich.state.status === "loading" && (
+            <p className="mt-1 text-xs text-gray-500">Fetching docs…</p>
+          )}
+          {enrich.state.status === "done" && (
+            <p className="mt-1 text-xs text-gray-400">
+              Linked {enrich.state.data.sources_created.length} source
+              {enrich.state.data.sources_created.length !== 1 ? "s" : ""}.
+            </p>
+          )}
+          {enrich.state.status === "error" && (
+            <p className="mt-1 text-xs text-red-400">{enrich.state.message}</p>
+          )}
+        </section>
+      )}
     </div>
   );
 }
