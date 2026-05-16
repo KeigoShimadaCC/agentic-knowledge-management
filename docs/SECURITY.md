@@ -137,6 +137,24 @@ Additional notes specific to career tools:
 - **Edge idempotency** — `link_to_project` calls `POST /api/v1/edges` which is idempotent on `(source_id, target_id, kind)`. Repeated links to the same project produce one edge row.
 - **Project mutations** — `create_project` and `update_project` call `POST/PATCH /api/v1/projects`. Project mutations are audited via `agent_runs` rows; `object_revisions` rows are written for mutations on pages and sources but not yet for projects (planned follow-up). Revision history for pages and sources is unaffected.
 
+## External MCP Connection Env Var Encryption (Phase 12A)
+
+Secrets stored in `mcp_connections.env_vars` (API keys for external MCP servers such as GitHub or Brave Search) are encrypted at rest using Fernet symmetric encryption from the `cryptography` library.
+
+**Key management:**
+- Set `MCP_ENV_ENCRYPTION_KEY` in `infra/.env` to a Fernet key generated with:
+  ```bash
+  python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
+  ```
+- If the key is absent or empty, any create/update request that includes `env_vars` returns HTTP 400. Connections without env vars can still be saved.
+- The key must be rotated manually (no automated rotation in 12A). To rotate: decrypt all rows with the old key, re-encrypt with the new key, then update `MCP_ENV_ENCRYPTION_KEY`.
+
+**What is encrypted:** only JSONB column values (`env_vars.{key}` values). Column keys remain plaintext so row inspection shows which vars are configured without revealing their contents.
+
+**API responses:** all `GET /api/v1/mcp-connections/*` responses redact env var values to `"*****"` regardless of the caller. The plaintext values are never returned over the API.
+
+**Subprocess env passing:** the `/test` endpoint decrypts env vars in memory, merges them with a whitelist of inherited env vars (`PATH`, `HOME`, `TMPDIR`, `TEMP`, `TMP`), and passes the result directly to the subprocess environment. The decrypted values are never written to disk or logged.
+
 ## Search Output Encoding (XSS Mitigation)
 
 The keyword and hybrid search endpoints return snippets as a structured `{text, highlights}` object — not raw HTML. `ts_headline` output is parsed with sentinel characters (`\x01` / `\x02`) server-side; the resulting plain text and character ranges are delivered as JSON. The frontend renders highlighted segments via React text nodes (not `dangerouslySetInnerHTML`), so user-supplied `<script>` or other HTML in page content cannot execute in the browser. Regression tests verify this with a `<script>` payload in page content.
