@@ -7,6 +7,7 @@
 - HTTP-only cookie `kos_session`, SameSite=Lax, 30-day expiry
 - Optional `Secure` flag via env `COOKIE_SECURE=true` when the API is served over HTTPS
 - All services bind to `127.0.0.1` by default
+- Browser CORS allows **`http://localhost:3000`** and **`http://127.0.0.1:3000`** (the UI is reachable on either host; they are different origins, so both must be listed for `fetch` to the API to succeed).
 
 ## Registration policy
 

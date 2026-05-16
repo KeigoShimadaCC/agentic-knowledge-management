@@ -1,37 +1,10 @@
-import { cookies } from "next/headers";
-import { redirect } from "next/navigation";
-import { getServerApiUrl } from "@/lib/serverApiUrl";
 import { AppShell } from "@/components/layout/AppShell";
 import { TutorialProvider } from "@/components/tutorial/TutorialProvider";
 import { WorkspaceLiteProvider } from "@/components/workspace/WorkspaceLiteProvider";
 import { ErrorBoundary } from "@/components/layout/ErrorBoundary";
 import { Toaster } from "@/components/ui/Toast";
 
-async function getCurrentUser() {
-  const apiUrl = getServerApiUrl();
-  const cookieStore = cookies();
-  const sessionCookie = cookieStore.get("kos_session");
-
-  if (!sessionCookie) return null;
-
-  try {
-    const res = await fetch(`${apiUrl}/api/v1/auth/me`, {
-      headers: {
-        Cookie: `kos_session=${sessionCookie.value}`,
-      },
-      cache: "no-store",
-    });
-    if (!res.ok) return null;
-    return res.json();
-  } catch {
-    return null;
-  }
-}
-
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
-  const user = await getCurrentUser();
-  if (!user) redirect("/login");
-
   return (
     <WorkspaceLiteProvider>
       <TutorialProvider>

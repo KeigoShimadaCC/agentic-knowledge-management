@@ -2,41 +2,38 @@ import { expect, test } from "@playwright/test";
 
 const apiURL = process.env.E2E_API_URL ?? "http://127.0.0.1:8001";
 
-test("registers, logs out, logs in, and resolves auth/me", async ({ page }) => {
-  const email = `auth-${crypto.randomUUID()}@example.com`;
-  const password = "auth-password";
+test("/ redirects directly to /app — no login gate", async ({ page }) => {
+  await page.goto("/");
+  await expect(page).toHaveURL(/\/app/);
+  // sidebar landmark proves the app shell rendered
+  await expect(page.locator("aside")).toBeVisible();
+});
 
+test("/login redirects to /app", async ({ page }) => {
+  await page.goto("/login");
+  await expect(page).toHaveURL(/\/app/);
+});
+
+test("/register redirects to /app", async ({ page }) => {
   await page.goto("/register");
-  await page.getByRole("textbox").nth(0).fill("Auth User");
-  await page.getByRole("textbox").nth(1).fill(email);
-  await page.locator('input[type="password"]').fill(password);
-  await page.getByRole("button", { name: "Create account" }).click();
+  await expect(page).toHaveURL(/\/app/);
+});
 
-  await expect(page).toHaveURL(/\/app$/);
-  await expect(page.getByText("Auth User")).toBeVisible();
+test("/forgot-password redirects to /app", async ({ page }) => {
+  await page.goto("/forgot-password");
+  await expect(page).toHaveURL(/\/app/);
+});
 
-  const cookies = await page.context().cookies();
-  const session = cookies.find((cookie) => cookie.name === "kos_session");
-  expect(session?.value).toBeTruthy();
-  const me = await page.request.get(`${apiURL}/api/v1/auth/me`, {
-    headers: { Cookie: `kos_session=${session?.value}` },
-  });
-  expect(me.ok()).toBeTruthy();
-  const meBody = (await me.json()) as { user: { email: string } };
-  expect(meBody.user.email).toBe(email);
+test("/auth/me returns the local user without any cookie", async ({ request }) => {
+  const res = await request.get(`${apiURL}/api/v1/auth/me`);
+  expect(res.ok()).toBeTruthy();
+  const body = (await res.json()) as { user: { id: string; email: string } };
+  expect(body.user.id).toBeTruthy();
+  expect(body.user.email).toBeTruthy();
+});
 
-  await page.getByRole("button", { name: "Sign out" }).click();
-  await expect(page).toHaveURL(/\/login$/);
-
-  await page.locator('input[type="email"]').fill(email);
-  await page.locator('input[type="password"]').fill(password);
-  await page.getByRole("button", { name: "Sign in" }).click();
-
-  await expect(page).toHaveURL(/\/app$/);
-  const loginSession = (await page.context().cookies()).find((cookie) => cookie.name === "kos_session");
-  expect(loginSession?.value).toBeTruthy();
-  const loginMe = await page.request.get(`${apiURL}/api/v1/auth/me`, {
-    headers: { Cookie: `kos_session=${loginSession?.value}` },
-  });
-  expect(loginMe.ok()).toBeTruthy();
+test("sidebar has no sign-out button", async ({ page }) => {
+  await page.goto("/app");
+  await expect(page.locator("aside")).toBeVisible();
+  await expect(page.getByRole("button", { name: /sign out/i })).not.toBeVisible();
 });

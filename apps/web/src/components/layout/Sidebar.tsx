@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import {
   BookOpen,
   Briefcase,
@@ -10,7 +10,6 @@ import {
   Image,
   Inbox,
   Layout,
-  LogOut,
   MessageSquareText,
   PlayCircle,
   Plug,
@@ -21,9 +20,8 @@ import { clsx } from "clsx";
 import { useEffect, useState } from "react";
 import { PanelLeft } from "lucide-react";
 
-import { logout, listWorkspaces, deleteWorkspace } from "@/lib/api";
+import { listWorkspaces, deleteWorkspace } from "@/lib/api";
 import type { WorkspaceOut } from "@/types";
-import { useAuth } from "@/lib/hooks/useAuth";
 import { useSidebarState } from "@/lib/hooks/useSidebarState";
 import { useShortcut } from "@/lib/hooks/useShortcut";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
@@ -44,9 +42,6 @@ const navItems = [
 
 export function Sidebar() {
   const pathname = usePathname();
-  const router = useRouter();
-  const { user, isLoading, mutate } = useAuth();
-  const [signingOut, setSigningOut] = useState(false);
   const { collapsed, toggle } = useSidebarState();
   const { loadWorkspace } = useWorkspaceLite();
   const { start, seedingStatus } = useTutorial();
@@ -72,18 +67,6 @@ export function Sidebar() {
       toggle();
     }
   });
-
-  async function handleSignOut() {
-    setSigningOut(true);
-    try {
-      await logout();
-      await mutate(undefined, { revalidate: false });
-      router.push("/login");
-      router.refresh();
-    } catch {
-      setSigningOut(false);
-    }
-  }
 
   return (
     <aside className={clsx(
@@ -206,28 +189,6 @@ export function Sidebar() {
         <div className={clsx("flex", collapsed ? "justify-center" : "justify-end px-1")}>
           <ThemeToggle />
         </div>
-        {!isLoading && user ? (
-          <>
-            {!collapsed && (
-              <p className="truncate px-2 text-xs text-gray-500" title={user.email}>
-                {user.display_name?.trim() || user.email}
-              </p>
-            )}
-            <button
-              type="button"
-              disabled={signingOut}
-              onClick={() => void handleSignOut()}
-              title={collapsed ? "Sign out" : undefined}
-              className={clsx(
-                "flex w-full items-center rounded-lg px-3 py-2 text-sm text-gray-400 transition-colors hover:bg-gray-800 hover:text-white disabled:opacity-50",
-                collapsed ? "justify-center gap-0" : "gap-2"
-              )}
-            >
-              <LogOut size={16} aria-hidden />
-              {!collapsed && (signingOut ? "Signing out…" : "Sign out")}
-            </button>
-          </>
-        ) : null}
       </div>
     </aside>
   );
