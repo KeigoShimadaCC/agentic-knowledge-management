@@ -10,7 +10,7 @@ TransformInstruction = Literal["improve", "concise", "grammar", "summarize"]
 
 
 class AiCompleteRequest(BaseModel):
-    context_before: str = Field(..., max_length=4000)
+    context_before: str = Field(..., min_length=1, max_length=4000)
     context_after: str = Field("", max_length=1000)
     instruction: CompletionInstruction = "continue"
     object_id: uuid.UUID | None = None
