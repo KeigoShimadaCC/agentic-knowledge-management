@@ -1,6 +1,6 @@
 # KnowledgeOS — Progress Tracker
 
-> Last updated: 2026-05-16 (Phase 11A Interactive Tutorial complete — 17/17 E2E tests passing)
+> Last updated: 2026-05-16 (Phase 12B On-Demand Ingest Bridge complete; Phase 11A Tutorial merged — all phases through 12B done)
 
 ---
 
@@ -512,12 +512,13 @@ See [`project-phases/PHASE-11A-TUTORIAL.md`](project-phases/PHASE-11A-TUTORIAL.m
 | Enhance-02 | Testing Infrastructure | ✅ Complete | 6 / 6 checkpoints (T1–T6) |
 | Enhance-03 | UX/UI Polish | ✅ Complete | 6 / 6 PRs |
 | 10A | Gap Audit & Fix | ✅ Complete | 6 / 6 subtasks |
-| 11A | Interactive Tutorial | 🚧 In Progress | 0 / 6 subtasks |
+| 11A | Interactive Tutorial | ✅ Complete | 17 / 17 E2E tests |
 | 11B | Inline Editor AI | ✅ Complete | 6 / 6 subtasks |
 | 11C | Proactive Background AI | ✅ Complete | 8 / 8 subtasks |
 | 12A | MCP Connections Registry | ✅ Complete | 9 / 9 subtasks |
+| 12B | On-Demand Ingest Bridge | ✅ Complete | — |
 
-**Active:** Phase 11A in progress on branch `phase-11a-tutorial`. Phase 12A complete and merged to main. Phases 11B and 11C complete. Test totals: ~294 (frontend 60 · API/unit 232 · worker 29 · MCP 56 · E2E 10).
+**Active:** All phases through 12B complete and merged to main. Test totals: ~311 (frontend 60 · API/unit 232 · worker 29 · MCP 56 · E2E 27 [10 golden path + 17 tutorial]).
 
 **Key cross-cutting concepts to track:**
 - Inbox/Triage (Phase 5): AI-classified staging area for unprocessed items
