@@ -167,3 +167,48 @@ Keyword search can find applied structured summaries immediately from Postgres f
 search includes the summary and extracted objects after the normal reindex/embedding pipeline
 runs. If embeddings or AI are disabled, keyword search still works and structured generation
 returns a clear provider-disabled error.
+
+## Phase 12B: MCP Ingest
+
+MCP ingest allows any registered external MCP server to feed content into KnowledgeOS as pages or
+sources. The user chooses a connection, picks a tool, fills in arguments, and triggers ingestion.
+The API enqueues an RQ job and returns immediately; the worker performs all heavy work
+asynchronously.
+
+### Flow
+
+1. User calls `POST /api/v1/mcp-connections/{id}/ingest` with `{ tool_name, args, target_kind, tags }`.
+2. The API validates the connection (ownership, existence) and enqueues `kos_worker.mcp_ingest.ingest_from_mcp` to the `kos-ingest` queue.
+3. The worker claims the job, resolves the connection, decrypts `env_vars`, and spawns an `McpClientSession`.
+4. The worker calls the requested tool and receives raw output (a dict or list).
+5. An adapter converts the raw output into a list of `SourceInput` / `PageInput` objects:
+   - **`GenericAdapter`** — generic fallback for unknown tools; flattens to title + body text.
+   - **`BraveSearchAdapter`** — maps `results[].title/url/description` to source objects with `source_type="web"`.
+   - **`GitHubIssueAdapter`** — maps issue number, body, and labels to source objects.
+   - **`Context7Adapter`** — maps library-doc results to source objects with `source_type="web"`.
+6. The worker creates `objects` + `sources` (or `pages`) rows via service functions.
+7. Each created object is enqueued for reindexing (`reindex_object(object_id)`), which chunks and embeds the extracted text.
+8. An `agent_runs` row is written for the full job.
+
+### Adapter Selection
+
+The worker selects the adapter by matching the tool name against adapter patterns using `fnmatch`:
+
+| Adapter | Matches |
+| --- | --- |
+| `BraveSearchAdapter` | `brave_web_search`, `brave_*` |
+| `GitHubIssueAdapter` | `github_list_issues`, `github_*_issues` |
+| `Context7Adapter` | `context7_*`, `get-library-docs` |
+| `GenericAdapter` | anything else (fallback) |
+
+### Error Handling
+
+If the MCP server fails to connect or the tool call times out (300 s job limit), the job transitions
+to `failed` status and an error message is recorded in the `agent_runs` row. Partial successes (some
+items ingested before a failure) retain the created objects.
+
+### Preview Before Ingest
+
+The `/call` endpoint (`POST /api/v1/mcp-connections/{id}/call`) provides a synchronous 30 s preview
+of tool output without creating any objects. The frontend uses this to show the raw result before the
+user commits to ingestion.

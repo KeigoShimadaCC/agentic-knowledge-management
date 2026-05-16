@@ -1381,3 +1381,56 @@ This object appears in `GET /api/v1/ai/inbox` (no tags, no description, within l
 - Task path: `kos_worker.ai_jobs.process_object_ai`
 - Job timeout: 300 s
 - Queue failures on page save are caught and logged — they never cause the save to fail
+
+## MCP Connections (Phase 12A/12B)
+
+The MCP Connections API manages external MCP server registrations and provides endpoints for calling
+and ingesting content from those servers.
+
+### POST /api/v1/mcp-connections
+
+Create a new MCP connection. **Request**: `{ "name": "Brave Search", "transport": "stdio", "command": "npx", "args": ["-y", "@modelcontextprotocol/server-brave-search"], "env_vars": {"BRAVE_API_KEY": "..."}, "enabled": true }` **Response**: `McpConnectionOut` — same shape with `env_vars` values redacted to `"*****"`.
+
+`transport` must be `"stdio"` or `"sse"`. `env_vars` values are Fernet-encrypted at rest (requires `MCP_ENV_ENCRYPTION_KEY`). Returns 400 if `env_vars` are provided but `MCP_ENV_ENCRYPTION_KEY` is not set.
+
+### GET /api/v1/mcp-connections
+
+List all non-deleted connections for the authenticated user. **Response**: `{ "items": [McpConnectionOut, ...] }`
+
+### GET /api/v1/mcp-connections/{id}
+
+Fetch a single connection. Returns 404 if not found or not owned by the user.
+
+### PATCH /api/v1/mcp-connections/{id}
+
+Update any subset of `name`, `transport`, `command`, `args`, `env_vars`, `enabled`. Partial update (fields omitted stay unchanged). Returns 404 on missing.
+
+### DELETE /api/v1/mcp-connections/{id}
+
+Soft-delete (sets `deleted_at`). Returns 204 on success.
+
+### POST /api/v1/mcp-connections/{id}/test
+
+Spawn the MCP server process, call `tools/list`, cache the result in `capabilities`, and return the discovered tools. Returns 422 for SSE connections (not yet supported).
+
+**Response**: `{ "tools": [{"name": "brave_web_search", "description": "...", "inputSchema": {...}}, ...], "connection_name": "Brave Search" }`
+
+### POST /api/v1/mcp-connections/{id}/call
+
+Call a specific tool on the connection and return the raw result synchronously. Used by the frontend to preview tool output before committing to ingestion. Records an `agent_runs` row.
+
+**Request**: `{ "tool_name": "brave_web_search", "args": { "query": "MCP protocol spec" } }`
+
+**Response**: `{ "result": { ...raw MCP tool output... }, "connection_name": "Brave Search" }`
+
+Timeout: 30 s. Returns 422 on timeout or connection failure.
+
+### POST /api/v1/mcp-connections/{id}/ingest
+
+Enqueue an asynchronous RQ job that calls the tool, adapts the result into KnowledgeOS objects (pages or sources), and reindexes them. Returns immediately with a job ID.
+
+**Request**: `{ "tool_name": "brave_web_search", "args": { "query": "LLM inference optimization" }, "target_kind": "source", "tags": ["AI", "research"] }`
+
+**Response**: `{ "job_id": "...", "status": "pending" }`
+
+`target_kind` must be `"page"` or `"source"`. Job executes via `kos_worker.mcp_ingest.ingest_from_mcp` with a 300 s timeout. Monitor job status via standard RQ job-status endpoints or by polling `GET /api/v1/objects` for the newly created objects.

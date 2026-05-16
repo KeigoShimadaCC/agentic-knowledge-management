@@ -1,6 +1,6 @@
 # Phase 12 — MCP Connections (App as MCP Consumer)
 
-> **Status:** Planned
+> **Status:** Complete
 > **Sub-phases:** 12A (Registry), 12B (Ingest Bridge), 12C (AI Augmentation)
 > **Depends on:** Phases 7A + 7B complete (MCP outbound server live on `main`). Phase 5 AI endpoints live.
 > **Blocks:** nothing (standalone capability expansion)
