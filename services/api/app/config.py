@@ -70,6 +70,14 @@ class Settings(BaseSettings):
             "AI tasks to run in background. Subset of: summarize, extract_claims, suggest_links."
         ),
     )
+    mcp_env_encryption_key: str = Field(
+        default="",
+        description=(
+            "Fernet symmetric key for encrypting MCP connection env var secrets at rest. "
+            "Generate with Fernet.generate_key(). "
+            "Empty = MCP env var storage disabled (create returns 400)."
+        ),
+    )
 
     model_config = {"env_file": ".env", "env_file_encoding": "utf-8"}
 

@@ -5,6 +5,7 @@ from app.models.chunk import Chunk
 from app.models.edge import Edge
 from app.models.ingestion_job import IngestionJob
 from app.models.interview_story_record import InterviewStoryRecord
+from app.models.mcp_connection import McpConnection
 from app.models.object import KosObject
 from app.models.page import Page
 from app.models.project import Project
@@ -23,6 +24,7 @@ __all__ = [
     "Edge",
     "IngestionJob",
     "InterviewStoryRecord",
+    "McpConnection",
     "KosObject",
     "ObjectRevision",
     "Page",

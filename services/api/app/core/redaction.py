@@ -1,9 +1,22 @@
-"""Strip sensitive keys from structures returned to agents or external callers."""
-
-from __future__ import annotations
+"""Redaction utilities for API responses."""
 
 from typing import Any
 
+_REDACTED_KEYS: frozenset[str] = frozenset(
+    {
+        "api_key",
+        "openai_api_key",
+        "session_secret",
+        "mcp_internal_token",
+        "token",
+        "token_hash",
+        "password",
+        "password_hash",
+        "secret",
+    }
+)
+_REDACTED_SENTINEL = "[REDACTED]"
+_ENV_VAR_SENTINEL = "*****"
 _SENSITIVE_KEY_FRAGMENTS: frozenset[str] = frozenset(
     {
         "password",
@@ -11,11 +24,27 @@ _SENSITIVE_KEY_FRAGMENTS: frozenset[str] = frozenset(
         "secret",
         "session_secret",
         "api_key",
+        "api_keys",
         "openai_api_key",
         "token_hash",
         "authorization",
     }
 )
+
+
+def redact_dict(data: Any) -> Any:
+    if isinstance(data, dict):
+        return {
+            k: _REDACTED_SENTINEL if k in _REDACTED_KEYS else redact_dict(v)
+            for k, v in data.items()
+        }
+    if isinstance(data, list):
+        return [redact_dict(item) for item in data]
+    return data
+
+
+def redact_env_vars(env_vars: dict[str, str]) -> dict[str, str]:
+    return {k: _ENV_VAR_SENTINEL for k in env_vars}
 
 
 def _is_sensitive_key(key: str) -> bool:
@@ -24,14 +53,14 @@ def _is_sensitive_key(key: str) -> bool:
 
 
 def redact_mapping(value: dict[str, Any], *, depth: int = 8) -> dict[str, Any]:
-    """Return a shallow-deep copy of *value* with sensitive keys removed or replaced."""
+    """Compatibility wrapper for earlier API unit tests."""
     if depth <= 0:
         return {"_redacted": True}
 
     out: dict[str, Any] = {}
     for key, item in value.items():
         if _is_sensitive_key(str(key)):
-            out[str(key)] = "[REDACTED]"
+            out[str(key)] = _REDACTED_SENTINEL
             continue
         if isinstance(item, dict):
             out[str(key)] = redact_mapping(item, depth=depth - 1)

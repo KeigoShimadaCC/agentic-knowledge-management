@@ -417,3 +417,35 @@ When `OPENAI_API_KEY` is not configured on the server, `extract_project`, `gener
 ```
 
 All other career tools (CRUD, link/unlink, list/get) work regardless of AI availability.
+
+---
+
+## External MCP Connections (Phase 12A)
+
+KnowledgeOS can also act as an MCP **client** — connecting to external MCP servers (GitHub, Brave Search, Context7, etc.) and pulling data into the knowledge base. Phase 12A adds the connection registry; Phase 12B adds the ingest bridge.
+
+### Connection registry API
+
+`/api/v1/mcp-connections` — CRUD for saved MCP server configurations. Requires a valid user session cookie.
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `GET` | `/api/v1/mcp-connections/` | List all active connections for the current user |
+| `POST` | `/api/v1/mcp-connections/` | Create a new connection |
+| `GET` | `/api/v1/mcp-connections/{id}` | Get one connection |
+| `PATCH` | `/api/v1/mcp-connections/{id}` | Update a connection |
+| `DELETE` | `/api/v1/mcp-connections/{id}` | Soft-delete a connection |
+| `POST` | `/api/v1/mcp-connections/{id}/test` | Probe the MCP server and cache its tool list |
+
+### Transports
+
+- **stdio** — spawns a local subprocess (`command` + `args`). Requires `command`; `args` defaults to `[]`.
+- **sse** — HTTP Server-Sent Events endpoint (`url`). Requires `url`. Test-connection not yet implemented for SSE (returns 422).
+
+### Env var encryption
+
+API keys and secrets passed as `env_vars` on create/update are encrypted at rest using Fernet symmetric encryption (`MCP_ENV_ENCRYPTION_KEY`). API responses always redact env var values to `"*****"`. Set `MCP_ENV_ENCRYPTION_KEY` in `infra/.env` (generate with `python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"`). If the key is absent, create/update with `env_vars` returns 400.
+
+### Test-connection probe (stdio)
+
+`POST /api/v1/mcp-connections/{id}/test` spawns the subprocess, exchanges a JSON-RPC 2.0 initialize handshake, requests `tools/list`, caches the result in `mcp_connections.capabilities`, and kills the process. Timeout: 10 seconds. On failure the error is written to `last_error` and the endpoint returns 422.
