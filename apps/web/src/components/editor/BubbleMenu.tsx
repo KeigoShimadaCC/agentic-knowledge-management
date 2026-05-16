@@ -5,12 +5,16 @@
  */
 "use client";
 
+import { useRef, useState } from "react";
 import { BubbleMenu as TiptapBubbleMenu, type Editor } from "@tiptap/react";
-import { Bold, Code, Italic, Link2, Strikethrough } from "lucide-react";
+import { Bold, Code, Italic, Link2, Loader2, Sparkles, Strikethrough } from "lucide-react";
+import { toast } from "sonner";
 import { cn } from "@/lib/cn";
+import { aiTransform } from "@/lib/api";
 
 interface EditorBubbleMenuProps {
   editor: Editor;
+  objectId?: string;
 }
 
 function ToolbarButton({
@@ -43,7 +47,26 @@ function ToolbarButton({
   );
 }
 
-export function EditorBubbleMenu({ editor }: EditorBubbleMenuProps) {
+export function EditorBubbleMenu({ editor, objectId }: EditorBubbleMenuProps) {
+  const [aiLoading, setAiLoading] = useState(false);
+  const detailsRef = useRef<HTMLDetailsElement>(null);
+
+  async function runTransform(instruction: "improve" | "concise" | "grammar" | "summarize") {
+    if (detailsRef.current) detailsRef.current.open = false;
+    const { from, to } = editor.state.selection;
+    const selectedText = editor.state.doc.textBetween(from, to, "\n");
+    if (!selectedText) return;
+    setAiLoading(true);
+    try {
+      const { result } = await aiTransform(selectedText, instruction, objectId);
+      editor.chain().focus().deleteRange({ from, to }).insertContentAt(from, result).run();
+    } catch {
+      toast.error("AI failed — try again");
+    } finally {
+      setAiLoading(false);
+    }
+  }
+
   return (
     <TiptapBubbleMenu
       editor={editor}
@@ -94,6 +117,51 @@ export function EditorBubbleMenu({ editor }: EditorBubbleMenuProps) {
       >
         <Link2 size={14} />
       </ToolbarButton>
+      {objectId && (
+        <>
+          <div className="mx-1 h-4 w-px bg-gray-700" />
+          <details ref={detailsRef} className="relative">
+            <summary
+              className={cn(
+                "flex h-7 cursor-pointer list-none items-center gap-1 rounded px-2 text-xs transition-colors",
+                aiLoading
+                  ? "text-gray-500"
+                  : "text-gray-300 hover:bg-gray-700 hover:text-white"
+              )}
+            >
+              {aiLoading ? (
+                <Loader2 size={12} className="animate-spin" />
+              ) : (
+                <Sparkles size={12} />
+              )}
+              AI ▾
+            </summary>
+            <div className="absolute left-0 top-full z-50 mt-1 w-44 overflow-hidden rounded-lg border border-gray-700 bg-gray-900 shadow-xl">
+              {(
+                [
+                  { label: "Improve", instruction: "improve" },
+                  { label: "Make concise", instruction: "concise" },
+                  { label: "Fix grammar", instruction: "grammar" },
+                  { label: "Summarize selection", instruction: "summarize" },
+                ] as const
+              ).map(({ label, instruction }) => (
+                <button
+                  key={instruction}
+                  type="button"
+                  disabled={aiLoading}
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    void runTransform(instruction);
+                  }}
+                  className="flex w-full items-center px-3 py-2 text-left text-xs text-gray-300 transition-colors hover:bg-gray-800 disabled:opacity-50"
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          </details>
+        </>
+      )}
     </TiptapBubbleMenu>
   );
 }
