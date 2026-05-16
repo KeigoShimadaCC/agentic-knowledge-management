@@ -769,6 +769,9 @@ requires-dist = [
 ]
 provides-extras = ["dev"]
 
+[package.metadata.requires-dev]
+dev = [{ name = "ruff", specifier = ">=0.15.12" }]
+
 [[package]]
 name = "kos-tests"
 version = "0.1.0"
