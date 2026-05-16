@@ -1272,3 +1272,50 @@ Soft-delete a workspace by setting `deleted_at` (`204`). Repeating the delete is
 ### POST /api/v1/workspaces/{workspace_id}/restore
 
 Restore a soft-deleted workspace. Returns `WorkspaceOut` with `deleted_at: null`; returns `404` if the workspace does not exist, is not owned by the current user, or is not currently deleted.
+
+
+## Inline AI Endpoints (Phase 11B)
+
+Both endpoints attach to the `/api/v1/ai` router and require authentication.
+
+### POST /api/v1/ai/complete
+
+Generate a text continuation from the content before the cursor.
+
+**Request body (`AiCompleteRequest`):**
+
+| Field | Type | Required | Default | Notes |
+|---|---|---|---|---|
+| `context_before` | string | yes | — | Text before cursor. 1–4000 chars. |
+| `context_after` | string | no | `""` | Text after cursor for fill-in-middle. Max 1000 chars. |
+| `instruction` | `"continue"` \| `"expand"` | no | `"continue"` | Biases completion style. |
+| `object_id` | UUID | no | — | If provided, used to label the audit row. |
+| `max_tokens` | int | no | 200 | 50–500. |
+
+**Response (`AiCompleteResponse`):**
+```json
+{ "completion": " that it requires careful tuning...", "agent_run_id": "uuid" }
+```
+
+**Errors:** `422` on validation failure (empty `context_before`, `max_tokens` out of range). `503` if `OPENAI_API_KEY` is unset.
+
+---
+
+### POST /api/v1/ai/transform
+
+Transform selected text according to an instruction.
+
+**Request body (`AiTransformRequest`):**
+
+| Field | Type | Required | Notes |
+|---|---|---|---|
+| `text` | string | yes | Selected text. 1–8000 chars. |
+| `instruction` | `"improve"` \| `"concise"` \| `"grammar"` \| `"summarize"` | yes | Transform mode. |
+| `object_id` | UUID | no | Used to label the audit row. |
+
+**Response (`AiTransformResponse`):**
+```json
+{ "result": "Improved text here.", "agent_run_id": "uuid" }
+```
+
+**Errors:** `422` on validation failure (empty `text`, invalid `instruction`). `503` if `OPENAI_API_KEY` is unset. Empty LLM response returns `200` with `result: ""`.
