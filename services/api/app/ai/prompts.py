@@ -40,6 +40,15 @@ ANSWER_QUESTION = (
     "Question: {question}\n\nContext:\n{context}"
 )
 
+ANSWER_QUESTION_WITH_WEB = (
+    "Answer the following question using the knowledge base context and web search results."
+    " Be concise. Cite KB sources with their IDs as: Sources: [id1, id2, ...]."
+    " For web results, reference them inline (e.g. '[Web: title]') but do NOT include them"
+    " in Sources: list."
+    " If neither context contains the answer, say so.\n\n"
+    "Question: {question}\n\nKnowledge base:\n{kb_context}\n\nWeb results:\n{web_context}"
+)
+
 TRIAGE_OBJECT = (
     "Analyze the following knowledge item and return a JSON object only, no markdown fences:"
     ' {{"suggested_tags": ["tag1", "tag2"], "suggested_title": "<improved title or null if fine>",'

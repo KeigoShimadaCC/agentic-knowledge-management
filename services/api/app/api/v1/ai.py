@@ -14,6 +14,8 @@ from app.models.user import User
 from app.schemas.ai import (
     AnswerRequest,
     AnswerResponse,
+    EnrichPageRequest,
+    EnrichPageResponse,
     ExtractRequest,
     ExtractResponse,
     SuggestLinksRequest,
@@ -86,8 +88,17 @@ async def answer(
     db: AsyncSession = Depends(get_db),
 ) -> AnswerResponse:
     return await ai_service.answer_question(
-        db, user.id, body.q, body.kind, body.limit, body.object_ids
+        db, user.id, body.q, body.kind, body.limit, body.object_ids, body.use_web_search
     )
+
+
+@router.post("/enrich-page", response_model=EnrichPageResponse)
+async def enrich_page(
+    body: EnrichPageRequest,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> EnrichPageResponse:
+    return await ai_service.enrich_page_with_context7(db, user.id, body.page_id, body.query)
 
 
 @router.post("/triage", response_model=TriageResponse)

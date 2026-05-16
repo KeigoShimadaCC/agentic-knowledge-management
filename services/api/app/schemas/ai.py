@@ -53,6 +53,7 @@ class AnswerRequest(BaseModel):
     kind: str | None = None
     limit: int = Field(default=10, ge=1, le=50)
     object_ids: list[uuid.UUID] | None = None
+    use_web_search: bool = False
 
 
 class Citation(BaseModel):
@@ -62,11 +63,19 @@ class Citation(BaseModel):
     snippet: str | None = None
 
 
+class WebCitation(BaseModel):
+    title: str
+    url: str
+    snippet: str | None = None
+
+
 class AnswerResponse(BaseModel):
     answer: str
     citations: list[Citation]
     agent_run_id: uuid.UUID
     context_count: int
+    web_citations: list[WebCitation] = []
+    warning: str | None = None
 
 
 class TriageRequest(BaseModel):
@@ -77,4 +86,15 @@ class TriageResponse(BaseModel):
     suggested_tags: list[str]
     suggested_title: str | None = None
     summary: str
+    agent_run_id: uuid.UUID
+
+
+class EnrichPageRequest(BaseModel):
+    page_id: uuid.UUID
+    query: str
+
+
+class EnrichPageResponse(BaseModel):
+    sources_created: list[uuid.UUID]
+    edges_created: list[uuid.UUID]
     agent_run_id: uuid.UUID
