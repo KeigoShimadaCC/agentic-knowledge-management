@@ -17,7 +17,7 @@ export function GraphPanel({ objectId, refreshKey }: GraphPanelProps) {
   const [edgeRefreshKey, setEdgeRefreshKey] = useState(0);
 
   return (
-    <div data-testid="graph-panel" className="flex h-full flex-col">
+    <div data-testid="graph-panel" data-tutorial="related-panel" className="flex h-full flex-col">
       <div className="border-b border-gray-800 p-3">
         <div className="text-xs font-medium uppercase text-gray-500">Graph</div>
         <div className="mt-3 grid grid-cols-3 rounded border border-gray-800 bg-gray-950 p-0.5">

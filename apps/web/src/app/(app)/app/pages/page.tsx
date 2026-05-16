@@ -95,6 +95,7 @@ export default function PagesListPage() {
         actions={
           <button
             type="button"
+            data-tutorial="new-page-btn"
             onClick={() => void handleNewPage()}
             disabled={creating}
             className="inline-flex h-9 w-9 items-center justify-center rounded-md bg-white text-gray-950 transition-colors hover:bg-gray-200 disabled:opacity-60"
