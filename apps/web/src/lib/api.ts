@@ -17,6 +17,14 @@ import type {
   GenerateResumeBulletsRequest,
   GenerateResumeBulletsResponse,
   InterviewStoryOut,
+  McpCallRequest,
+  McpCallResponse,
+  McpConnectionCreate,
+  McpConnectionOut,
+  McpConnectionTestResult,
+  McpConnectionUpdate,
+  McpIngestRequest,
+  McpIngestResponse,
   ObjectOut,
   PageCreateResponse,
   PageOut,
@@ -528,6 +536,65 @@ export async function deleteWorkspace(id: string): Promise<void> {
 export async function restoreWorkspace(id: string): Promise<WorkspaceOut> {
   return request<WorkspaceOut>(`/api/v1/workspaces/${id}/restore`, {
     method: "POST",
+  });
+}
+
+// ── MCP Connections ──────────────────────────────────────────────────────────
+
+export async function listMcpConnections(): Promise<McpConnectionOut[]> {
+  return request<McpConnectionOut[]>("/api/v1/mcp-connections/");
+}
+
+export async function createMcpConnection(
+  data: McpConnectionCreate
+): Promise<McpConnectionOut> {
+  return request<McpConnectionOut>("/api/v1/mcp-connections/", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
+export async function getMcpConnection(id: string): Promise<McpConnectionOut> {
+  return request<McpConnectionOut>(`/api/v1/mcp-connections/${id}`);
+}
+
+export async function updateMcpConnection(
+  id: string,
+  data: McpConnectionUpdate
+): Promise<McpConnectionOut> {
+  return request<McpConnectionOut>(`/api/v1/mcp-connections/${id}`, {
+    method: "PATCH",
+    body: JSON.stringify(data),
+  });
+}
+
+export async function deleteMcpConnection(id: string): Promise<void> {
+  await request<void>(`/api/v1/mcp-connections/${id}`, { method: "DELETE" });
+}
+
+export async function testMcpConnection(id: string): Promise<McpConnectionTestResult> {
+  return request<McpConnectionTestResult>(`/api/v1/mcp-connections/${id}/test`, {
+    method: "POST",
+  });
+}
+
+export async function callMcpTool(
+  id: string,
+  data: McpCallRequest
+): Promise<McpCallResponse> {
+  return request<McpCallResponse>(`/api/v1/mcp-connections/${id}/call`, {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
+export async function ingestFromMcp(
+  id: string,
+  data: McpIngestRequest
+): Promise<McpIngestResponse> {
+  return request<McpIngestResponse>(`/api/v1/mcp-connections/${id}/ingest`, {
+    method: "POST",
+    body: JSON.stringify(data),
   });
 }
 

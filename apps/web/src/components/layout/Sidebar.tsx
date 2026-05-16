@@ -13,6 +13,7 @@ import {
   LogOut,
   MessageSquareText,
   PlayCircle,
+  Plug,
   Trash2,
   Trash,
 } from "lucide-react";
@@ -37,6 +38,7 @@ const navItems = [
   { href: "/app/chats", label: "Chats", icon: MessageSquareText },
   { href: "/app/projects", label: "Projects", icon: Briefcase },
   { href: "/app/inbox", label: "Inbox", icon: Inbox },
+  { href: "/app/settings/mcp", label: "MCP", icon: Plug },
   { href: "/app/trash", label: "Trash", icon: Trash2 },
 ];
 

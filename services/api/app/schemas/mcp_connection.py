@@ -57,3 +57,25 @@ class McpConnectionTestResult(BaseModel):
     ok: bool
     tools: list[McpToolDefinition]
     error: str | None = None
+
+
+class McpCallRequest(BaseModel):
+    tool_name: str
+    args: dict = {}
+
+
+class McpCallResponse(BaseModel):
+    result: dict
+    connection_name: str
+
+
+class McpIngestRequest(BaseModel):
+    tool_name: str
+    args: dict = {}
+    target_kind: str = "source"
+    tags: list[str] = []
+
+
+class McpIngestResponse(BaseModel):
+    job_id: str
+    status: str

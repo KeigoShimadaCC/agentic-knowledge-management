@@ -609,3 +609,76 @@ export interface ExtractProjectResponse {
   agent_run_id: string;
   source_id: string;
 }
+
+// ── MCP Connections ───────────────────────────────────────────────────────────
+
+export type McpTransport = "stdio" | "sse";
+
+export interface McpToolDefinition {
+  name: string;
+  description: string;
+  input_schema: Record<string, unknown>;
+}
+
+export interface McpConnectionOut {
+  id: string;
+  name: string;
+  transport: McpTransport;
+  command: string | null;
+  args: string[];
+  url: string | null;
+  env_vars: Record<string, string>;
+  capabilities: McpToolDefinition[] | null;
+  enabled: boolean;
+  last_tested_at: string | null;
+  last_error: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface McpConnectionCreate {
+  name: string;
+  transport: McpTransport;
+  command?: string;
+  args?: string[];
+  url?: string;
+  env_vars?: Record<string, string>;
+  enabled?: boolean;
+}
+
+export interface McpConnectionUpdate {
+  name?: string;
+  command?: string;
+  args?: string[];
+  url?: string;
+  env_vars?: Record<string, string>;
+  enabled?: boolean;
+}
+
+export interface McpConnectionTestResult {
+  ok: boolean;
+  tools: McpToolDefinition[];
+  error?: string;
+}
+
+export interface McpCallRequest {
+  tool_name: string;
+  args?: Record<string, unknown>;
+}
+
+export interface McpCallResponse {
+  result: Record<string, unknown>;
+  connection_name: string;
+}
+
+export interface McpIngestRequest {
+  tool_name: string;
+  args?: Record<string, unknown>;
+  target_kind?: "page" | "source";
+  tags?: string[];
+}
+
+export interface McpIngestResponse {
+  job_id: string;
+  status: string;
+}

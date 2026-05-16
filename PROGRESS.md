@@ -451,6 +451,26 @@ See [`project-phases/PHASE-12-MCP-CONNECTIONS.md`](project-phases/PHASE-12-MCP-C
 
 ---
 
+## Phase 12B — On-Demand Ingest Bridge ✅ Complete
+
+**Branch:** `phase-12b-ingest-bridge`
+
+**Goal:** Enable KnowledgeOS to call external MCP tool endpoints and ingest results as KosObjects (pages or sources) via an RQ worker job. Adds a frontend settings page for managing connections and a "From MCP" tab in the source creation modal.
+
+- [x] **12B-0** — `McpClientSession` async context manager (`mcp_client/client.py`): stdio JSON-RPC 2.0 handshake, `list_tools`, `call_tool`, auto-kill on `__aexit__`; SSE raises stub error
+- [x] **12B-1** — Tool adapters (`mcp_client/adapters.py`): `GenericAdapter` + `BraveSearchAdapter` + `GitHubIssueAdapter` + `Context7Adapter`; `get_adapter(tool_name)` pattern-matched registry
+- [x] **12B-2** — `ingest_from_mcp` RQ worker job (`kos_worker/mcp_ingest.py`): asyncio.run around McpClientSession, adapt result, create KosObject, reindex, write agent_runs row
+- [x] **12B-3** — `/call` endpoint (`POST /api/v1/mcp-connections/{id}/call`): raw tool result preview, 30s timeout, agent_runs audit row, 422 on error
+- [x] **12B-4** — `/ingest` endpoint (`POST /api/v1/mcp-connections/{id}/ingest`): enqueue RQ job, return `{job_id, status: "pending"}`
+- [x] **12B-5** — Frontend `/app/settings/mcp` page: list connections (name, transport, last-tested, error), Add Connection modal, Test button (shows tool count), Delete with confirm
+- [x] **12B-6** — `CreateSourceModal` "From MCP" tab: connection picker → tool picker → arg form → Preview button (raw JSON) → Ingest as Source / Ingest as Page
+- [x] **12B-7** — `McpConnectionCreate` schema extended with `McpCallRequest/Response` + `McpIngestRequest/Response`; TypeScript types added to `types/index.ts`; `api.ts` MCP functions added; Sidebar MCP nav item
+- [x] **12B-8** — Docs and PROGRESS.md updated
+
+**Verification:** `ruff check` clean; `pnpm typecheck` clean (2 pre-existing unrelated errors); `pytest api/ unit/ -q` → 250 passing (15 pre-existing AI-job failures).
+
+---
+
 ## Phase 11A — Interactive Guided Tutorial 🚧 In Progress
 
 **Branch:** `phase-11a-tutorial` (worktree: `/Users/keigoshimada/Documents/agentic-knowledge-management-phase-11a`)
