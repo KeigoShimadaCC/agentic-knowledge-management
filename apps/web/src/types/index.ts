@@ -17,7 +17,8 @@ export type ObjectKind =
   | "task"
   | "project"
   | "resume_bullet_set"
-  | "interview_story";
+  | "interview_story"
+  | "ai_notification";
 
 export interface ObjectOut {
   id: string;
