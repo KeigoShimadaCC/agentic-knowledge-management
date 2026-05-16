@@ -44,6 +44,7 @@ def _make_obj(metadata=None, deleted_at=None, title="Test Object"):
 
 # ── Test 1: disabled flag ─────────────────────────────────────────────────────
 
+
 def test_returns_immediately_when_ai_auto_process_false(monkeypatch: pytest.MonkeyPatch):
     """ai_auto_process=False → returns without touching DB or services."""
     monkeypatch.setattr("app.config.settings.ai_auto_process", False)
@@ -55,6 +56,7 @@ def test_returns_immediately_when_ai_auto_process_false(monkeypatch: pytest.Monk
 
 
 # ── Test 2: object not found ──────────────────────────────────────────────────
+
 
 def test_returns_when_object_not_found(monkeypatch: pytest.MonkeyPatch):
     """Non-existent object → no AI service calls."""
@@ -72,6 +74,7 @@ def test_returns_when_object_not_found(monkeypatch: pytest.MonkeyPatch):
 
 
 # ── Test 3: soft-deleted object ───────────────────────────────────────────────
+
 
 def test_returns_when_object_soft_deleted(monkeypatch: pytest.MonkeyPatch):
     """Deleted object → no AI service calls."""
@@ -94,6 +97,7 @@ def test_returns_when_object_soft_deleted(monkeypatch: pytest.MonkeyPatch):
 
 # ── Test 4: opt-out metadata ──────────────────────────────────────────────────
 
+
 def test_returns_when_object_opted_out(monkeypatch: pytest.MonkeyPatch):
     """metadata_['ai_auto_process']=False → no AI calls."""
     monkeypatch.setattr("app.config.settings.ai_auto_process", True)
@@ -112,6 +116,7 @@ def test_returns_when_object_opted_out(monkeypatch: pytest.MonkeyPatch):
 
 
 # ── Test 5: task isolation on failure ─────────────────────────────────────────
+
 
 def test_remaining_tasks_run_after_one_failure(monkeypatch: pytest.MonkeyPatch):
     """summarize raises → extract_claims still called."""
@@ -140,6 +145,7 @@ def test_remaining_tasks_run_after_one_failure(monkeypatch: pytest.MonkeyPatch):
 
 # ── Test 6: all tasks succeed → commit called ─────────────────────────────────
 
+
 def test_ai_processed_at_written_on_success(monkeypatch: pytest.MonkeyPatch):
     """All tasks succeed → session.commit() called to persist ai_processed_at."""
     monkeypatch.setattr("app.config.settings.ai_auto_process", True)
@@ -158,6 +164,7 @@ def test_ai_processed_at_written_on_success(monkeypatch: pytest.MonkeyPatch):
 
 
 # ── Test 7: notification created on success ───────────────────────────────────
+
 
 def test_notification_created_when_tasks_succeed(monkeypatch: pytest.MonkeyPatch):
     """At least one task succeeds → KosObject with kind='ai_notification' added."""
@@ -183,6 +190,7 @@ def test_notification_created_when_tasks_succeed(monkeypatch: pytest.MonkeyPatch
 
 
 # ── Test 8: no notification when all tasks fail ───────────────────────────────
+
 
 def test_no_notification_when_all_tasks_fail(monkeypatch: pytest.MonkeyPatch):
     """All tasks fail → no notification object created."""

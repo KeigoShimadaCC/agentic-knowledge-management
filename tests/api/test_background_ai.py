@@ -13,8 +13,8 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 from httpx import AsyncClient
 
-
 # ── helpers ──────────────────────────────────────────────────────────────────
+
 
 async def _make_page(auth_client: AsyncClient, title: str = "BG AI Test") -> dict:
     r = await auth_client.post("/api/v1/pages", json={"title": title})
@@ -24,6 +24,7 @@ async def _make_page(auth_client: AsyncClient, title: str = "BG AI Test") -> dic
 
 def _invoke(object_id: str | None = None, user_id: str | None = None) -> None:
     from kos_worker.ai_jobs import process_object_ai
+
     process_object_ai(object_id or str(uuid.uuid4()), user_id or str(uuid.uuid4()))
 
 
@@ -39,6 +40,7 @@ def _mock_session(obj=None):
 
 def _make_obj(metadata=None, deleted_at=None, title="Test"):
     from app.models.object import KosObject
+
     obj = MagicMock(spec=KosObject)
     obj.deleted_at = deleted_at
     obj.title = title
@@ -48,6 +50,7 @@ def _make_obj(metadata=None, deleted_at=None, title="Test"):
 
 
 # ── Tests 1–3: API hook guards (async — need real FastAPI client) ─────────────
+
 
 @pytest.mark.asyncio
 async def test_patch_page_no_ai_job_when_disabled(
@@ -126,6 +129,7 @@ async def test_put_page_enqueues_ai_job_when_enabled(
 
 
 # ── Tests 4–10: process_object_ai dispatch (sync — avoids nested event loops) ──
+
 
 def test_process_object_ai_skips_missing_object(monkeypatch: pytest.MonkeyPatch):
     """Non-existent object_id → returns immediately, no AI service calls."""
@@ -247,9 +251,7 @@ def test_source_ingest_enqueues_ai_job(monkeypatch: pytest.MonkeyPatch):
     enqueued_tasks: list[str] = []
 
     mock_queue = MagicMock()
-    mock_queue.enqueue = MagicMock(
-        side_effect=lambda task, *a, **kw: enqueued_tasks.append(task)
-    )
+    mock_queue.enqueue = MagicMock(side_effect=lambda task, *a, **kw: enqueued_tasks.append(task))
 
     from app.models.object import KosObject
     from app.models.source import Source
@@ -265,8 +267,6 @@ def test_source_ingest_enqueues_ai_job(monkeypatch: pytest.MonkeyPatch):
 
     # Exercise the exact hook logic from kos_worker/tasks.py ingest_source()
     from app.config import settings
-    from redis import Redis
-    from rq import Queue
 
     if settings.ai_auto_process:
         try:
