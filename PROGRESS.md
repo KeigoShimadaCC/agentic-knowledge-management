@@ -1,6 +1,6 @@
 # KnowledgeOS — Progress Tracker
 
-> Last updated: 2026-05-16 (Phase 9D Career MCP Tools complete; Phase 9 fully done — 9A+9B+9C+9D all shipped)
+> Last updated: 2026-05-16 (Phase 11A Interactive Tutorial in progress on branch `phase-11a-tutorial`)
 
 ---
 
@@ -429,6 +429,23 @@ See [`project-phases/PHASE-10A-GAP-AUDIT-AND-FIX.md`](project-phases/PHASE-10A-G
 
 ---
 
+## Phase 11A — Interactive Guided Tutorial 🚧 In Progress
+
+**Branch:** `phase-11a-tutorial` (worktree: `/Users/keigoshimada/Documents/agentic-knowledge-management-phase-11a`)
+
+**Goal:** Add a spotlight-driven guided tour launched by a "Start Tour" button in the sidebar. Users click through 10 steps, each highlighting a UI element with a dark overlay + popup card. Fixed sample data is seeded via a backend endpoint. Tour can be stopped at any time.
+
+See [`project-phases/PHASE-11A-TUTORIAL.md`](project-phases/PHASE-11A-TUTORIAL.md) for the full spec.
+
+- [ ] **Backend** — `tutorial_seed_service.py` (3 pages, 1 project, 2 edges tagged `tutorial_v1`) + `POST /api/v1/tutorial/seed` + `DELETE /api/v1/tutorial/reset`
+- [ ] **Frontend context** — `TutorialProvider` + `useTutorial()` hook (active, stepIndex, start/next/prev/stop)
+- [ ] **Spotlight overlay** — `TutorialOverlay` (portal + 4-panel spotlight + ResizeObserver) + `TutorialPopup` card
+- [ ] **Step config** — `tutorial-steps.ts` with 10 typed steps
+- [ ] **Wire-up** — Sidebar "Start Tour" button + `data-tutorial` attributes on existing components
+- [ ] **Quality gates** — `pnpm typecheck`, `pnpm lint`, `ruff check/format`
+
+---
+
 ## Summary
 
 | Phase | Name | Status | Progress |
@@ -453,8 +470,9 @@ See [`project-phases/PHASE-10A-GAP-AUDIT-AND-FIX.md`](project-phases/PHASE-10A-G
 | Enhance-02 | Testing Infrastructure | ✅ Complete | 6 / 6 checkpoints (T1–T6) |
 | Enhance-03 | UX/UI Polish | ✅ Complete | 6 / 6 PRs |
 | 10A | Gap Audit & Fix | ✅ Complete | 6 / 6 subtasks |
+| 11A | Interactive Tutorial | 🚧 In Progress | 0 / 6 subtasks |
 
-**All phases complete.** Test totals: ~256 (frontend 27 · API/unit 134 · worker 29 · MCP 56 · E2E 10).
+**Active:** Phase 11A in progress on branch `phase-11a-tutorial`. Test totals: ~256 (frontend 27 · API/unit 134 · worker 29 · MCP 56 · E2E 10).
 
 **Key cross-cutting concepts to track:**
 - Inbox/Triage (Phase 5): AI-classified staging area for unprocessed items
