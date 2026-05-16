@@ -1,3 +1,4 @@
+import fnmatch
 import uuid
 from datetime import UTC, datetime
 
@@ -137,3 +138,23 @@ async def record_test_error(db: AsyncSession, conn: McpConnection, error: str) -
     conn.last_tested_at = None
     conn.updated_at = datetime.now(UTC)
     await db.flush()
+
+
+async def find_connection_for_patterns(
+    db: AsyncSession,
+    user_id: uuid.UUID,
+    patterns: list[str],
+    preferred_name: str = "",
+) -> McpConnection | None:
+    """Return first enabled connection with a cached tool matching any pattern."""
+    connections = await list_connections(db, user_id)
+    if preferred_name:
+        connections = sorted(connections, key=lambda c: c.name != preferred_name)
+    for conn in connections:
+        if not conn.enabled or not conn.capabilities:
+            continue
+        for tool in conn.capabilities:
+            tool_name = tool["name"] if isinstance(tool, dict) else tool.name
+            if any(fnmatch.fnmatch(tool_name, p) for p in patterns):
+                return conn
+    return None

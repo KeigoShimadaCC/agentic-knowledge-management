@@ -1,5 +1,5 @@
 import type {
-  AnswerResponse,
+  AiAnswerResponse,
   AssetUploadResponse,
   AuthResponse,
   ChatImportResponse,
@@ -9,6 +9,7 @@ import type {
   EdgeCreate,
   EdgeWithObjectsOut,
   EdgeOut,
+  EnrichPageResponse,
   ExtractProjectRequest,
   ExtractProjectResponse,
   ExtractResponse,
@@ -404,16 +405,45 @@ export async function aiSuggestLinks(
 export async function aiAnswer(
   q: string,
   kind?: string,
-  object_ids?: string[]
-): Promise<AnswerResponse> {
-  return request<AnswerResponse>("/api/v1/ai/answer", {
+  object_ids?: string[],
+  useWebSearch?: boolean
+): Promise<AiAnswerResponse> {
+  const body: {
+    q: string;
+    kind: string | null;
+    object_ids: string[] | null;
+    use_web_search?: boolean;
+  } = {
+    q,
+    kind: kind ?? null,
+    object_ids: object_ids && object_ids.length > 0 ? object_ids : null,
+  };
+  if (useWebSearch !== undefined) {
+    body.use_web_search = useWebSearch;
+  }
+  return request<AiAnswerResponse>("/api/v1/ai/answer", {
     method: "POST",
-    body: JSON.stringify({
-      q,
-      kind: kind ?? null,
-      object_ids: object_ids && object_ids.length > 0 ? object_ids : null,
-    }),
+    body: JSON.stringify(body),
   });
+}
+
+export async function enrichPage(
+  pageId: string,
+  query: string
+): Promise<EnrichPageResponse> {
+  const res = await fetch(`${BASE}/api/v1/ai/enrich-page`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify({ page_id: pageId, query }),
+  });
+  if (!res.ok) {
+    const body = (await res
+      .json()
+      .catch(() => ({ detail: res.statusText }))) as { detail?: string };
+    throw new Error(body.detail ?? res.statusText);
+  }
+  return res.json() as Promise<EnrichPageResponse>;
 }
 
 export async function aiTriage(objectId: string): Promise<TriageResponse> {

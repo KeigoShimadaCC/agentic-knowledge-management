@@ -78,6 +78,8 @@ class Settings(BaseSettings):
             "Empty = MCP env var storage disabled (create returns 400)."
         ),
     )
+    mcp_web_search_threshold: float = 0.45
+    mcp_web_search_connection_name: str = ""
 
     model_config = {"env_file": ".env", "env_file_encoding": "utf-8"}
 

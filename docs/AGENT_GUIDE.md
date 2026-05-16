@@ -439,3 +439,50 @@ Agents must not:
 | Connect directly to Postgres | Bypasses validation, auth, and audit |
 | Edit files behind the API's back | Desynchronizes database state and filesystem state |
 | Hard-delete records | Breaks recovery and audit expectations |
+
+---
+
+## Web Search Augmentation (Phase 12C)
+
+When calling `POST /api/v1/ai/answer`, pass `"use_web_search": true` to enable live web search as a fallback when the KB has no confident match.
+
+```json
+// Request
+{ "q": "latest FastAPI release notes", "use_web_search": true }
+
+// Response (web search triggered)
+{
+  "answer": "FastAPI 0.115 was released...",
+  "citations": [],
+  "web_citations": [
+    { "title": "FastAPI Changelog", "url": "https://fastapi.tiangolo.com/release-notes/", "snippet": "..." }
+  ],
+  "warning": null
+}
+```
+
+**How it works:**
+1. KB hybrid search runs first (existing behavior).
+2. If the top result score < `MCP_WEB_SEARCH_THRESHOLD` (default 0.45), KnowledgeOS calls the first enabled MCP connection whose tools match the Brave/Exa pattern (`brave_*`, `web_search*`, `exa_*`, `search*`).
+3. Web results are merged into the LLM context alongside KB results and returned as `web_citations`.
+4. If no matching connection is configured or the call fails, `warning: "web_search_unavailable"` is set and a KB-only answer is returned (never a 500).
+
+**Setup:** Register a Brave Search or Exa MCP connection at `/app/settings/mcp` and test it. See `docs/MCP_TOOLS.md` for example connection configs.
+
+---
+
+## Enrich Page with Docs (Phase 12C)
+
+`POST /api/v1/ai/enrich-page` fetches up-to-date library documentation from a Context7 MCP and links it to a page as source objects with `cites` edges.
+
+```json
+// Request
+{ "page_id": "uuid", "query": "FastAPI dependency injection" }
+
+// Response
+{ "sources_created": ["uuid1"], "edges_created": ["edge-uuid1"], "agent_run_id": "uuid" }
+```
+
+**Use case:** When writing a page about a framework or API, use this to automatically pull in current official docs and link them as cited sources. The AI Panel exposes this as "Enrich with Docs" button.
+
+**Requirements:** At least one enabled MCP connection with a `context7*`-pattern tool (e.g. `@upstash/context7-mcp`). Returns 422 if none is configured.

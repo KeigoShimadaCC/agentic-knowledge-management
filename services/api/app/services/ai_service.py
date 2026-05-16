@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import asyncio
+import fnmatch
 import json
 import re
 import uuid
@@ -12,6 +14,9 @@ from sqlalchemy.orm.attributes import flag_modified
 
 from app.ai import prompts
 from app.ai.client import call_ai
+from app.config import settings
+from app.mcp_client.adapters import BraveSearchAdapter, Context7Adapter
+from app.mcp_client.client import McpClientSession, McpConnectionError
 from app.models.agent_run import AgentRun
 from app.models.edge import Edge
 from app.models.object import KosObject
@@ -20,14 +25,26 @@ from app.models.source import Source
 from app.schemas.ai import (
     AnswerResponse,
     Citation,
+    EnrichPageResponse,
     ExtractedItem,
     ExtractResponse,
     LinkSuggestion,
     SuggestLinksResponse,
     SummarizeResponse,
     TriageResponse,
+    WebCitation,
 )
-from app.services import revision_service
+from app.schemas.source import SourceCreate
+from app.services import (
+    edge_service,
+    page_service,
+    reindex_service,
+    revision_service,
+    source_service,
+)
+from app.services import (
+    mcp_connection_service as _mcp_svc,
+)
 from app.services.search_service import hybrid_search, keyword_search
 
 
@@ -55,6 +72,21 @@ async def _get_content(db: AsyncSession, obj: KosObject) -> str:
         source = result.scalar_one_or_none()
         return (source.extracted_text or "") if source else ""
     return f"{obj.title} {obj.description or ''}"
+
+
+def _cached_tool_name(tool: dict | object) -> str:
+    return tool["name"] if isinstance(tool, dict) else tool.name
+
+
+def _first_matching_tool(tools: list[dict] | None, patterns: list[str]) -> str | None:
+    return next(
+        (
+            tool_name
+            for tool in (tools or [])
+            if any(fnmatch.fnmatch(tool_name := _cached_tool_name(tool), p) for p in patterns)
+        ),
+        None,
+    )
 
 
 async def summarize_object(
@@ -284,6 +316,7 @@ async def answer_question(
     kind: str | None = None,
     limit: int = 8,
     object_ids: list[uuid.UUID] | None = None,
+    use_web_search: bool = False,
 ) -> AnswerResponse:
     results, _ = await hybrid_search(db, user_id, q, kind=kind, limit=limit)
     if not results:
@@ -294,13 +327,59 @@ async def answer_question(
         id_set = {str(oid) for oid in object_ids}
         results = [r for r in results if str(r.id) in id_set]
 
+    web_citations: list[dict] = []
+    warning: str | None = None
+
+    if use_web_search:
+        max_score = max((r.score for r in results), default=0.0)
+        if max_score < settings.mcp_web_search_threshold:
+            brave_patterns = getattr(
+                BraveSearchAdapter, "mcp_name_patterns", BraveSearchAdapter.patterns
+            )
+            preferred = settings.mcp_web_search_connection_name
+            web_conn = await _mcp_svc.find_connection_for_patterns(
+                db, user_id, brave_patterns, preferred_name=preferred
+            )
+            if web_conn is not None:
+                matched_tool = _first_matching_tool(web_conn.capabilities, brave_patterns)
+                if matched_tool:
+                    try:
+                        async with McpClientSession(web_conn, timeout=20) as session:
+                            raw = await session.call_tool(matched_tool, {"query": q})
+                        adapter = BraveSearchAdapter()
+                        inputs = adapter.adapt(raw, "source")
+                        for item in inputs:
+                            if hasattr(item, "url") and item.url:
+                                web_citations.append(
+                                    {
+                                        "title": item.title or item.url,
+                                        "url": item.url,
+                                        "snippet": (item.extracted_text or "")[:200] or None,
+                                    }
+                                )
+                    except (McpConnectionError, asyncio.TimeoutError):
+                        warning = "web_search_unavailable"
+            else:
+                warning = "web_search_unavailable"
+
     context_parts = [f"[{r.id}] {r.title}\n{r.snippet or ''}" for r in results[:limit]]
-    context = "\n\n".join(context_parts)
+
+    if web_citations:
+        web_ctx = "\n\n".join(
+            f"{c['title']}\n{c.get('snippet') or ''}\nURL: {c['url']}" for c in web_citations
+        )
+        prompt = prompts.ANSWER_QUESTION_WITH_WEB.format(
+            question=q,
+            kb_context="\n\n".join(context_parts),
+            web_context=web_ctx,
+        )
+    else:
+        prompt = prompts.ANSWER_QUESTION.format(question=q, context="\n\n".join(context_parts))
 
     messages = [
         {
             "role": "user",
-            "content": prompts.ANSWER_QUESTION.format(question=q, context=context),
+            "content": prompt,
         }
     ]
     answer_text, run = await call_ai(
@@ -330,6 +409,8 @@ async def answer_question(
         citations=citations,
         agent_run_id=run.id,
         context_count=len(results),
+        web_citations=[WebCitation(**c) for c in web_citations],
+        warning=warning,
     )
 
 
@@ -368,3 +449,100 @@ async def triage_object(
         summary=parsed.get("summary", ""),
         agent_run_id=run.id,
     )
+
+
+async def enrich_page_with_context7(
+    db: AsyncSession,
+    user_id: uuid.UUID,
+    page_id: uuid.UUID,
+    query: str,
+) -> EnrichPageResponse:
+    page_obj = await page_service.get_page_or_404(db, page_id, user_id)
+
+    ctx7_patterns = getattr(Context7Adapter, "mcp_name_patterns", Context7Adapter.patterns)
+    ctx7_conn = await _mcp_svc.find_connection_for_patterns(db, user_id, ctx7_patterns)
+    if ctx7_conn is None:
+        raise HTTPException(
+            status_code=422,
+            detail="no_context7_connection: Configure a Context7 MCP connection first.",
+        )
+
+    matched_tool = _first_matching_tool(ctx7_conn.capabilities, ctx7_patterns)
+    if matched_tool is None:
+        raise HTTPException(
+            status_code=422,
+            detail="no_context7_connection: No matching tool found.",
+        )
+
+    started_at = datetime.now(UTC)
+    sources_created: list[uuid.UUID] = []
+    edges_created: list[uuid.UUID] = []
+
+    try:
+        async with McpClientSession(ctx7_conn, timeout=30) as session:
+            raw = await session.call_tool(matched_tool, {"query": query})
+
+        adapter = Context7Adapter()
+        inputs = adapter.adapt(raw, "source")
+
+        for item in inputs:
+            sc = SourceCreate(
+                source_type="web",
+                title=item.title or query,
+                description=None,
+                tags=[],
+                url=item.url,
+            )
+            kos_obj, _source, _job = await source_service.create_source(db, user_id, sc)
+            sources_created.append(kos_obj.id)
+
+            edge = await edge_service.create_edge(
+                db,
+                source_id=page_obj.id,
+                target_id=kos_obj.id,
+                kind="cites",
+                user_id=user_id,
+            )
+            edges_created.append(edge.id)
+
+        await db.flush()
+
+        run = AgentRun(
+            user_id=user_id,
+            status="success",
+            agent_type="mcp:enrich_page_context7",
+            input={"page_id": str(page_id), "query": query, "connection_id": str(ctx7_conn.id)},
+            output={"sources_created": [str(s) for s in sources_created]},
+            error=None,
+            model="mcp",
+            started_at=started_at,
+            finished_at=datetime.now(UTC),
+        )
+        db.add(run)
+        await db.flush()
+        await db.commit()
+
+        for oid in sources_created:
+            reindex_service.enqueue_reindex_object(oid)
+
+        return EnrichPageResponse(
+            sources_created=sources_created,
+            edges_created=edges_created,
+            agent_run_id=run.id,
+        )
+
+    except (McpConnectionError, asyncio.TimeoutError) as exc:
+        run = AgentRun(
+            user_id=user_id,
+            status="failed",
+            agent_type="mcp:enrich_page_context7",
+            input={"page_id": str(page_id), "query": query},
+            output=None,
+            error=str(exc),
+            model="mcp",
+            started_at=started_at,
+            finished_at=datetime.now(UTC),
+        )
+        db.add(run)
+        await db.commit()
+        raise HTTPException(status_code=422, detail=f"MCP call failed: {exc}") from exc

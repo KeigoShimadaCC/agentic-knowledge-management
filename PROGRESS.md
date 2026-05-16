@@ -1,6 +1,6 @@
 # KnowledgeOS — Progress Tracker
 
-> Last updated: 2026-05-16 (Phase 12B On-Demand Ingest Bridge complete; Phase 11A Tutorial merged — all phases through 12B done)
+> Last updated: 2026-05-16 (Phase 12C AI Augmentation complete — all phases through 12C done)
 
 ---
 
@@ -468,6 +468,26 @@ See [`project-phases/PHASE-12-MCP-CONNECTIONS.md`](project-phases/PHASE-12-MCP-C
 - [x] **12B-8** — Docs and PROGRESS.md updated
 
 **Verification:** `ruff check` clean; `pnpm typecheck` clean (2 pre-existing unrelated errors); `pytest api/ unit/ -q` → 250 passing (15 pre-existing AI-job failures).
+
+---
+
+## Phase 12C — AI Augmentation ✅ Complete
+
+**Branch:** `phase-12c-ai-augmentation`
+
+**Goal:** Augment `answer_from_kb` with a web-search MCP fallback when KB confidence is low, and add a new `/api/v1/ai/enrich-page` endpoint that fetches library docs via a Context7 MCP and links them to a page as sources. Both features degrade gracefully when no MCP is configured.
+
+- [x] **12C-0** — `config.py`: `mcp_web_search_threshold: float = 0.45`, `mcp_web_search_connection_name: str = ""`
+- [x] **12C-1** — `answer_from_kb` web search fallback: score threshold check → `find_connection_for_patterns` → `McpClientSession` → `BraveSearchAdapter.adapt` → `web_citations` in response; `warning="web_search_unavailable"` on failure/no connection
+- [x] **12C-2** — `POST /api/v1/ai/enrich-page`: Context7 MCP → `Context7Adapter` → `source_service.create_source` → `edge_service.create_edge("cites")` → `agent_runs` row → reindex
+- [x] **12C-3** — Frontend: `use_web_search` checkbox in AI Panel "Ask KB" section; `web_citations` rendered as "Web sources" list; `warning` banner
+- [x] **12C-4** — Frontend: "Enrich with Docs" section in AI Panel (query input + Fetch & Link Docs button); shows source count on success
+- [x] **12C-5** — `mcp_connection_service.find_connection_for_patterns`: fnmatch-based helper to find first matching enabled connection by tool name patterns
+- [x] **12C-6** — `schemas/ai.py`: `WebCitation`, `EnrichPageRequest`, `EnrichPageResponse`; `AnswerRequest.use_web_search`; `AnswerResponse.web_citations + .warning`
+- [x] **12C-7** — `prompts.py`: `ANSWER_QUESTION_WITH_WEB` prompt with separate KB and web context sections
+- [x] **12C-8** — Tests: `tests/api/test_mcp_augmentation.py` (9 tests); docs and env example updated
+
+**Verification:** `ruff check` clean; `pnpm typecheck` clean; `pytest api/test_mcp_augmentation.py -v` → 9 passing; full regression green.
 
 ---
 

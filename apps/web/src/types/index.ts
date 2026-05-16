@@ -367,6 +367,12 @@ export interface AiCitation {
   snippet: string | null;
 }
 
+export interface WebCitation {
+  title: string;
+  url: string;
+  snippet: string | null;
+}
+
 export interface AnswerRequest {
   q: string;
   kind?: string | null;
@@ -374,11 +380,26 @@ export interface AnswerRequest {
   object_ids?: string[] | null;
 }
 
-export interface AnswerResponse {
+export interface AiAnswerResponse {
   answer: string;
   citations: AiCitation[];
   agent_run_id: string;
   context_count: number;
+  web_citations: WebCitation[];
+  warning: string | null;
+}
+
+export interface AnswerResponse extends AiAnswerResponse {}
+
+export interface EnrichPageRequest {
+  page_id: string;
+  query: string;
+}
+
+export interface EnrichPageResponse {
+  sources_created: string[];
+  edges_created: string[];
+  agent_run_id: string;
 }
 
 export interface TriageResponse {
