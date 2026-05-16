@@ -1,6 +1,6 @@
 # KnowledgeOS — Progress Tracker
 
-> Last updated: 2026-05-16 (Phase 9D Career MCP Tools complete; Phase 9 fully done — 9A+9B+9C+9D all shipped)
+> Last updated: 2026-05-16 (Phase 11A Interactive Tutorial complete — 17/17 E2E tests passing)
 
 ---
 
@@ -525,3 +525,23 @@ See [`project-phases/PHASE-10A-GAP-AUDIT-AND-FIX.md`](project-phases/PHASE-10A-G
 - ✅ Phase Fix 02 resolved MCP env drift: `infra/.env.example` now has one `MCP_INTERNAL_TOKEN`, and host-side `kos-mcp` defaults to the dockerized API at `http://127.0.0.1:8001`.
 - ✅ Phase Fix 02 resolved host-side Postgres port drift: docs and tests now use `127.0.0.1:5433`; `postgres:5432` remains the Docker-network address.
 - `test_output*.txt` files: `.gitignore` already excludes them; not tracked.
+
+---
+
+## Phase 11A — Interactive Guided Tutorial ✅ Complete
+
+**Goal:** Add a spotlight-driven guided tour launched by a "Start Tour" button in the sidebar. Users click through 10 steps, each highlighting a UI element with a dark overlay + popup card. Fixed sample data is seeded into the user's account via a backend endpoint on tour start. Tour can be stopped at any time.
+
+**Branch:** `phase-11a-tutorial` · **Tests:** 17/17 E2E passing
+
+- [x] **Backend — seed service** (`services/api/app/services/tutorial_seed_service.py`): idempotent seed via `tutorial_v1` tag check; creates 3 pages + 1 web source + 1 project + 2 edges; writes `agent_runs` audit row; soft-deletes on reset
+- [x] **Backend — router** (`services/api/app/api/v1/tutorial.py`): `POST /api/v1/tutorial/seed` → `{status, seeded}`, `DELETE /api/v1/tutorial/reset` → `{status, reset}`; auth-gated; registered in `router.py`
+- [x] **Frontend — step config** (`apps/web/src/components/tutorial/tutorial-steps.ts`): 10 typed steps with id, title, body, target selectors, position, and `navigateTo` routes
+- [x] **Frontend — TutorialProvider** (`apps/web/src/components/tutorial/TutorialProvider.tsx`): React context with `active`, `stepIndex`, `seedingStatus`, `start/next/prev/stop`; calls seed API on start; navigates on step change; persists completion to `localStorage`
+- [x] **Frontend — TutorialOverlay** (`apps/web/src/components/tutorial/TutorialOverlay.tsx`): portal to `document.body`; 4-panel dark backdrop; blue outline ring; ResizeObserver + scroll/resize recompute; Escape key handler
+- [x] **Frontend — TutorialPopup** (`apps/web/src/components/tutorial/TutorialPopup.tsx`): step counter, Back/Stop/Next buttons, "Explore" CTA on last step, Back hidden on step 1; `data-testid="tutorial-popup"`
+- [x] **Wire-up**: `layout.tsx` wrapped in `TutorialProvider`; `AppShell.tsx` mounts `TutorialOverlay`; Sidebar has Start Tour / Replay Tour button + all `data-tutorial` attributes; `new-page-btn`, `search-trigger`, `related-panel` wired in respective components
+- [x] **Convenience hook** (`apps/web/src/lib/hooks/useTutorial.ts`): re-exports `useTutorial` from `TutorialProvider`
+- [x] **E2E tests** (`tests/e2e/specs/12-tutorial.spec.ts`): 17 tests covering seed API idempotency, reset, sidebar button state, full tour navigation, Escape/Stop dismissal, spotlight overlay rendering, localStorage completion flag
+
+*Quality gates:* `pnpm typecheck` ✅ · `pnpm lint` ✅ · `ruff check` ✅ · `ruff format --check` ✅ · 17/17 E2E tests ✅

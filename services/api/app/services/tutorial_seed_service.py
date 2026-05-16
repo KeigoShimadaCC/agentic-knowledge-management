@@ -15,7 +15,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.object import KosObject
 from app.schemas.page import PageCreate, PageUpdate
 from app.schemas.project import ProjectCreate
-from app.services import agent_run_service, edge_service, page_service, project_service
+from app.schemas.source import SourceCreate
+from app.services import (
+    agent_run_service,
+    edge_service,
+    page_service,
+    project_service,
+    source_service,
+)
 
 TUTORIAL_TAG = "tutorial_v1"
 
@@ -124,6 +131,18 @@ async def seed_tutorial(db: AsyncSession, user_id: uuid.UUID) -> bool:
             )
             page_ids.append(page.id)
 
+        _src_obj, _src, _job = await source_service.create_source(
+            db,
+            user_id,
+            SourceCreate(
+                source_type="web",
+                title="Personal Knowledge Management — Wikipedia",
+                description="An overview of PKM techniques used as a tutorial reference.",
+                tags=[TUTORIAL_TAG],
+                url="https://en.wikipedia.org/wiki/Personal_knowledge_management",
+            ),
+        )
+
         project_obj, _project = await project_service.create_project(
             db,
             user_id=user_id,
@@ -157,7 +176,7 @@ async def seed_tutorial(db: AsyncSession, user_id: uuid.UUID) -> bool:
             output={
                 "seeded": True,
                 "tag": TUTORIAL_TAG,
-                "object_ids": [str(object_id) for object_id in [*page_ids, project_obj.id]],
+                "object_ids": [str(oid) for oid in [*page_ids, _src_obj.id, project_obj.id]],
             },
         )
     except Exception as exc:
