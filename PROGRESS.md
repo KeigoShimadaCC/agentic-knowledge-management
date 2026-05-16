@@ -66,7 +66,7 @@ See [`project-phases/PHASE-3-SEARCH.md`](project-phases/PHASE-3-SEARCH.md) for t
 
 ---
 
-## Hardening Track — Search Quality + Multilingual Retrieval 🚧 Partial
+## Hardening Track — Search Quality + Multilingual Retrieval ✅ Complete
 
 **Goal:** Strengthen retrieval quality for multilingual content (Japanese focus), harden security of search snippets, and increase observability and debug visibility.
 
@@ -204,7 +204,7 @@ See [`project-phases/PHASE-6B-STRUCTURED-CHAT-IMPORT.md`](project-phases/PHASE-6
 
 ## Phase 7A — MCP Read/Search + Safety Foundation ✅ Complete
 
-**Goal:** Safe local-only stdio MCP server with read/search tools. No write tools. No shell. No arbitrary filesystem access. `answer_from_kb` registered as disabled stub.
+**Goal:** Safe local-only stdio MCP server with read/search tools. No write tools. No shell. No arbitrary filesystem access. `answer_from_kb` wired to `POST /api/v1/ai/answer` (degrades to 503 when `OPENAI_API_KEY` absent; stub wiring fixed in Fix-01).
 
 **Commits:** 4 commits · 24 tests passing (19 MCP package + 5 FastAPI token auth)
 
@@ -217,28 +217,12 @@ See [`project-phases/PHASE-7A-MCP.md`](project-phases/PHASE-7A-MCP.md) for the f
 - [x] **Subtask 4** — MCP server scaffold: `server.py` + `tools.py` + tool registry + `list_tools`/`call_tool` handlers
 - [x] **Subtask 5** — Search tools: `search_objects`, `hybrid_search` (with 503 → keyword fallback)
 - [x] **Subtask 6** — Object/page/source tools: `get_object`, `get_page` (50k truncation), `get_source` (configurable text truncation)
-- [x] **Subtask 7** — Graph tool + `answer_from_kb` stub: `get_related_objects` (depth capped at 2), disabled stub with clear error
+- [x] **Subtask 7** — Graph tool + `answer_from_kb`: `get_related_objects` (depth capped at 2); `answer_from_kb` initially a stub, later wired to `/api/v1/ai/answer` in Fix-01
 - [x] **Subtask 8** — Tests: `test_config.py` (6), `test_tools.py` (13), `test_mcp_auth.py` (5) — all passing
 - [x] **Subtask 9** — Docs: `MCP_TOOLS.md` (full rewrite), `SECURITY.md` (MCP token + safety section), `AGENT_GUIDE.md` (MCP usage patterns)
 
 ---
 
-## Phase Enhance 03 — UX/UI Polish 🚧 In Progress
-
-**Goal:** Lift KnowledgeOS to a polished daily-driver: design system tokens, UI primitives, toast system, keyboard shortcuts overlay, responsive layouts, light theme, and accessibility baseline. All changes purely additive; no existing files renamed or removed.
-
-Working branch: `phase-enhance-03-ux-polish` (worktree: `/private/tmp/akm-enhance-03`)
-
-See [`project-phases/PHASE-ENHANCE-03-UX-POLISH.md`](project-phases/PHASE-ENHANCE-03-UX-POLISH.md) for the full spec.
-
-- [x] **UX-T1** — Design tokens (`tokens.css`), Tailwind extension, Inter + JetBrains Mono fonts, 20 UI primitives (`components/ui/`), 3 layout primitives, `cn()` helper, 7 `data-testid` additions on contractual components, feature flag stubs in `.env.example`. `typecheck ✓  lint ✓  build ✓` — commit `d969ef8`
-- [ ] **UX-T2** — Toast system, route error boundaries, mobile drawer, sidebar collapse (Cmd+\), inline save-status feedback
-- [ ] **UX-T3** — cmdk search palette + Tiptap bubble/slash menus (both flag-gated; default off)
-- [ ] **UX-T4** — Unified list page shell with filters, sort, keyboard nav (j/k), bulk actions
-- [ ] **UX-T5** — Light theme support, auth screen redesign, ThemeProvider
-- [ ] **UX-T6** — Accessibility baseline (axe audit), shortcut overlay (?), a11y + UX docs
-
----
 
 ## Phase 7B — MCP Write Tools ✅ Complete
 
@@ -262,20 +246,6 @@ See [`project-phases/PHASE-7B-MCP-WRITE.md`](project-phases/PHASE-7B-MCP-WRITE.m
 
 ---
 
-## Phase 8 — Multi-Pane Workspaces ⬜ Planned
-
-**Goal:** Transform the app into a serious research environment — multiple pages, sources, and AI tools open side by side in a saved, reusable workspace layout.
-
-- [ ] **Subtask 1** — Pane layout engine: split main area into 2–4 resizable panes; each pane can independently show any object (page, source, asset, search)
-- [ ] **Subtask 2** — Workspace data model: `workspaces` table with `layout_json` storing open pane configurations; CRUD API
-- [ ] **Subtask 3** — Save/restore workspace: "Save Workspace" button; named workspace list in sidebar; restore opens exact pane set
-- [ ] **Subtask 4** — Drag selected text between panes: drag text from source pane → creates a quote block in page pane with back-reference
-- [ ] **Subtask 5** — Link pane to pane: "Link current page to another open page" command; creates typed edge instantly
-- [ ] **Subtask 6** — AI scoped to workspace: AI sidebar context picker — "Ask about this pane", "Ask about selected panes", "Ask about whole workspace"
-- [ ] **Subtask 7** — Workspace-scoped search: search results filtered to objects open or linked in the current workspace
-- [ ] **Subtask 8** — Tests + docs: workspace CRUD tests; UI smoke test; `docs/ARCHITECTURE.md` updated
-
----
 
 ## Phase 9 — Career & Project Memory ✅ Complete (9A+9B+9C+9D all done)
 
@@ -330,7 +300,7 @@ See [`project-phases/PHASE-7B-MCP-WRITE.md`](project-phases/PHASE-7B-MCP-WRITE.m
 - [x] **REST** — `api/v1/projects.py` + router registration; restore via existing `POST /api/v1/objects/{id}/restore`
 - [x] **AI** — Thin `extract-project` route in `api/v1/ai.py`; JSON-mode extraction; 503 when `OPENAI_API_KEY` unset; 502 + persisted failed `agent_run` on malformed JSON
 - [x] **Tests** — `tests/api/test_projects.py` (12 cases), five new cases appended to `tests/api/test_ai.py`
-- [ ] **Follow-up (9B+)** — MCP project tools (after 7B audited writes), resume/interview generators, frontend; optional retrofit of project mutations to `audited_write_service` once Phase 7B merges
+- [x] **Follow-up (9B+)** — MCP project tools (after 7B audited writes), resume/interview generators, frontend; optional retrofit of project mutations to `audited_write_service` once Phase 7B merges. ✅ Completed via phases 9B/9C/9D.
 
 **Verification:** `cd tests && PYTHONPATH=../services/api uv run --project ../services/api --extra dev pytest api/ -q` → 135 passed; `pytest unit/` → 16 passed; `cd services/api && uv run ruff check . && uv run ruff format --check .` clean.
 
@@ -444,6 +414,21 @@ See [`project-phases/PHASE-8C-MULTI-PANE-WORKSPACES.md`](project-phases/PHASE-8C
 
 ---
 
+## Phase 10A — Gap Audit & Fix ✅ Complete
+
+**Goal:** Full audit of all 24 phase plan documents against the live codebase. Fix every identified gap — PROGRESS.md inconsistencies, ruff format drift, and the pg_trgm optimization deferred since Hardening Subtask 1.
+
+See [`project-phases/PHASE-10A-GAP-AUDIT-AND-FIX.md`](project-phases/PHASE-10A-GAP-AUDIT-AND-FIX.md) for the full audit report.
+
+- [x] **10A-1** — Full audit: all 24 phase plan docs read and cross-referenced against codebase + PROGRESS.md; no missing features found
+- [x] **10A-2** — Ruff format: 4 drifted files fixed (`search.py`, `rate_limit.py`, `audited_write_service.py`, `page_service.py`); CI clean
+- [x] **10A-3** — PROGRESS.md: 8 documentation inconsistencies fixed (stale sections deleted, unchecked items resolved, summary table completed, total count updated)
+- [x] **10A-4** — Migration 0010: `pg_trgm` extension + GIN indexes on `objects.title` and `objects.description` for O(log n) multilingual ILIKE
+- [x] **10A-5** — Docs: `docs/INGESTION.md` pg_trgm section added
+- [x] **10A-6** — Verification: `pytest api/ unit/ -q` → 217 passed; `alembic heads` → 0010; `ruff check/format --check` → clean
+
+---
+
 ## Summary
 
 | Phase | Name | Status | Progress |
@@ -453,20 +438,23 @@ See [`project-phases/PHASE-8C-MULTI-PANE-WORKSPACES.md`](project-phases/PHASE-8C
 | 3 | Search | ✅ Complete | 10 / 10 subtasks |
 | 4 | Graph Lite | ✅ Complete | 6 / 6 subtasks |
 | 8A | Workspace Lite | ✅ Complete | 7 / 7 subtasks |
+| 8B | Workspaces Backend | ✅ Complete | 6 / 6 subtasks |
 | 5 | AI Assistant + Inbox/Triage | ✅ Complete | 9 / 9 subtasks |
 | 6A | Chat Import Lite | ✅ Complete | 8 / 8 subtasks |
 | 6B | Structured Chat Import | ✅ Complete | 9 / 9 subtasks |
 | 7A | MCP Read/Search | ✅ Complete | 10 / 10 subtasks |
 | 7C | Wave 1 Stabilization | ✅ Complete | 3 / 3 tracks |
-| Hardening | Search Quality + Multilingual | ✅ Complete | 6 / 7 subtasks (Subtask 1 pg_trgm deferred) |
+| Hardening | Search Quality + Multilingual | ✅ Complete | 7 / 7 subtasks (pg_trgm GIN index — migration 0010) |
 | 7B | MCP Write Tools | ✅ Complete | 13 / 13 subtasks |
 | 8C | Multi-Pane Workspaces | ✅ Complete | 7 / 7 subtasks |
 | 9 | Career & Project Memory | ✅ Complete (9A+9B+9C+9D) | 8 / 8 subtasks |
 | 9C | Career Memory Frontend | ✅ Complete | 20 / 20 subtasks |
 | 9D | Career MCP Tools | ✅ Complete | 4 / 4 subtasks |
+| Enhance-02 | Testing Infrastructure | ✅ Complete | 6 / 6 checkpoints (T1–T6) |
 | Enhance-03 | UX/UI Polish | ✅ Complete | 6 / 6 PRs |
+| 10A | Gap Audit & Fix | ✅ Complete | 6 / 6 subtasks |
 
-**Total:** 109 / 123 subtasks complete
+**All phases complete.** Test totals: ~256 (frontend 27 · API/unit 134 · worker 29 · MCP 56 · E2E 10).
 
 **Key cross-cutting concepts to track:**
 - Inbox/Triage (Phase 5): AI-classified staging area for unprocessed items
