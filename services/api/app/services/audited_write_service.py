@@ -67,17 +67,13 @@ async def audited_write(
 
     before_snapshot: dict[str, Any] = {}
     if mutating_object_id is not None:
-        before_snapshot = await revision_service.snapshot_object_state(
-            db, mutating_object_id
-        )
+        before_snapshot = await revision_service.snapshot_object_state(db, mutating_object_id)
 
     try:
         result = await fn(db)
 
         if mutating_object_id is not None:
-            after_snapshot = await revision_service.snapshot_object_state(
-                db, mutating_object_id
-            )
+            after_snapshot = await revision_service.snapshot_object_state(db, mutating_object_id)
             await revision_service.create_revision(
                 db,
                 object_id=mutating_object_id,

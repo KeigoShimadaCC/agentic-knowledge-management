@@ -53,8 +53,7 @@ async def update_page(
         raise HTTPException(
             status_code=409,
             detail=(
-                f"Version conflict: expected {data.expected_version},"
-                f" current is {page.version}."
+                f"Version conflict: expected {data.expected_version}, current is {page.version}."
             ),
         )
 

@@ -31,7 +31,13 @@ async def keyword_search(
     db: AsyncSession = Depends(get_db),
 ) -> SearchResponse:
     results = await search_service.keyword_search(
-        db, user.id, q, kind=kind, source_type=source_type, limit=limit, offset=offset,
+        db,
+        user.id,
+        q,
+        kind=kind,
+        source_type=source_type,
+        limit=limit,
+        offset=offset,
         object_ids=object_ids,
     )
     return SearchResponse(results=results, total=len(results), query=q, mode="keyword")

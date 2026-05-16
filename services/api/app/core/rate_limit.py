@@ -24,8 +24,7 @@ class RateLimitError(Exception):
         self.limit = limit
         self.retry_after = retry_after
         super().__init__(
-            f"Rate limit exceeded: {limit} writes per {kind}. "
-            f"Retry after {retry_after} seconds."
+            f"Rate limit exceeded: {limit} writes per {kind}. Retry after {retry_after} seconds."
         )
 
 
