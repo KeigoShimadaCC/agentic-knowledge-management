@@ -1007,7 +1007,15 @@ Return ranked link suggestions (read-only — user must call `POST /edges` to co
 
 ### POST /api/v1/ai/answer
 
-Answer a question grounded in the KB. **Request**: `{ "q": "...", "kind": null, "limit": 8 }` **Response**: `{ "answer": "...", "citations": [...], "agent_run_id": "uuid", "context_count": 4 }`
+Answer a question grounded in the KB. **Request**: `{ "q": "...", "kind": null, "limit": 8, "use_web_search": false }` **Response**: `{ "answer": "...", "citations": [...], "agent_run_id": "uuid", "context_count": 4, "web_citations": [], "warning": null }`
+
+When `use_web_search: true`: if the top KB result score is below `MCP_WEB_SEARCH_THRESHOLD` (default 0.45), a web-search MCP connection (Brave/Exa) is called and results are merged into the LLM context. `web_citations` contains `[{title, url, snippet}]` entries from the web results. If no web-search connection is configured or the call fails, `warning: "web_search_unavailable"` is set and the response is still 200.
+
+### POST /api/v1/ai/enrich-page
+
+Fetch library documentation from a Context7 MCP connection and link it to a page as source objects. **Request**: `{ "page_id": "uuid", "query": "FastAPI dependency injection" }` **Response**: `{ "sources_created": ["uuid", ...], "edges_created": ["uuid", ...], "agent_run_id": "uuid" }`
+
+Creates `cites` edges from the page to each new source. Requires at least one enabled MCP connection with a `context7*`-pattern tool. Returns 422 with `detail: "no_context7_connection: ..."` if none is configured.
 
 ### POST /api/v1/ai/triage
 
