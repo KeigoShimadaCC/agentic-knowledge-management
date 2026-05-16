@@ -138,8 +138,8 @@ export function PageView({ pageId, initialTitle, initialContent }: PageViewProps
 
   return (
     <div className="flex flex-col h-full">
-      {useV2Editor && editor && <EditorBubbleMenu editor={editor} />}
-      {useV2Editor && editor && <SlashMenu editor={editor} />}
+      {useV2Editor && editor && <EditorBubbleMenu editor={editor} objectId={pageId} />}
+      {useV2Editor && editor && <SlashMenu editor={editor} objectId={pageId} />}
       <EditorToolbar
         editor={editor}
         onCite={() => setIsSourcePickerOpen(true)}
