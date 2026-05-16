@@ -1,6 +1,6 @@
 # Phase 11B — Inline Editor AI (Slash-Command AI Actions)
 
-> **Status:** Planned
+> **Status:** ✅ Complete (2026-05-16, branch `feat/phase-11b-inline-editor-ai`)
 > **Owner:** Full-stack (frontend-heavy, small backend addition)
 > **Audience:** AI coder (Codex). Read end-to-end before writing a single line.
 > **Estimated effort:** 1 PR, ~8 commits, ~600–800 LOC including tests.
@@ -429,13 +429,13 @@ This is the only new component file needed. Keep it focused — no React compone
 
 Each subtask is independently Codex-delegatable and ends with a single conventional commit. Subtasks 0–2 are **blocking** — they must merge before 3–6 start.
 
-- [ ] **Subtask 0** — Worktree setup + plan review **(blocking)**
-- [ ] **Subtask 1** — Backend schemas (`schemas/inline_ai.py`) **(blocking)**
-- [ ] **Subtask 2** — Backend endpoint handlers appended to `api/v1/ai.py` + `lib/api.ts` additions **(blocking)**
-- [ ] **Subtask 3** — `AiSlashCommand.tsx` utility + SlashMenu entries
-- [ ] **Subtask 4** — BubbleMenu AI dropdown
-- [ ] **Subtask 5** — Integration tests (`tests/api/test_inline_ai.py`)
-- [ ] **Subtask 6** — Frontend component test + docs + PROGRESS flip
+- [x] **Subtask 0** — Worktree setup + plan review **(blocking)**
+- [x] **Subtask 1** — Backend schemas (`schemas/inline_ai.py`) **(blocking)**
+- [x] **Subtask 2** — Backend endpoint handlers appended to `api/v1/ai.py` + `lib/api.ts` additions **(blocking)**
+- [x] **Subtask 3** — `AiSlashCommand.tsx` utility + SlashMenu entries
+- [x] **Subtask 4** — BubbleMenu AI dropdown
+- [x] **Subtask 5** — Integration tests (`tests/api/test_inline_ai.py`)
+- [x] **Subtask 6** — Frontend component test + docs + PROGRESS flip
 
 ---
 
