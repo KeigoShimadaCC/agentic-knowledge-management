@@ -429,7 +429,7 @@ See [`project-phases/PHASE-10A-GAP-AUDIT-AND-FIX.md`](project-phases/PHASE-10A-G
 
 ---
 
-## Phase 12A — MCP Connections Registry 🚧 In Progress
+## Phase 12A — MCP Connections Registry ✅ Complete
 
 **Branch:** `phase-12a-mcp-registry`
 
@@ -444,8 +444,10 @@ See [`project-phases/PHASE-12-MCP-CONNECTIONS.md`](project-phases/PHASE-12-MCP-C
 - [x] **12A-5** — Service `services/mcp_connection_service.py`: list, get_or_404, create (encrypt), update (re-encrypt), soft-delete, cache_capabilities, record_test_error
 - [x] **12A-6** — REST router `api/v1/mcp_connections.py` + registration in `api/v1/router.py`; env_vars redacted on all GET responses
 - [x] **12A-7** — Test-connection endpoint: spawn stdio subprocess, JSON-RPC 2.0 handshake (initialize + tools/list), cache capabilities, timeout/error handling; SSE returns 422 stub
-- [ ] **12A-8** — Integration tests `tests/api/test_mcp_connections.py` (12+ cases) — in progress
-- [ ] **12A-9** — Docs: `.env.example` MCP_ENV_ENCRYPTION_KEY added; PROGRESS.md updated
+- [x] **12A-8** — Integration tests `tests/api/test_mcp_connections.py`: 13 cases all passing (CRUD, redaction, ownership, DB encryption verified, subprocess mock, timeout, key-absent)
+- [x] **12A-9** — Docs: `infra/.env.example` MCP_ENV_ENCRYPTION_KEY added; `tests/api/conftest.py` Fernet fixture key; PROGRESS.md Phase 12A section complete
+
+**Verification:** `pytest api/test_mcp_connections.py -v` → 13 passed; `pytest unit/test_mcp_crypto.py -v` → 4 passed; `alembic upgrade head` → 0011 applied; `ruff check/format --check` → clean.
 
 ---
 
@@ -493,7 +495,7 @@ See [`project-phases/PHASE-11A-TUTORIAL.md`](project-phases/PHASE-11A-TUTORIAL.m
 | 11A | Interactive Tutorial | 🚧 In Progress | 0 / 6 subtasks |
 | 11B | Inline Editor AI | ✅ Complete | 6 / 6 subtasks |
 | 11C | Proactive Background AI | ✅ Complete | 8 / 8 subtasks |
-| 12A | MCP Connections Registry | 🚧 In Progress | 7 / 9 subtasks |
+| 12A | MCP Connections Registry | ✅ Complete | 9 / 9 subtasks |
 
 **Active:** Phase 12A (MCP Connections Registry) in progress on branch `phase-12a-mcp-registry`. Phase 11A in progress on branch `phase-11a-tutorial`. Phases 11B and 11C complete. Test totals: ~294 (frontend 60 · API/unit 232 · worker 29 · MCP 56 · E2E 10).
 
