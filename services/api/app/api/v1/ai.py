@@ -6,6 +6,7 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.ai.client import call_ai
 from app.core.deps import get_current_user
 from app.db.session import get_db
 from app.models.object import KosObject
@@ -29,6 +30,12 @@ from app.schemas.career_ai import (
     GenerateResumeBulletsResponse,
 )
 from app.schemas.common import PaginatedResponse
+from app.schemas.inline_ai import (
+    AiCompleteRequest,
+    AiCompleteResponse,
+    AiTransformRequest,
+    AiTransformResponse,
+)
 from app.schemas.object import ObjectOut
 from app.schemas.project import ExtractProjectRequest, ExtractProjectResponse
 from app.services import ai_service, career_ai_service, project_service
@@ -156,3 +163,78 @@ async def generate_interview_story_endpoint(
     result = await career_ai_service.generate_interview_story(db, user_id=user.id, payload=body)
     await db.commit()
     return result
+
+
+_COMPLETE_SYSTEM: dict[str, str] = {
+    "continue": (
+        "You are a writing assistant. Continue the text naturally."
+        " Return only the continuation, no preamble."
+    ),
+    "expand": (
+        "You are a writing assistant. Expand the text with more detail."
+        " Return only the expanded continuation."
+    ),
+}
+
+_TRANSFORM_SYSTEM: dict[str, str] = {
+    "improve": (
+        "You are an editor. Improve the clarity and flow of the text."
+        " Return only the improved version."
+    ),
+    "concise": (
+        "You are an editor. Make the text more concise without losing meaning."
+        " Return only the revised version."
+    ),
+    "grammar": (
+        "You are a proofreader. Fix all grammar and spelling errors."
+        " Return only the corrected version."
+    ),
+    "summarize": (
+        "You are an editor. Write a one-paragraph summary of the text. Return only the summary."
+    ),
+}
+
+
+@router.post("/complete", response_model=AiCompleteResponse)
+async def ai_complete(
+    body: AiCompleteRequest,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> AiCompleteResponse:
+    system = _COMPLETE_SYSTEM[body.instruction]
+    user_msg = body.context_before
+    if body.context_after:
+        user_msg += f"\n[TEXT AFTER CURSOR: {body.context_after}]"
+    text, run = await call_ai(
+        db,
+        user_id=user.id,
+        agent_type="inline_ai_complete",
+        messages=[
+            {"role": "system", "content": system},
+            {"role": "user", "content": user_msg},
+        ],
+        input_context={"instruction": body.instruction, "object_id": str(body.object_id)},
+    )
+    await db.commit()
+    return AiCompleteResponse(completion=text, agent_run_id=run.id)
+
+
+@router.post("/transform", response_model=AiTransformResponse)
+async def ai_transform(
+    body: AiTransformRequest,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> AiTransformResponse:
+    system = _TRANSFORM_SYSTEM[body.instruction]
+    text, run = await call_ai(
+        db,
+        user_id=user.id,
+        agent_type="inline_ai_transform",
+        messages=[
+            {"role": "system", "content": system},
+            {"role": "user", "content": body.text},
+        ],
+        input_context={"instruction": body.instruction, "object_id": str(body.object_id)},
+    )
+    await db.commit()
+    return AiTransformResponse(result=text, agent_run_id=run.id)
