@@ -12,6 +12,7 @@ import {
   Layout,
   LogOut,
   MessageSquareText,
+  PlayCircle,
   Trash2,
   Trash,
 } from "lucide-react";
@@ -25,6 +26,7 @@ import { useAuth } from "@/lib/hooks/useAuth";
 import { useSidebarState } from "@/lib/hooks/useSidebarState";
 import { useShortcut } from "@/lib/hooks/useShortcut";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
+import { useTutorial } from "@/components/tutorial/TutorialProvider";
 import { useWorkspaceLite } from "@/components/workspace/WorkspaceLiteProvider";
 
 const navItems = [
@@ -45,8 +47,14 @@ export function Sidebar() {
   const [signingOut, setSigningOut] = useState(false);
   const { collapsed, toggle } = useSidebarState();
   const { loadWorkspace } = useWorkspaceLite();
+  const { start, seedingStatus } = useTutorial();
   const [workspaces, setWorkspaces] = useState<WorkspaceOut[]>([]);
   const [wsExpanded, setWsExpanded] = useState(false);
+  const [completedTutorial, setCompletedTutorial] = useState(false);
+
+  useEffect(() => {
+    setCompletedTutorial(localStorage.getItem("kos:tutorial:completed") === "true");
+  }, []);
 
   useEffect(() => {
     if (wsExpanded) {
@@ -79,7 +87,8 @@ export function Sidebar() {
     <aside className={clsx(
       "flex h-full shrink-0 flex-col border-r border-gray-800 bg-gray-900 transition-all duration-base",
       collapsed ? "w-14" : "w-60"
-    )}>
+    )}
+    data-tutorial="sidebar">
       <div className="flex items-center justify-between border-b border-gray-800 p-4">
         {!collapsed && (
           <span className="text-lg font-bold tracking-tight text-white">KnowledgeOS</span>
@@ -103,6 +112,15 @@ export function Sidebar() {
           <Link
             key={href}
             href={href}
+            data-tutorial={
+              href === "/app/pages"
+                ? "nav-pages"
+                : href === "/app/sources"
+                  ? "nav-sources"
+                  : href === "/app/chats"
+                    ? "nav-chats"
+                    : undefined
+            }
             title={collapsed ? label : undefined}
             className={clsx(
               "flex items-center rounded-lg px-3 py-2 text-sm transition-colors",
@@ -169,7 +187,20 @@ export function Sidebar() {
         </div>
       </nav>
 
-      <div className="shrink-0 space-y-2 border-t border-gray-800 p-3">
+      <div data-tutorial="sidebar-footer" className="shrink-0 space-y-2 border-t border-gray-800 p-3">
+        <button
+          type="button"
+          onClick={() => void start()}
+          disabled={seedingStatus === "loading"}
+          title={collapsed ? (completedTutorial ? "Replay Tour" : "Start Tour") : undefined}
+          className={clsx(
+            "flex w-full items-center rounded-lg px-3 py-2 text-sm text-gray-400 transition-colors hover:bg-gray-800 hover:text-white disabled:opacity-50",
+            collapsed ? "justify-center gap-0" : "gap-2"
+          )}
+        >
+          <PlayCircle size={16} aria-hidden />
+          {!collapsed && (completedTutorial ? "Replay Tour" : "Start Tour")}
+        </button>
         <div className={clsx("flex", collapsed ? "justify-center" : "justify-end px-1")}>
           <ThemeToggle />
         </div>

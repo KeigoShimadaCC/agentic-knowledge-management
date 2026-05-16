@@ -140,6 +140,18 @@ export async function logout(): Promise<void> {
   await request<{ ok: boolean }>("/api/v1/auth/logout", { method: "POST" });
 }
 
+export async function seedTutorial(): Promise<{ status: "ok"; seeded: boolean }> {
+  return request<{ status: "ok"; seeded: boolean }>("/api/v1/tutorial/seed", {
+    method: "POST",
+  });
+}
+
+export async function resetTutorial(): Promise<{ status: "ok"; reset: number }> {
+  return request<{ status: "ok"; reset: number }>("/api/v1/tutorial/reset", {
+    method: "DELETE",
+  });
+}
+
 export interface ListObjectsParams {
   kind?: string;
   tag?: string;
