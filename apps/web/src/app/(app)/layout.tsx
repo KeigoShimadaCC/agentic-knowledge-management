@@ -1,5 +1,6 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import { getServerApiUrl } from "@/lib/serverApiUrl";
 import { AppShell } from "@/components/layout/AppShell";
 import { TutorialProvider } from "@/components/tutorial/TutorialProvider";
 import { WorkspaceLiteProvider } from "@/components/workspace/WorkspaceLiteProvider";
@@ -7,7 +8,7 @@ import { ErrorBoundary } from "@/components/layout/ErrorBoundary";
 import { Toaster } from "@/components/ui/Toast";
 
 async function getCurrentUser() {
-  const apiUrl = process.env.API_URL ?? "http://localhost:8000";
+  const apiUrl = getServerApiUrl();
   const cookieStore = cookies();
   const sessionCookie = cookieStore.get("kos_session");
 

@@ -23,11 +23,15 @@ ENV_FILE="${SCRIPT_DIR}/../infra/.env"
 
 if [ ! -f "${ENV_FILE}" ]; then
     cp "${ENV_EXAMPLE}" "${ENV_FILE}"
-    # Substitute the placeholder username with the actual home path
-    sed -i '' "s|/Users/YOUR_USERNAME|${HOME}|g" "${ENV_FILE}"
     echo "Created infra/.env — edit it to set your SESSION_SECRET"
 else
     echo "infra/.env already exists — skipping copy"
+fi
+
+# Always fix stale template paths (older copies of .env skipped substitution).
+if grep -q 'YOUR_USERNAME' "${ENV_FILE}" 2>/dev/null; then
+    sed -i '' "s|/Users/YOUR_USERNAME|${HOME}|g" "${ENV_FILE}"
+    echo "Updated LIBRARY_ROOT in infra/.env (replaced YOUR_USERNAME with ${HOME})"
 fi
 
 echo ""

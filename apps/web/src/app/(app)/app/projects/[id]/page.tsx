@@ -2,10 +2,11 @@ import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
 
 import { ProjectView } from "@/components/projects/ProjectView";
+import { getServerApiUrl } from "@/lib/serverApiUrl";
 import type { ProjectOut } from "@/types";
 
 async function fetchProject(id: string): Promise<ProjectOut | null> {
-  const apiUrl = process.env.API_URL ?? process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+  const apiUrl = getServerApiUrl();
   const cookieStore = cookies();
   const sessionCookie = cookieStore.get("kos_session");
   if (!sessionCookie) return null;

@@ -1,10 +1,11 @@
 import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
+import { getServerApiUrl } from "@/lib/serverApiUrl";
 import { PageView } from "@/components/pages/PageView";
 import type { PageOut } from "@/types";
 
 async function fetchPage(id: string): Promise<PageOut | null> {
-  const apiUrl = process.env.API_URL ?? "http://localhost:8000";
+  const apiUrl = getServerApiUrl();
   const cookieStore = cookies();
   const sessionCookie = cookieStore.get("kos_session");
   if (!sessionCookie) return null;
@@ -22,7 +23,7 @@ async function fetchPage(id: string): Promise<PageOut | null> {
 }
 
 async function fetchObject(id: string) {
-  const apiUrl = process.env.API_URL ?? "http://localhost:8000";
+  const apiUrl = getServerApiUrl();
   const cookieStore = cookies();
   const sessionCookie = cookieStore.get("kos_session");
   if (!sessionCookie) return null;

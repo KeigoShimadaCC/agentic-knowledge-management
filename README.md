@@ -130,6 +130,16 @@ open http://localhost:3000
 
 Register an account on first visit. All data stays local.
 
+Simpler, non-engineer walkthrough: [`quickstart.md`](quickstart.md).
+
+### Docker troubleshooting
+
+| Symptom | What to do |
+|--------|----------------|
+| `bind: address already in use` on **8001** | Free `127.0.0.1:8001` (often a local `uvicorn` on that port). Stop it, then `docker compose -f infra/docker-compose.yml up -d` again. |
+| Mount error / path contains **`YOUR_USERNAME`** | Set `LIBRARY_ROOT` in `infra/.env` to your real library path (under `~/KnowledgeOS/`). Run `bash scripts/setup.sh` (it patches a stale placeholder). If a bad volume already exists: `docker compose -f infra/docker-compose.yml down`, `docker volume rm infra_library-data`, then `up -d`. |
+| **Internal Server Error** from the web UI / Next **Module not found** | Stale `node_modules` volume for `kos-web`: `docker compose -f infra/docker-compose.yml rm -sf web`, `docker volume rm infra_kos-web-node-modules`, `docker compose -f infra/docker-compose.yml up -d --build web`. If you use **`pnpm dev`** on the host with the API in Docker, add `apps/web/.env.local` from [`apps/web/.env.local.example`](apps/web/.env.local.example). Confirm `docker ps` shows **`kos-web`** on port 3000. |
+
 ---
 
 ## Development

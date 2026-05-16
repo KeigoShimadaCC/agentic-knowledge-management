@@ -140,7 +140,8 @@ services:
       API_URL: http://api:8000
     volumes:
       - ../apps/web:/app/apps/web
-      - /app/apps/web/node_modules
+      # Named volume so stale deps can be cleared: docker volume rm infra_kos-web-node-modules
+      - kos-web-node-modules:/app/apps/web/node_modules
     command: ["pnpm", "exec", "next", "dev", "--port", "3000", "--hostname", "0.0.0.0"]
     ports:
       - "127.0.0.1:3000:3000"
@@ -153,6 +154,7 @@ volumes:
   postgres-data:
   redis-data:
   qdrant-data:
+  kos-web-node-modules:
   library-data:
     driver: local
     driver_opts:
