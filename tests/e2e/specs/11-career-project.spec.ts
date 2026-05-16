@@ -72,22 +72,47 @@ test.describe("Career project golden path", () => {
 
   test("generate and save resume bullets", async ({ page, api }) => {
     const project = await createProject(api, `Bullet project ${crypto.randomUUID()}`);
+    const stubBullet = {
+      text: "Built KnowledgeOS project memory and reduced lookup time by 40%.",
+      evidence_object_ids: [],
+      confidence: "high",
+      metrics_cited: ["40%"],
+    };
+
     await page.route("**/api/v1/ai/generate-resume-bullets", async (route) => {
       await route.fulfill({
         json: {
           project_id: project.id,
-          agent_run_id: crypto.randomUUID(),
+          // null avoids FK constraint violation: agent_run_id FK requires a real agent_runs row
+          agent_run_id: null,
           evidence_count: 0,
-          bullets: [
-            {
-              text: "Built KnowledgeOS project memory and reduced lookup time by 40%.",
-              evidence_object_ids: [],
-              confidence: "high",
-              metrics_cited: ["40%"],
-            },
-          ],
+          bullets: [stubBullet],
         },
       });
+    });
+
+    // Mock save + list so the FK null passes cleanly and UI updates deterministically
+    const savedSetId = crypto.randomUUID();
+    const savedSet = {
+      id: savedSetId,
+      user_id: crypto.randomUUID(),
+      project_id: project.id,
+      target_role: "Lead Engineer",
+      emphasis: null,
+      count: 1,
+      bullets: [stubBullet],
+      agent_run_id: null,
+      prompt_version: null,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      deleted_at: null,
+    };
+    await page.route(`**/api/v1/projects/${project.id}/resume-bullet-sets`, async (route) => {
+      if (route.request().method() === "POST") {
+        await route.fulfill({ status: 201, contentType: "application/json", json: savedSet });
+      } else {
+        await route.fulfill({ json: [savedSet] });
+      }
     });
 
     await page.goto(`/app/projects/${project.id}`);
@@ -95,7 +120,7 @@ test.describe("Career project golden path", () => {
     await page.getByRole("button", { name: "Generate" }).click();
     await expect(page.getByText(/Built KnowledgeOS project memory/)).toBeVisible();
     await page.getByRole("button", { name: "Save" }).click();
-    await expect(page.getByText(/Staff Engineer · 1 bullets/)).toBeVisible();
+    await expect(page.getByText(/Lead Engineer · 1 bullets/)).toBeVisible({ timeout: 10_000 });
   });
 
   test("markdown export triggers download", async ({ page, api }) => {

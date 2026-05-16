@@ -508,6 +508,39 @@ See [`project-phases/PHASE-11A-TUTORIAL.md`](project-phases/PHASE-11A-TUTORIAL.m
 
 ---
 
+## Phase 13 — Frontend Health Check & Debug Sprint 🚧 In Progress
+
+**Last updated:** 2026-05-17
+
+**Goal:** Systematically verify every frontend feature works in a real browser. Three worktree tracks: audit (13A), bug fixes (13B), and E2E coverage expansion (13C). Claude orchestrates; Codex implements.
+
+See [`project-phases/PHASE-13-FRONTEND-HEALTH-CHECK.md`](project-phases/PHASE-13-FRONTEND-HEALTH-CHECK.md) for the full spec.
+
+### Track 13A — Playwright Audit (`phase-13a-playwright-audit`)
+
+- [ ] **13A-0** — Branch + worktree setup
+- [ ] **13A-1** — Run full `pnpm test:e2e` suite; collect HTML report + failure traces
+- [ ] **13A-2** — Investigate 8 uncommitted modified files; commit or revert each
+- [ ] **13A-3** — Route-crawl spec: visit every major route, assert no JS crashes
+- [ ] **13A-4** — Feature smoke spec: render-only check for slash menu, bubble menu, AI panel, multi-pane, tutorial, shortcut overlay, etc.
+- [ ] **13A-5** — Produce `tests/e2e/AUDIT-13A.md` bug table
+
+### Track 13B — Bug Fix Sprint (`phase-13b-bug-fixes`)
+
+- [ ] **13B-1** through **13B-15** — One Codex fix task per bug found in 13A (auth redirects, sidebar, API startup, MCP settings, inbox bulk triage, multi-pane, slash menu, bubble menu, career AI generators, AI panel enrich/web-search, search workspace filter, shortcut overlay, asset upload, tutorial replay)
+
+### Track 13C — Coverage Expansion (`phase-13c-coverage`)
+
+- [ ] **13C-0** — Branch + worktree setup
+- [ ] **13C-1** — Write specs 13–17 (inbox, multi-pane, MCP settings, career AI, editor UX)
+- [ ] **13C-2** — Write specs 18–20 (AI panel advanced, shortcut overlay, asset upload)
+- [ ] **13C-3** — Full suite run; fix flaky assertions
+- [ ] **13C-4** — Update `tests/e2e/README.md`
+- [ ] **13C-5** — Update `docs/A11Y.md` and `docs/UX_GUIDE.md`
+- [ ] **13C-6** — PROGRESS.md complete; PR to main
+
+---
+
 ## Summary
 
 | Phase | Name | Status | Progress |
@@ -537,8 +570,9 @@ See [`project-phases/PHASE-11A-TUTORIAL.md`](project-phases/PHASE-11A-TUTORIAL.m
 | 11C | Proactive Background AI | ✅ Complete | 8 / 8 subtasks |
 | 12A | MCP Connections Registry | ✅ Complete | 9 / 9 subtasks |
 | 12B | On-Demand Ingest Bridge | ✅ Complete | — |
+| **13** | **Frontend Health Check & Debug** | 🚧 In Progress | 0 / 21 subtasks (3 tracks) |
 
-**Active:** All phases through 12B complete and merged to main. Test totals: ~311 (frontend 60 · API/unit 232 · worker 29 · MCP 56 · E2E 27 [10 golden path + 17 tutorial]).
+**Active:** Phase 13 in progress. Prior test totals: ~311 (frontend 60 · API/unit 232 · worker 29 · MCP 56 · E2E 27). Phase 13 target: ≥ 47 E2E tests total (+ 8 new spec files).
 
 **Key cross-cutting concepts to track:**
 - Inbox/Triage (Phase 5): AI-classified staging area for unprocessed items

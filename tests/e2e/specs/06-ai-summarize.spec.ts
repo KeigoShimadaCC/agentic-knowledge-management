@@ -20,6 +20,14 @@ test("summarizes a page via the API stub and records an agent run audit row", as
     "KnowledgeOS summarizes local knowledge safely."
   );
 
+  await page.route("**/api/v1/ai/summarize", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      json: { summary: STUB_SUMMARY, from_cache: false },
+    });
+  });
+
   await page.goto(`/app/pages/${pageId}`);
   await page.getByRole("button", { name: "AI" }).click();
   await page.getByRole("button", { name: "Summarize" }).click();

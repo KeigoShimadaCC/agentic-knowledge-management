@@ -14,7 +14,8 @@ test("opens a search result in the side pane without navigating away", async ({ 
   await page.getByTitle("Open in side pane").click();
 
   await expect(page).toHaveURL(new RegExp(`/app/pages/${mainId}$`));
-  await expect(page.locator("aside").getByText(sideTitle)).toBeVisible();
-  await expect(page.locator("aside").getByText(`Side pane content ${marker}`)).toBeVisible();
+  // Side pane is rendered in a Panel (react-resizable-panels), not in <aside>
+  await expect(page.getByText(sideTitle).last()).toBeVisible({ timeout: 5_000 });
+  await expect(page.getByText(`Side pane content ${marker}`)).toBeVisible({ timeout: 5_000 });
 });
 

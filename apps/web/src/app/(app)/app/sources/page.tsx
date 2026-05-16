@@ -31,6 +31,7 @@ export default function SourcesPage() {
   }, [sources, search, sort]);
 
   return (
+    <>
     <ListPage
       title="Sources"
       loading={isLoading}
@@ -58,11 +59,12 @@ export default function SourcesPage() {
       }
     >
       <SourceList sources={filtered} />
-      <CreateSourceModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        onCreated={() => void mutate()}
-      />
     </ListPage>
+    <CreateSourceModal
+      isOpen={isModalOpen}
+      onClose={() => setIsModalOpen(false)}
+      onCreated={() => void mutate()}
+    />
+    </>
   );
 }

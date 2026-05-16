@@ -180,6 +180,7 @@ export default function ChatsPage() {
   }
 
   return (
+    <>
     <ListPage
       title="Chats"
       loading={isLoading}
@@ -221,7 +222,8 @@ export default function ChatsPage() {
           </Link>
         ))}
       </div>
-      <ImportChatModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onImported={handleImported} />
     </ListPage>
+    <ImportChatModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onImported={handleImported} />
+    </>
   );
 }

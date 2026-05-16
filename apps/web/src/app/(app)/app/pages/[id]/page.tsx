@@ -1,4 +1,3 @@
-import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
 import { getServerApiUrl } from "@/lib/serverApiUrl";
 import { PageView } from "@/components/pages/PageView";
@@ -6,15 +5,8 @@ import type { PageOut } from "@/types";
 
 async function fetchPage(id: string): Promise<PageOut | null> {
   const apiUrl = getServerApiUrl();
-  const cookieStore = cookies();
-  const sessionCookie = cookieStore.get("kos_session");
-  if (!sessionCookie) return null;
-
   try {
-    const res = await fetch(`${apiUrl}/api/v1/pages/${id}`, {
-      headers: { Cookie: `kos_session=${sessionCookie.value}` },
-      cache: "no-store",
-    });
+    const res = await fetch(`${apiUrl}/api/v1/pages/${id}`, { cache: "no-store" });
     if (!res.ok) return null;
     return res.json() as Promise<PageOut>;
   } catch {
@@ -24,15 +16,8 @@ async function fetchPage(id: string): Promise<PageOut | null> {
 
 async function fetchObject(id: string) {
   const apiUrl = getServerApiUrl();
-  const cookieStore = cookies();
-  const sessionCookie = cookieStore.get("kos_session");
-  if (!sessionCookie) return null;
-
   try {
-    const res = await fetch(`${apiUrl}/api/v1/objects/${id}`, {
-      headers: { Cookie: `kos_session=${sessionCookie.value}` },
-      cache: "no-store",
-    });
+    const res = await fetch(`${apiUrl}/api/v1/objects/${id}`, { cache: "no-store" });
     if (!res.ok) return null;
     return res.json();
   } catch {
