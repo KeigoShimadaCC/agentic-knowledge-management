@@ -61,6 +61,15 @@ class Settings(BaseSettings):
         default="X-KOS-Agent-Id",
         description="Header name that agents use to identify themselves for rate limiting.",
     )
+    ai_auto_process: bool = Field(
+        False, description="Enqueue background AI jobs on page save and source ingest."
+    )
+    ai_auto_process_tasks: list[str] = Field(
+        default_factory=lambda: ["summarize", "extract_claims", "suggest_links"],
+        description=(
+            "AI tasks to run in background. Subset of: summarize, extract_claims, suggest_links."
+        ),
+    )
 
     model_config = {"env_file": ".env", "env_file_encoding": "utf-8"}
 
