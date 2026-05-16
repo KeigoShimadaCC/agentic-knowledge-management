@@ -413,6 +413,34 @@ export async function getInbox(
   return request<PaginatedResponse<ObjectOut>>(`/api/v1/ai/inbox${query ? `?${query}` : ""}`);
 }
 
+export async function aiComplete(
+  contextBefore: string,
+  instruction: "continue" | "expand" = "continue",
+  objectId?: string,
+  maxTokens = 200
+): Promise<{ completion: string; agent_run_id: string }> {
+  return request<{ completion: string; agent_run_id: string }>("/api/v1/ai/complete", {
+    method: "POST",
+    body: JSON.stringify({
+      context_before: contextBefore,
+      instruction,
+      object_id: objectId ?? null,
+      max_tokens: maxTokens,
+    }),
+  });
+}
+
+export async function aiTransform(
+  text: string,
+  instruction: "improve" | "concise" | "grammar" | "summarize",
+  objectId?: string
+): Promise<{ result: string; agent_run_id: string }> {
+  return request<{ result: string; agent_run_id: string }>("/api/v1/ai/transform", {
+    method: "POST",
+    body: JSON.stringify({ text, instruction, object_id: objectId ?? null }),
+  });
+}
+
 export async function updateObject(
   id: string,
   data: {

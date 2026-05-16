@@ -7,73 +7,95 @@
 
 import { useEffect, useRef, useState } from "react";
 import type { Editor } from "@tiptap/react";
-import { AlignLeft, CheckSquare, Code, Heading1, Heading2, Heading3, Minus, Quote, Table } from "lucide-react";
+import {
+  AlignLeft,
+  CheckSquare,
+  Code,
+  Heading1,
+  Heading2,
+  Heading3,
+  Minus,
+  Quote,
+  Sparkles,
+  Table,
+  type LucideIcon,
+} from "lucide-react";
 import { cn } from "@/lib/cn";
+import { aiComplete, aiTransform } from "@/lib/api";
+import { applyAiAction } from "./AiSlashCommand";
 import { subscribeSlashMenu, type SlashMenuState } from "./extensions/SlashMenuExtension";
 
-const COMMANDS = [
+type Command = {
+  label: string;
+  description: string;
+  icon: LucideIcon;
+  execute: (editor: Editor) => unknown;
+};
+
+const COMMANDS: Command[] = [
   {
     label: "Heading 1",
     description: "Large section heading",
     icon: Heading1,
-    execute: (editor: Editor) => editor.chain().focus().toggleHeading({ level: 1 }).run(),
+    execute: (editor) => editor.chain().focus().toggleHeading({ level: 1 }).run(),
   },
   {
     label: "Heading 2",
     description: "Medium section heading",
     icon: Heading2,
-    execute: (editor: Editor) => editor.chain().focus().toggleHeading({ level: 2 }).run(),
+    execute: (editor) => editor.chain().focus().toggleHeading({ level: 2 }).run(),
   },
   {
     label: "Heading 3",
     description: "Small section heading",
     icon: Heading3,
-    execute: (editor: Editor) => editor.chain().focus().toggleHeading({ level: 3 }).run(),
+    execute: (editor) => editor.chain().focus().toggleHeading({ level: 3 }).run(),
   },
   {
     label: "Paragraph",
     description: "Plain text block",
     icon: AlignLeft,
-    execute: (editor: Editor) => editor.chain().focus().setParagraph().run(),
+    execute: (editor) => editor.chain().focus().setParagraph().run(),
   },
   {
     label: "Quote",
     description: "Blockquote",
     icon: Quote,
-    execute: (editor: Editor) => editor.chain().focus().toggleBlockquote().run(),
+    execute: (editor) => editor.chain().focus().toggleBlockquote().run(),
   },
   {
     label: "Code block",
     description: "Monospace code block",
     icon: Code,
-    execute: (editor: Editor) => editor.chain().focus().toggleCodeBlock().run(),
+    execute: (editor) => editor.chain().focus().toggleCodeBlock().run(),
   },
   {
     label: "Task list",
     description: "Checkbox task list",
     icon: CheckSquare,
-    execute: (editor: Editor) => editor.chain().focus().toggleTaskList().run(),
+    execute: (editor) => editor.chain().focus().toggleTaskList().run(),
   },
   {
     label: "Divider",
     description: "Horizontal rule",
     icon: Minus,
-    execute: (editor: Editor) => editor.chain().focus().setHorizontalRule().run(),
+    execute: (editor) => editor.chain().focus().setHorizontalRule().run(),
   },
   {
     label: "Table",
     description: "Insert a 3×3 table",
     icon: Table,
-    execute: (editor: Editor) =>
+    execute: (editor) =>
       editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run(),
   },
 ];
 
 interface SlashMenuProps {
   editor: Editor;
+  objectId?: string;
 }
 
-export function SlashMenu({ editor }: SlashMenuProps) {
+export function SlashMenu({ editor, objectId }: SlashMenuProps) {
   const [menuState, setMenuState] = useState<SlashMenuState>({ active: false, query: "", range: null });
   const [selectedIdx, setSelectedIdx] = useState(0);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -83,7 +105,121 @@ export function SlashMenu({ editor }: SlashMenuProps) {
     return () => { unsub(); };
   }, []);
 
-  const filtered = COMMANDS.filter((c) =>
+  const aiCommands: Command[] = objectId
+    ? [
+        {
+          label: "Continue writing",
+          description: "Let AI complete your thought",
+          icon: Sparkles,
+          execute: (ed) => {
+            const slashFrom = menuState.range?.from ?? ed.state.selection.from;
+            const cursorPos = ed.state.selection.from;
+            ed.chain().focus().deleteRange({ from: slashFrom, to: cursorPos }).run();
+            const textBefore = ed.state.doc.textBetween(0, slashFrom, "\n", "\n");
+            void applyAiAction(ed, "[AI writing…]", async () => {
+              const { completion } = await aiComplete(textBefore, "continue", objectId);
+              return completion;
+            });
+          },
+        },
+        {
+          label: "Expand",
+          description: "Expand the current paragraph with more detail",
+          icon: Sparkles,
+          execute: (ed) => {
+            const slashFrom = menuState.range?.from ?? ed.state.selection.from;
+            const cursorPos = ed.state.selection.from;
+            ed.chain().focus().deleteRange({ from: slashFrom, to: cursorPos }).run();
+            const textBefore = ed.state.doc.textBetween(0, slashFrom, "\n", "\n");
+            void applyAiAction(ed, "[AI writing…]", async () => {
+              const { completion } = await aiComplete(textBefore, "expand", objectId);
+              return completion;
+            });
+          },
+        },
+        {
+          label: "Improve writing",
+          description: "Rewrite the current paragraph for clarity",
+          icon: Sparkles,
+          execute: (ed) => {
+            const slashFrom = menuState.range?.from ?? ed.state.selection.from;
+            const cursorPos = ed.state.selection.from;
+            const { $anchor } = ed.state.selection;
+            const paraStart = $anchor.start();
+            const paraEnd = $anchor.end();
+            const paraText = ed.state.doc.textBetween(paraStart, paraEnd, "\n");
+            ed.chain().focus().deleteRange({ from: slashFrom, to: cursorPos }).run();
+            ed.chain().focus().setTextSelection({ from: paraStart, to: paraEnd }).run();
+            void applyAiAction(ed, "[AI writing…]", async () => {
+              const { result } = await aiTransform(paraText, "improve", objectId);
+              return result;
+            });
+          },
+        },
+        {
+          label: "Make concise",
+          description: "Shorten the current paragraph",
+          icon: Sparkles,
+          execute: (ed) => {
+            const slashFrom = menuState.range?.from ?? ed.state.selection.from;
+            const cursorPos = ed.state.selection.from;
+            const { $anchor } = ed.state.selection;
+            const paraStart = $anchor.start();
+            const paraEnd = $anchor.end();
+            const paraText = ed.state.doc.textBetween(paraStart, paraEnd, "\n");
+            ed.chain().focus().deleteRange({ from: slashFrom, to: cursorPos }).run();
+            ed.chain().focus().setTextSelection({ from: paraStart, to: paraEnd }).run();
+            void applyAiAction(ed, "[AI writing…]", async () => {
+              const { result } = await aiTransform(paraText, "concise", objectId);
+              return result;
+            });
+          },
+        },
+        {
+          label: "Fix grammar",
+          description: "Correct spelling and grammar",
+          icon: Sparkles,
+          execute: (ed) => {
+            const slashFrom = menuState.range?.from ?? ed.state.selection.from;
+            const cursorPos = ed.state.selection.from;
+            const { $anchor } = ed.state.selection;
+            const paraStart = $anchor.start();
+            const paraEnd = $anchor.end();
+            const paraText = ed.state.doc.textBetween(paraStart, paraEnd, "\n");
+            ed.chain().focus().deleteRange({ from: slashFrom, to: cursorPos }).run();
+            ed.chain().focus().setTextSelection({ from: paraStart, to: paraEnd }).run();
+            void applyAiAction(ed, "[AI writing…]", async () => {
+              const { result } = await aiTransform(paraText, "grammar", objectId);
+              return result;
+            });
+          },
+        },
+        {
+          label: "Summarize selection",
+          description: "Summarize this page in one paragraph",
+          icon: Sparkles,
+          execute: (ed) => {
+            const slashFrom = menuState.range?.from ?? ed.state.selection.from;
+            const cursorPos = ed.state.selection.from;
+            ed.chain().focus().deleteRange({ from: slashFrom, to: cursorPos }).run();
+            const fullText = ed.state.doc.textBetween(
+              0,
+              ed.state.doc.content.size,
+              "\n",
+              "\n",
+            );
+            void applyAiAction(ed, "[AI writing…]", async () => {
+              const { result } = await aiTransform(fullText, "summarize", objectId);
+              return result;
+            });
+          },
+        },
+      ]
+    : [];
+
+  const allCommands = [...COMMANDS, ...aiCommands];
+
+  const filtered = allCommands.filter((c) =>
     !menuState.query || c.label.toLowerCase().includes(menuState.query.toLowerCase())
   );
 
