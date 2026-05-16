@@ -3,27 +3,66 @@ import json
 import os
 import uuid
 from contextlib import suppress
+from datetime import UTC, datetime
 
 from fastapi import APIRouter, Depends, HTTPException
+from redis import Redis
+from rq import Queue
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.config import settings
 from app.core.deps import get_current_user
 from app.core.redaction import redact_env_vars
 from app.db.session import get_db
+from app.mcp_client.client import McpClientSession, McpConnectionError
 from app.mcp_client.crypto import decrypt_env_vars
+from app.models.agent_run import AgentRun
 from app.models.mcp_connection import McpConnection
 from app.models.user import User
 from app.schemas.mcp_connection import (
+    McpCallRequest,
+    McpCallResponse,
     McpConnectionCreate,
     McpConnectionOut,
     McpConnectionTestResult,
     McpConnectionTransport,
     McpConnectionUpdate,
+    McpIngestRequest,
+    McpIngestResponse,
     McpToolDefinition,
 )
 from app.services import mcp_connection_service
 
 router = APIRouter()
+
+
+async def _write_agent_run(
+    db: AsyncSession,
+    *,
+    user_id: uuid.UUID,
+    status: str,
+    tool_name: str,
+    input_payload: dict,
+    output: dict | None = None,
+    error: str | None = None,
+) -> None:
+    try:
+        db.add(
+            AgentRun(
+                user_id=user_id,
+                status=status,
+                agent_type=f"mcp:{tool_name}"[:64],
+                input=input_payload,
+                output=output,
+                error=error,
+                model="mcp",
+                started_at=datetime.now(UTC),
+                finished_at=datetime.now(UTC),
+            )
+        )
+        await db.flush()
+    except Exception:
+        pass
 
 
 def _to_out(conn: McpConnection) -> McpConnectionOut:
@@ -213,3 +252,69 @@ async def test_connection_endpoint(
     if conn.transport == McpConnectionTransport.sse.value:
         raise HTTPException(status_code=422, detail="SSE test-connection not yet supported")
     return await _run_stdio_test(conn, db)
+
+
+@router.post("/{connection_id}/call", response_model=McpCallResponse)
+async def call_connection_tool_endpoint(
+    connection_id: uuid.UUID,
+    payload: McpCallRequest,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> McpCallResponse:
+    conn = await mcp_connection_service.get_or_404(db, connection_id, user.id)
+    input_payload = {
+        "connection_id": str(connection_id),
+        "tool_name": payload.tool_name,
+        "args": payload.args,
+    }
+    try:
+        async with McpClientSession(conn, timeout=30) as session:
+            result = await session.call_tool(payload.tool_name, payload.args or {})
+    except (asyncio.TimeoutError, McpConnectionError) as exc:
+        await _write_agent_run(
+            db,
+            user_id=user.id,
+            status="failed",
+            tool_name=payload.tool_name,
+            input_payload=input_payload,
+            error=str(exc),
+        )
+        await db.commit()
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+    await _write_agent_run(
+        db,
+        user_id=user.id,
+        status="success",
+        tool_name=payload.tool_name,
+        input_payload=input_payload,
+        output=result,
+    )
+    await db.commit()
+    return McpCallResponse(result=result, connection_name=conn.name)
+
+
+@router.post("/{connection_id}/ingest", response_model=McpIngestResponse)
+async def ingest_connection_tool_endpoint(
+    connection_id: uuid.UUID,
+    payload: McpIngestRequest,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> McpIngestResponse:
+    await mcp_connection_service.get_or_404(db, connection_id, user.id)
+    if payload.target_kind not in {"page", "source"}:
+        raise HTTPException(status_code=422, detail="target_kind must be 'page' or 'source'")
+
+    queue = Queue("kos-ingest", connection=Redis.from_url(settings.redis_url))
+    job = await asyncio.to_thread(
+        queue.enqueue,
+        "kos_worker.mcp_ingest.ingest_from_mcp",
+        str(connection_id),
+        payload.tool_name,
+        payload.args or {},
+        payload.target_kind,
+        payload.tags or [],
+        str(user.id),
+        job_timeout=300,
+    )
+    return McpIngestResponse(job_id=str(job.id), status="pending")
