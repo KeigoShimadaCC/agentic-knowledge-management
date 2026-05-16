@@ -24,7 +24,7 @@ export function TutorialPopup({
   const isLast = stepIndex === TUTORIAL_STEPS.length - 1;
 
   return (
-    <div className="min-w-[300px] max-w-[400px] rounded-xl border border-gray-800 bg-gray-900 text-gray-100 shadow-2xl">
+    <div data-testid="tutorial-popup" className="min-w-[300px] max-w-[400px] rounded-xl border border-gray-800 bg-gray-900 text-gray-100 shadow-2xl">
       <div className="border-b border-gray-800 px-4 py-3">
         <p className="text-xs font-medium uppercase text-gray-500">
           Step {stepIndex + 1} of {TUTORIAL_STEPS.length} <span className="text-gray-700">·</span>{" "}
