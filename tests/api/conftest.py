@@ -2,6 +2,7 @@ import asyncio
 import os
 
 import pytest_asyncio
+from cryptography.fernet import Fernet
 from httpx import ASGITransport, AsyncClient
 
 # Set env vars BEFORE any app imports so the engine is created with the test URL.
@@ -16,6 +17,8 @@ os.environ.setdefault("LIBRARY_ROOT", "/tmp/kos-test-library")
 # Provide a dummy key so settings.openai_api_key is non-empty; individual AI tests mock chat
 # completions. The embedding provider treats this placeholder as deterministic and offline.
 os.environ.setdefault("OPENAI_API_KEY", "sk-test-placeholder")
+# Provide a Fernet key so MCP connection env var encryption works in tests.
+os.environ.setdefault("MCP_ENV_ENCRYPTION_KEY", Fernet.generate_key().decode())
 
 from app.db.base import Base  # noqa: E402
 from app.db.session import engine  # noqa: E402
