@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   aiAnswer,
   aiExtractClaims,
@@ -8,7 +8,9 @@ import {
   aiSuggestLinks,
   aiSummarize,
   createEdge,
+  getObject,
 } from "@/lib/api";
+import { formatDistanceToNow } from "date-fns";
 import { toast } from "@/components/ui/Toast";
 import type {
   AnswerResponse,
@@ -53,6 +55,18 @@ function useAiAction<T>() {
 }
 
 export function AiPanel({ objectId, onEdgeCreated }: AiPanelProps) {
+  const [aiProcessedAt, setAiProcessedAt] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!objectId) return;
+    getObject(objectId)
+      .then((obj) => {
+        const ts = obj.metadata?.ai_processed_at;
+        if (typeof ts === "string") setAiProcessedAt(ts);
+      })
+      .catch(() => {});
+  }, [objectId]);
+
   const summarize = useAiAction<SummarizeResponse>();
   const claims = useAiAction<ExtractResponse>();
   const tasks = useAiAction<ExtractResponse>();
@@ -91,6 +105,11 @@ export function AiPanel({ objectId, onEdgeCreated }: AiPanelProps) {
 
   return (
     <div data-testid="ai-panel" className="space-y-4 p-3">
+      {aiProcessedAt && (
+        <p className="text-[10px] text-gray-600">
+          Auto-processed {formatDistanceToNow(new Date(aiProcessedAt), { addSuffix: true })}
+        </p>
+      )}
       {/* Summarize */}
       <section>
         <div className="flex items-center justify-between">

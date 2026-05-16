@@ -1,9 +1,14 @@
+import asyncio
+import logging
 import uuid
 
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel
+from redis import Redis
+from rq import Queue
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.config import settings
 from app.core.deps import get_current_user
 from app.db.session import get_db
 from app.models.user import User
@@ -12,6 +17,7 @@ from app.schemas.page import PageCreate, PageOut, PageUpdate
 from app.services import page_service, reindex_service
 
 router = APIRouter(prefix="/pages", tags=["pages"])
+logger = logging.getLogger(__name__)
 
 
 class PageCreateResponse:
@@ -58,6 +64,17 @@ async def replace_page(
     page = await page_service.update_page(db, page_id, user.id, body)
     await db.commit()
     reindex_service.enqueue_reindex_object(page.id)
+    if settings.ai_auto_process:
+        try:
+            await asyncio.to_thread(
+                Queue("kos-ingest", connection=Redis.from_url(settings.redis_url)).enqueue,
+                "kos_worker.ai_jobs.process_object_ai",
+                str(page.id),
+                str(user.id),
+                job_timeout=300,
+            )
+        except Exception:
+            logger.exception("Failed to enqueue AI job for page %s", page.id)
     await db.refresh(page)
     return PageOut.model_validate(page)
 
@@ -72,5 +89,16 @@ async def patch_page(
     page = await page_service.update_page(db, page_id, user.id, body)
     await db.commit()
     reindex_service.enqueue_reindex_object(page.id)
+    if settings.ai_auto_process:
+        try:
+            await asyncio.to_thread(
+                Queue("kos-ingest", connection=Redis.from_url(settings.redis_url)).enqueue,
+                "kos_worker.ai_jobs.process_object_ai",
+                str(page.id),
+                str(user.id),
+                job_timeout=300,
+            )
+        except Exception:
+            logger.exception("Failed to enqueue AI job for page %s", page.id)
     await db.refresh(page)
     return PageOut.model_validate(page)

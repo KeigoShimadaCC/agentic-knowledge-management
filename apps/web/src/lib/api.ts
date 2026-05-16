@@ -441,6 +441,10 @@ export async function aiTransform(
   });
 }
 
+export async function getObject(id: string): Promise<ObjectOut> {
+  return request<ObjectOut>(`/api/v1/objects/${id}`);
+}
+
 export async function updateObject(
   id: string,
   data: {

@@ -1,6 +1,6 @@
 # Phase 11C — Proactive Background AI Processing
 
-> **Status:** Planned
+> **Status:** ✅ Complete (merged to `feat/phase-11c-background-ai`, 2026-05-16)
 > **Owner:** Backend-heavy (worker pipeline + thin frontend status indicator)
 > **Audience:** AI coder (Codex). Read end-to-end before writing a single line.
 > **Estimated effort:** 1 PR, ~9 commits, ~700–900 LOC including tests.
@@ -334,15 +334,15 @@ Where `formatRelativeTime` is a lightweight helper (e.g., "3 min ago", "2 h ago"
 
 Each subtask is independently Codex-delegatable and ends with a single conventional commit. Subtasks marked **(blocking)** must land before later ones.
 
-- [ ] **Subtask 0** — Worktree setup + plan review **(blocking)**
-- [ ] **Subtask 1** — Config flags in `config.py` **(blocking)**
-- [ ] **Subtask 2** — Worker task module `ai_jobs.py` **(blocking)**
-- [ ] **Subtask 3** — Page save hook in `pages.py`
-- [ ] **Subtask 4** — Source ingest hook in `source_service.py`
-- [ ] **Subtask 5** — Inbox notification write in `ai_jobs.py` (follow-up to Subtask 2)
-- [ ] **Subtask 6** — `AiPanel.tsx` processed-at badge
-- [ ] **Subtask 7** — Integration tests (`tests/api/test_background_ai.py`)
-- [ ] **Subtask 8** — Worker unit tests (`tests/unit/test_ai_jobs.py`) + docs + PROGRESS flip
+- [x] **Subtask 0** — Worktree setup + plan review **(blocking)**
+- [x] **Subtask 1** — Config flags in `config.py` **(blocking)**
+- [x] **Subtask 2** — Worker task module `ai_jobs.py` **(blocking)** — actual path: `kos_worker/ai_jobs.py`
+- [x] **Subtask 3** — Page save hook in `pages.py`
+- [x] **Subtask 4** — Source ingest hook — placed in `kos_worker/tasks.py:ingest_source()` (not `source_service.py` — ingestion_status is set by the worker, not the service)
+- [x] **Subtask 5** — Inbox notification write in `ai_jobs.py` (follow-up to Subtask 2)
+- [x] **Subtask 6** — `AiPanel.tsx` processed-at badge
+- [x] **Subtask 7** — Integration tests (`tests/api/test_background_ai.py`) — 11 tests
+- [x] **Subtask 8** — Worker unit tests (`tests/unit/test_ai_jobs.py`) + docs + PROGRESS flip — 8 tests
 
 ---
 

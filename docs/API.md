@@ -1319,3 +1319,57 @@ Transform selected text according to an instruction.
 ```
 
 **Errors:** `422` on validation failure (empty `text`, invalid `instruction`). `503` if `OPENAI_API_KEY` is unset. Empty LLM response returns `200` with `result: ""`.
+
+---
+
+## Background AI Processing (Phase 11C)
+
+When `AI_AUTO_PROCESS=true` is set in the environment, KnowledgeOS automatically enqueues an AI processing job after every page save (PATCH/PUT) and after every source ingestion completes. The job runs the enabled tasks (summarize, extract-claims, suggest-links) and writes results into existing `metadata_` fields — no new endpoints or schema changes.
+
+### Configuration
+
+| Env var | Type | Default | Description |
+|---|---|---|---|
+| `AI_AUTO_PROCESS` | bool | `false` | Enable/disable background AI jobs globally |
+| `AI_AUTO_PROCESS_TASKS` | list[str] | `summarize,extract_claims,suggest_links` | Comma-separated tasks to run |
+
+### Opt-out per object
+
+Set `metadata_["ai_auto_process"] = false` on any object to skip background processing for that object regardless of the global flag.
+
+### Metadata keys written by background jobs
+
+| Key | Type | Description |
+|---|---|---|
+| `ai_processed_at` | ISO-8601 string | Timestamp of the last successful background processing run |
+
+All other AI result keys (`ai_summary`, `ai_claims_extracted_at`, `ai_link_suggestions`) are written by the existing Phase 5 service functions called from within the background job.
+
+### Inbox notification
+
+When at least one task succeeds, a `KosObject` with `kind="ai_notification"` is created:
+
+```json
+{
+  "kind": "ai_notification",
+  "title": "AI processed: {object_title}",
+  "metadata_": {
+    "source_object_id": "<uuid>",
+    "tasks_run": ["summarize", "extract_claims"],
+    "ai_processed_at": "<ISO-8601>"
+  }
+}
+```
+
+This object appears in `GET /api/v1/ai/inbox` (no tags, no description, within last 30 days).
+
+### AiPanel badge
+
+`apps/web/src/components/ai/AiPanel.tsx` fetches the object metadata on mount and displays `"Auto-processed X ago"` above the Summarize section if `metadata.ai_processed_at` is set.
+
+### Queue details
+
+- Queue name: `kos-ingest` (shared with ingestion/reindex)
+- Task path: `kos_worker.ai_jobs.process_object_ai`
+- Job timeout: 300 s
+- Queue failures on page save are caught and logged — they never cause the save to fail

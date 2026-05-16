@@ -472,8 +472,9 @@ See [`project-phases/PHASE-11A-TUTORIAL.md`](project-phases/PHASE-11A-TUTORIAL.m
 | 10A | Gap Audit & Fix | ✅ Complete | 6 / 6 subtasks |
 | 11A | Interactive Tutorial | 🚧 In Progress | 0 / 6 subtasks |
 | 11B | Inline Editor AI | ✅ Complete | 6 / 6 subtasks |
+| 11C | Proactive Background AI | ✅ Complete | 8 / 8 subtasks |
 
-**Active:** Phase 11A in progress on branch `phase-11a-tutorial`. Phase 11B complete on branch `feat/phase-11b-inline-editor-ai`. Test totals: ~268 (frontend 60 · API/unit 213 · worker 29 · MCP 56 · E2E 10).
+**Active:** Phase 11A in progress on branch `phase-11a-tutorial`. Phases 11B and 11C complete and merged to main. Test totals: ~294 (frontend 60 · API/unit 232 · worker 29 · MCP 56 · E2E 10).
 
 **Key cross-cutting concepts to track:**
 - Inbox/Triage (Phase 5): AI-classified staging area for unprocessed items

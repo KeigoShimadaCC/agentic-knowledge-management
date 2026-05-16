@@ -1,11 +1,14 @@
+import logging
 import os
 from datetime import UTC, datetime
 from typing import Any
 
 import redis
+from app.config import settings
 from app.models.ingestion_job import IngestionJob
 from app.models.object import KosObject
 from app.models.source import Source
+from redis import Redis
 from rq import Queue
 from sqlalchemy import select
 
@@ -13,6 +16,7 @@ from kos_worker.db import get_session
 from kos_worker.extractors import run_extractor
 
 SEARCH_QUEUE_NAME = "kos-ingest"
+logger = logging.getLogger(__name__)
 
 
 def _now() -> datetime:
@@ -51,6 +55,22 @@ def ingest_source(job_id: str) -> None:
         job.result = result
         job.finished_at = _now()
         db.commit()
+
+        if settings.ai_auto_process:
+            try:
+                _kos_obj = db.get(KosObject, source.id)
+                if _kos_obj:
+                    Queue(
+                        "kos-ingest",
+                        connection=Redis.from_url(settings.redis_url),
+                    ).enqueue(
+                        "kos_worker.ai_jobs.process_object_ai",
+                        str(source.id),
+                        str(_kos_obj.user_id),
+                        job_timeout=300,
+                    )
+            except Exception:
+                logger.exception("Failed to enqueue AI job for source %s", source.id)
 
         enqueue_reindex_object(str(source.id))
     except Exception as exc:

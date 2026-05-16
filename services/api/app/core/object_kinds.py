@@ -11,6 +11,7 @@ VALID_OBJECT_KINDS = (
     "project",
     "resume_bullet_set",
     "interview_story",
+    "ai_notification",
 )
 
 
