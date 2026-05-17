@@ -1,6 +1,6 @@
 # KnowledgeOS — Progress Tracker
 
-> Last updated: 2026-05-17 (Phase PHONE-00 mobile contract docs landed)
+> Last updated: 2026-05-17 (Phase PHONE-01B Mac↔iPhone networking landed)
 
 ---
 
@@ -733,3 +733,20 @@ See [`project-phases/PHASE-13D.md`](project-phases/PHASE-13D.md) for the full sp
 - [x] PROGRESS.md updated (this entry)
 
 **Blocks unblocked:** PHASE-PHONE-01A (backend auth), PHASE-PHONE-01B (Mac↔iPhone networking), PHASE-PHONE-01C (iOS scaffold)
+
+---
+
+## Phase PHONE-01B — Mac↔iPhone Networking ✅ Complete
+
+**Goal:** Make the FastAPI backend reachable from the iOS Simulator (loopback, default) and a physical iPhone on the same Wi-Fi (LAN override) without exposing postgres / redis / qdrant / worker / web.
+
+**Branch:** `phase-phone-01b-networking` · **Worktree:** `../kos-phone-01b` · **Scope:** `infra/`, `scripts/`, `docs/MOBILE_NETWORKING.md`, `infra/.env.example` (no `services/`, `apps/`, or `tests/` touched)
+
+- [x] [`infra/docker-compose.mobile.yml`](infra/docker-compose.mobile.yml) — LAN override binds api to `0.0.0.0:8001:8000` via Compose `!override` directive (avoids the `address already in use` collision a naive merge would cause); only `api` is touched, postgres / redis / qdrant / worker / web stay loopback
+- [x] [`scripts/mobile_network_check.sh`](scripts/mobile_network_check.sh) — reachability check (`curl /api/v1/health`), LAN URL suggestion (`ipconfig getifaddr en0/en1`), Tailscale URL suggestion (`tailscale status --json | jq .Self.DNSName`, retries once on cold-start partial state), and a safety audit that FAILs the script (non-zero exit) if postgres `:5433`, redis `:6379`, or qdrant `:6333`/`:6334` is bound beyond loopback; section 5 detects active profile (simulator-only vs mobile profile ACTIVE) from `lsof` on `:8001`
+- [x] [`docs/MOBILE_NETWORKING.md`](docs/MOBILE_NETWORKING.md) — appended §10 Operator runbook (Simulator/LAN/Tailscale start, teardown, what the script verifies, `MOBILE_API_BIND_HOST` reserved-env note); §3 design from PHONE-00 stays the contract
+- [x] [`infra/.env.example`](infra/.env.example) — documented reserved `MOBILE_API_BIND_HOST` env (commented out; not consumed by 01B; reserved for future per-interface bind variant)
+
+**Validation performed:** `docker compose -f infra/docker-compose.yml -f infra/docker-compose.mobile.yml config` shows api → `0.0.0.0:8001` and postgres/redis/qdrant/web → `127.0.0.1:*`; base-profile script run → 0 FAIL / 0 WARN; mobile-profile script run → 0 FAIL / 0 WARN with section 5 reporting `mobile profile ACTIVE`; `curl http://172.16.80.50:8001/api/v1/health` succeeds from the host LAN IP; teardown to base profile returns `:8001` to loopback only.
+
+**Blocks unblocked:** PHASE-PHONE-06 (device install + private release).
