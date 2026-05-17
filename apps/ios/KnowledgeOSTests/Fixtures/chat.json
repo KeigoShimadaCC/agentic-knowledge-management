@@ -1,0 +1,46 @@
+{
+  "id": "66666666-6666-6666-6666-666666666666",
+  "user_id": "11111111-1111-1111-1111-111111111111",
+  "kind": "chat",
+  "title": "Fixture Chat",
+  "description": null,
+  "tags": [],
+  "is_pinned": false,
+  "is_archived": false,
+  "created_at": "2026-05-17T10:00:00.000Z",
+  "updated_at": "2026-05-17T10:00:00.000Z",
+  "deleted_at": null,
+  "provider": "chatgpt",
+  "external_chat_id": null,
+  "source_filename": "chat.json",
+  "raw_storage_path": "chats/66666666-6666-6666-6666-666666666666/raw.json",
+  "raw_format": "json",
+  "turn_count": 2,
+  "started_at": "2026-05-17T09:00:00.000Z",
+  "ended_at": "2026-05-17T09:30:00.000Z",
+  "imported_at": "2026-05-17T10:00:00.000Z",
+  "parsed_turns": [
+    {
+      "turn_index": 0,
+      "role": "user",
+      "author": null,
+      "content": "Hello",
+      "created_at": null,
+      "metadata": {}
+    },
+    {
+      "turn_index": 1,
+      "role": "assistant",
+      "author": null,
+      "content": "Hi there",
+      "created_at": null,
+      "metadata": {}
+    }
+  ],
+  "content_text": "Hello\n\nHi there",
+  "metadata": {},
+  "structured_summary": null,
+  "structured_summary_status": "none",
+  "structured_summary_agent_run_id": null,
+  "structured_summary_updated_at": null
+}

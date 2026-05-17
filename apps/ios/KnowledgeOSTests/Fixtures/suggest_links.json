@@ -1,0 +1,12 @@
+{
+  "suggestions": [
+    {
+      "target_id": "33333333-3333-3333-3333-333333333333",
+      "target_title": "Sample Web Article",
+      "target_kind": "source",
+      "reason": "Related topic",
+      "confidence": 0.82
+    }
+  ],
+  "agent_run_id": "99999999-9999-9999-9999-999999999999"
+}

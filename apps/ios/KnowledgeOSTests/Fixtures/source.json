@@ -1,0 +1,22 @@
+{
+  "id": "33333333-3333-3333-3333-333333333333",
+  "user_id": "11111111-1111-1111-1111-111111111111",
+  "kind": "source",
+  "title": "Sample Web Article",
+  "description": "Fixture source",
+  "tags": ["reading"],
+  "is_pinned": false,
+  "is_archived": false,
+  "created_at": "2026-05-17T10:00:00.000Z",
+  "updated_at": "2026-05-17T10:00:00.000Z",
+  "deleted_at": null,
+  "source_type": "web",
+  "url": "https://example.com/article",
+  "asset_id": null,
+  "ingestion_status": "success",
+  "extracted_text": "Article body text for search.",
+  "page_count": null,
+  "thumbnail_path": null,
+  "preview_data": null,
+  "error_message": null
+}

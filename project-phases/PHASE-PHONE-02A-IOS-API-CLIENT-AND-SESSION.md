@@ -1,6 +1,6 @@
 # Phase PHONE-02A — iOS API Client & Session
 
-**Status:** Planned
+**Status:** Complete
 **Goal:** Typed `APIClient`, Keychain-backed bearer token storage, login/logout/bootstrap, full DTO set mirroring `docs/MOBILE_API_CONTRACT.md`.
 **Wave:** 2 (parallel with 02B)
 **Branch:** `phase-phone-02a-ios-api-client`

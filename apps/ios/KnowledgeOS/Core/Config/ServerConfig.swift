@@ -13,6 +13,10 @@ final class ServerConfig {
         self.storage = storage
     }
 
+    var hasPersistedBaseURL: Bool {
+        storage.string(forKey: Key.baseURL) != nil
+    }
+
     var baseURL: URL {
         if let value = storage.string(forKey: Key.baseURL),
            let url = URL(string: value),

@@ -7,6 +7,7 @@ final class BootSmokeTests: XCTestCase {
 
     func testLaunchShowsConnectScreen() throws {
         let app = XCUIApplication()
+        app.launchArguments += ["-ui-testing-reset"]
         app.launch()
 
         XCTAssertTrue(app.navigationBars["Connect"].waitForExistence(timeout: 5))
