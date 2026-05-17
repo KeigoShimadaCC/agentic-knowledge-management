@@ -65,4 +65,38 @@ enum Kos {
         static let screen = "kos.settings.screen"
         static let logoutButton = "kos.settings.logoutButton"
     }
+
+    enum ObjectDetail {
+        static let editButton = "kos.objectDetail.editButton"
+        static let tagsRow = "kos.objectDetail.tagsRow"
+    }
+
+    enum PageDetail {
+        static let editButton = "kos.pageDetail.editButton"
+    }
+
+    enum EditMetadata {
+        static let screen = "kos.editMetadata.screen"
+        static let titleField = "kos.editMetadata.titleField"
+        static let tagField = "kos.editMetadata.tagField"
+        static let tagChip = "kos.editMetadata.tagChip"
+        static let tagAddButton = "kos.editMetadata.tagAddButton"
+        static let saveButton = "kos.editMetadata.saveButton"
+        static let cancelButton = "kos.editMetadata.cancelButton"
+        static let errorBanner = "kos.editMetadata.errorBanner"
+    }
+
+    enum EditBody {
+        static let screen = "kos.editBody.screen"
+        static let editor = "kos.editBody.editor"
+        static let saveButton = "kos.editBody.saveButton"
+        static let cancelButton = "kos.editBody.cancelButton"
+        static let errorBanner = "kos.editBody.errorBanner"
+    }
+
+    enum Conflict {
+        static let screen = "kos.conflict.screen"
+        static let discardButton = "kos.conflict.discardButton"
+        static let keepMineButton = "kos.conflict.keepMineButton"
+    }
 }

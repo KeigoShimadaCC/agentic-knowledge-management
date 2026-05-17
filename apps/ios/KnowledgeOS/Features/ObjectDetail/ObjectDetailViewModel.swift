@@ -25,4 +25,8 @@ final class ObjectDetailViewModel {
             errorMessage = readErrorMessage(error)
         }
     }
+
+    func apply(updated: ObjectDTO) {
+        object = updated
+    }
 }

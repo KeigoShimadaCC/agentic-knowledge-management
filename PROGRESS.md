@@ -1,6 +1,6 @@
 # KnowledgeOS — Progress Tracker
 
-> Last updated: 2026-05-18 (Wave 3 mobile phases merged to main — 03A read/search, 03B capture/ingest, 03C mobile AI)
+> Last updated: 2026-05-18 (Phase PHONE-04 edit-lite complete — title/tags/body edits with 409 conflict handling)
 
 ---
 
@@ -924,3 +924,45 @@ xcodebuild ... -only-testing:KnowledgeOSTests test                        # ⇒ 
 **Backend dependency satisfied:** the `Citation` Pydantic validation bug in `services/api/app/services/ai_service.py::answer_question` is fixed in branch `fix-ai-citation-snippet` (commit `73122f7`). With that fix and `OPENAI_API_KEY` set in `infra/.env`, `/api/v1/ai/answer` returns a grounded answer + ≥1 citation against the demo seed (verified by the new smoke test in 3.3s).
 
 **Blocks unblocked:** none (03C is a leaf in Wave 3).
+
+---
+
+## Phase PHONE-04 — Edit-Lite ✅ Complete
+
+**Goal:** Safe lightweight edits on iPhone — object title, object tags, and plain-text page body — without recreating Tiptap. Plain text saves as valid Tiptap `doc` JSON; page body saves use optimistic locking via `expected_version` and route 409 responses through an explicit conflict-resolution sheet.
+
+**Branch:** `phase-phone-04-edit-lite` · **Worktree:** `../kos-phone-04` · **Scope:** `apps/ios/KnowledgeOS/Features/ObjectDetail/Edit*.swift`, `Features/PageDetail/Edit*.swift`, `Features/PageDetail/ConflictResolutionSheet.swift`, `Features/PageDetail/PlainTextTiptap` shared in `Core/API/TiptapPlainText.swift`, plus `Core/UI/TagChipEditor.swift`. Touches the read views only to add an Edit entry point and render the tags row.
+
+- [x] Kickoff: phase doc reviewed; worktree branched from `origin/main` after 03A merged.
+- [x] `Core/API/TiptapPlainText.swift` — shared pure functions `tiptapDocument(from:)` / `extractPlainText(from:)`. `Features/Capture/CaptureAPI.swift` now delegates to it (single source of truth; existing capture test still passes).
+- [x] `Core/API/APIError.swift` — `case conflict(String)`; `APIError.from(httpStatus:data:)` maps 409 → `.conflict`.
+- [x] `Core/API/APIEndpoint.swift` — added `.updateObject(id:)` (PATCH) and `.updatePage(id:)` (PUT).
+- [x] `Core/API/DTOs/ObjectDTO.swift` — added `ObjectUpdateRequest` (title/description/tags optional fields).
+- [x] `Core/UI/TagChipEditor.swift` — reusable `Binding<[String]>` chip editor with a custom `FlowLayout` for wrapping; trims whitespace, de-dupes case-insensitively, drops empties.
+- [x] `Core/UI/AccessibilityID.swift` — added `Kos.ObjectDetail`, `Kos.PageDetail`, `Kos.EditMetadata`, `Kos.EditBody`, `Kos.Conflict` enums.
+- [x] `Features/ObjectDetail/EditAPI.swift` — `Sendable` API wrapper for `updateObject`, `updatePage`, and a refresh `page(id:)`.
+- [x] `Features/ObjectDetail/EditMetadataSheet.swift` + `ObjectDetail/ObjectDetailView.swift` toolbar wiring — Edit entry point on any object kind; sheet has title field + tag chip editor; Cancel discards local state; Save sends a PATCH with only changed fields.
+- [x] `Features/PageDetail/EditBodySheet.swift` — `TextEditor` pre-filled from `contentText` (or extracted Tiptap text); Save converts to Tiptap JSON, sends PUT with `expected_version`; 409 routes through `onConflict`.
+- [x] `Features/PageDetail/ConflictResolutionSheet.swift` — two-button sheet (Keep Mine = re-fetch + force-overwrite with fresh version; Discard = re-fetch only). No silent merge.
+- [x] `Features/PageDetail/PageDetailViewModel.swift` — added `apply(updated:)`, `discardAndRefresh(pageID:)`, `overwriteWith(draftText:pageID:)` and `conflict: PageConflict?`.
+- [x] `Features/PageDetail/PageDetailView.swift` — Edit-body toolbar item; body editor and conflict sheets presented. Shared `DetailHeader` now renders an `ObjectDetail.tagsRow` chip strip so tag edits are visible after Save.
+- [x] Tests: `KnowledgeOSTests/TiptapPlainTextTests.swift` (7 tests: empty, whitespace-only, single line, multi-paragraph with blanks, round-trip, missing content key, nested text-node flattening).
+- [x] `KnowledgeOSUITests/EditMetadataSmokeTests.swift` — XCUITest that opens the first Home object, taps Edit, appends a timestamped suffix, saves, pops home, and asserts the updated title persists. Requires a running backend with the demo seed (same prereq as `LoginEndToEndSmokeTests`).
+- [x] `scripts/mobile_qa_edit_title.sh` — simulator-MCP companion script that captures the 6-step edit flow under `.tmp/mobile-qa/edit-title/<timestamp>/`.
+
+**Validation performed:**
+
+```bash
+cd apps/ios && xcodegen generate                                            # ⇒ passed
+xcodebuild -project KnowledgeOS.xcodeproj -scheme KnowledgeOS \
+  -destination 'platform=iOS Simulator,name=iPhone 16' build                 # ⇒ BUILD SUCCEEDED
+xcodebuild ... -only-testing:KnowledgeOSTests test                           # ⇒ 45/45 unit tests pass
+                                                                             #    (38 prior + 7 new TiptapPlainText tests)
+```
+
+**Scope-guard notes:**
+- No rich editor, image insertion, or real-time collaboration was added.
+- Read views were touched only to add the toolbar Edit buttons and the `DetailHeader` tags row (needed to make tag edits observable). All other read code is untouched.
+- The phase spec line "Preserve unmodified blocks if a `version` field is present" was interpreted faithfully against the actual backend: the server implements single-page optimistic locking via `expected_version`, not per-block versioning. Edit-Lite performs a full body replace gated by `expected_version`; per-block merging is out of scope.
+
+**Blocks unblocked:** none (Wave 4 leaf — PHASE-PHONE-05 offline cache and PHASE-PHONE-06 device install can proceed independently of this).

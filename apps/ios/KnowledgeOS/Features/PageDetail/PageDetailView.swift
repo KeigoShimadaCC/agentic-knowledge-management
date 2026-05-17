@@ -3,6 +3,7 @@ import SwiftUI
 struct PageDetailView: View {
     let object: ObjectDTO
     @State private var viewModel = PageDetailViewModel()
+    @State private var isEditingBody = false
 
     var body: some View {
         ScrollView {
@@ -26,6 +27,40 @@ struct PageDetailView: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding()
         }
+        .toolbar {
+            if viewModel.page != nil {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button {
+                        isEditingBody = true
+                    } label: {
+                        Label("Edit body", systemImage: "square.and.pencil")
+                    }
+                    .accessibilityIdentifier(Kos.PageDetail.editButton)
+                }
+            }
+        }
+        .sheet(isPresented: $isEditingBody) {
+            if let page = viewModel.page {
+                EditBodySheet(
+                    page: page,
+                    objectTitle: object.title,
+                    onSaved: { updated in viewModel.apply(updated: updated) },
+                    onConflict: { conflict in viewModel.conflict = conflict }
+                )
+            }
+        }
+        .sheet(item: Binding(
+            get: { viewModel.conflict },
+            set: { viewModel.conflict = $0 }
+        )) { conflict in
+            ConflictResolutionSheet(
+                conflict: conflict,
+                onDiscard: { await viewModel.discardAndRefresh(pageID: conflict.pageID) },
+                onKeepMine: {
+                    await viewModel.overwriteWith(draftText: conflict.draftText, pageID: conflict.pageID)
+                }
+            )
+        }
         .task {
             await viewModel.load(id: object.id)
         }
@@ -43,6 +78,20 @@ struct DetailHeader: View {
             if let description = object.description, !description.isEmpty {
                 Text(description)
                     .foregroundStyle(.secondary)
+            }
+            if !object.tags.isEmpty {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 6) {
+                        ForEach(object.tags, id: \.self) { tag in
+                            Text(tag)
+                                .font(.caption)
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 3)
+                                .background(Color.secondary.opacity(0.15), in: Capsule())
+                        }
+                    }
+                }
+                .accessibilityIdentifier(Kos.ObjectDetail.tagsRow)
             }
         }
     }

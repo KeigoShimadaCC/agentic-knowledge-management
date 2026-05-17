@@ -1,5 +1,11 @@
 import Foundation
 
+struct ObjectUpdateRequest: Encodable {
+    let title: String?
+    let description: String?
+    let tags: [String]?
+}
+
 struct ObjectDTO: Codable, Equatable, Identifiable {
     let id: UUID
     let userId: UUID
