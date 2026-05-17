@@ -25,6 +25,7 @@ export function useShortcut(
           return;
         }
       }
+      if (e.key !== key) return;
       handler(e);
     }
     document.addEventListener("keydown", onKeyDown);
