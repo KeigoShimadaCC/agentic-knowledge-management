@@ -31,7 +31,7 @@ final class ConnectViewModel: ObservableObject {
             request.httpMethod = "GET"
             request.timeoutInterval = 10
 
-            let (_, response) = try await session.data(for: request)
+            let (data, response) = try await session.data(for: request)
             guard let httpResponse = response as? HTTPURLResponse else {
                 resultState = .failure("The server returned an invalid response.")
                 return nil
@@ -39,6 +39,12 @@ final class ConnectViewModel: ObservableObject {
 
             guard (200..<300).contains(httpResponse.statusCode) else {
                 resultState = .failure("Health check failed with HTTP \(httpResponse.statusCode).")
+                return nil
+            }
+
+            let health = try JSONCoding.decoder.decode(HealthResponse.self, from: data)
+            guard health.status == "ok" else {
+                resultState = .failure("Health check returned unexpected status.")
                 return nil
             }
 

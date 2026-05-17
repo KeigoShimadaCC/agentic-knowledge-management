@@ -1,0 +1,15 @@
+{
+  "answer": "KnowledgeOS is a local-first knowledge base.",
+  "citations": [
+    {
+      "object_id": "22222222-2222-2222-2222-222222222222",
+      "title": "Sample Page",
+      "kind": "page",
+      "snippet": "local-first"
+    }
+  ],
+  "agent_run_id": "33333333-3333-3333-3333-333333333333",
+  "context_count": 1,
+  "web_citations": [],
+  "warning": null
+}
