@@ -42,6 +42,7 @@ export default function AssetsPage() {
       empty={filtered.length === 0 && !search}
       emptyTitle="No assets yet"
       emptyDescription="Drop files below to upload your first asset"
+      emptyAction={<AssetUploader onUploadComplete={() => void mutate()} />}
       toolbar={
         <ListToolbar
           search={search}
