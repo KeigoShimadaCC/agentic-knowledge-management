@@ -24,16 +24,32 @@ async function findProjectId(api: APIRequestContext, title: string): Promise<str
   return body.items?.find((project) => project.title === title)?.id ?? "";
 }
 
-async function expectAiPanelOutcome(page: Page) {
-  const hasGeneratedContent = (await page.getByText(/\b(led|reduced|improved|built)\b/i).count()) > 0;
-  const hasAmberAlert =
-    (await page
-      .locator('[role="alert"], .border-amber-500\\/40, .bg-amber-500\\/10')
-      .count()) > 0;
-  expect(hasGeneratedContent || hasAmberAlert).toBeTruthy();
+async function expectAiContent(page: Page, generateUrlFragment: string) {
+  // Wait for the actual AI response to land, then assert real content appeared.
+  // If the API returns 503 (no key / model disabled), the amber alert is shown — accept that.
+  const responsePromise = page.waitForResponse(
+    (r) => r.url().includes(generateUrlFragment),
+    { timeout: 20_000 }
+  );
+  await page.getByRole("button", { name: "Generate" }).click();
+  const response = await responsePromise;
+
+  if (response.status() === 503) {
+    // Graceful AI-disabled path — amber alert must be visible
+    await expect(
+      page.locator('[role="alert"], .border-amber-500\\/40, .bg-amber-500\\/10').first()
+    ).toBeVisible({ timeout: 5_000 });
+    return;
+  }
+
+  expect(response.ok()).toBeTruthy();
+  // Content must appear in the UI — at least one non-trivial word from typical AI output
+  await expect(page.getByText(/\b(led|reduced|improved|built|situation|task|action|result)\b/i).first()).toBeVisible({
+    timeout: 5_000,
+  });
 }
 
-test.describe.configure({ mode: "serial", timeout: 90_000 });
+test.describe.configure({ mode: "serial", timeout: 120_000 });
 test.describe("S02 freelance engineer scenario", () => {
   test.beforeAll(async () => {
     const user = await createTestUser();
@@ -49,7 +65,6 @@ test.describe("S02 freelance engineer scenario", () => {
     await page.goto("/app/projects");
     await page.getByRole("button", { name: "New project" }).click();
     await page.getByLabel("Title").fill(PROJECT_TITLE);
-    // Add TAG as a tag via the tags input (last "Type and press Enter" placeholder)
     const tagInputs = page.getByPlaceholder("Type and press Enter");
     await tagInputs.last().fill(TAG);
     await tagInputs.last().press("Enter");
@@ -57,9 +72,22 @@ test.describe("S02 freelance engineer scenario", () => {
 
     await page.goto("/app/projects");
     await expect(page.getByText(PROJECT_TITLE)).toBeVisible();
-    // Use seedApi (no cleanup side-effect) to find the project id
+
     projectId = await findProjectId(seedApi, PROJECT_TITLE);
     expect(projectId).toBeTruthy();
+
+    // Patch with rich content so AI generators have something to work with
+    const patch = await seedApi.patch(`/api/v1/projects/${projectId}`, {
+      data: {
+        role: "Lead Engineer",
+        organization: "RetailCo",
+        description: "Led full rebuild of legacy PHP monolith into React + FastAPI microservices",
+        problem: "Legacy PHP app had 4s average page load and 40% cart abandonment rate",
+        actions: "Decomposed monolith into 6 FastAPI services, migrated frontend to Next.js, added Redis caching",
+        results: "Reduced page load to 800ms, decreased cart abandonment by 22%",
+      },
+    });
+    expect(patch.ok()).toBeTruthy();
   });
 
   test("@s02 project detail renders evidence panel", async ({ page }) => {
@@ -69,22 +97,18 @@ test.describe("S02 freelance engineer scenario", () => {
     await expect(page.getByText("Evidence")).toBeVisible();
   });
 
-  test("@s02 resume bullets panel renders", async ({ page }) => {
+  test("@s02 resume bullets panel renders and generates content", async ({ page }) => {
     await page.goto(`/app/projects/${projectId}`);
     await page.getByRole("button", { name: "Resume Bullets" }).click();
     await expect(page.getByRole("button", { name: "Generate" })).toBeVisible();
-    await page.getByRole("button", { name: "Generate" }).click();
-    await page.waitForTimeout(3_000);
-    await expectAiPanelOutcome(page);
+    await expectAiContent(page, "generate-resume-bullets");
   });
 
-  test("@s02 interview story panel renders", async ({ page }) => {
+  test("@s02 interview story panel renders and generates content", async ({ page }) => {
     await page.goto(`/app/projects/${projectId}`);
     await page.getByRole("button", { name: "Interview Stories" }).click();
     await expect(page.getByRole("button", { name: "Generate" })).toBeVisible();
-    await page.getByRole("button", { name: "Generate" }).click();
-    await page.waitForTimeout(3_000);
-    await expectAiPanelOutcome(page);
+    await expectAiContent(page, "generate-interview-story");
   });
 
   test("@s02 no console errors", async ({ page }) => {
