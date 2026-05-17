@@ -1,6 +1,6 @@
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
@@ -58,15 +58,21 @@ app.add_middleware(
 )
 
 
-@app.exception_handler(Exception)
-async def generic_exception_handler(request: Request, exc: Exception) -> JSONResponse:
-    from fastapi import HTTPException
-
-    if isinstance(exc, HTTPException):
+@app.exception_handler(HTTPException)
+async def http_exception_handler(request: Request, exc: HTTPException) -> JSONResponse:
+    if isinstance(exc.detail, dict) and "detail" in exc.detail and "code" in exc.detail:
         return JSONResponse(
             status_code=exc.status_code,
-            content={"detail": exc.detail, "code": "http_error"},
+            content={"detail": exc.detail["detail"], "code": exc.detail["code"]},
         )
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={"detail": exc.detail, "code": "http_error"},
+    )
+
+
+@app.exception_handler(Exception)
+async def generic_exception_handler(request: Request, exc: Exception) -> JSONResponse:
     return JSONResponse(
         status_code=500,
         content={"detail": "Internal server error", "code": "internal_error"},

@@ -18,9 +18,12 @@ All JSON examples show the stable shape clients should rely on. Extra fields may
 
 ## Authentication
 
-KnowledgeOS uses a local httponly session cookie named `kos_session`. The cookie is created by `POST /api/v1/auth/register` or `POST /api/v1/auth/login` and is sent automatically by the browser on later requests.
+KnowledgeOS supports two user-facing session surfaces:
 
-Clients outside the browser must preserve and resend the cookie. The raw session token is never stored in the database; the server stores a SHA-256 hash and resolves each request by session lookup.
+- Web clients use a local httponly session cookie named `kos_session`. The cookie is created by `POST /api/v1/auth/register` or `POST /api/v1/auth/login` and is sent automatically by the browser on later requests.
+- Native mobile clients use `Authorization: Bearer <opaque_mobile_token>`. The token is issued by `POST /api/v1/auth/mobile-login` and returned only once.
+
+The raw session token is never stored in the database. The server stores a SHA-256 hash in `sessions.token_hash`, resolves each request by session lookup, checks expiry/deleted-user state, and updates `last_seen`.
 
 ## Errors
 
@@ -145,6 +148,39 @@ Status codes: `200`, `400`, `401`, `422`.
 
 Side effect: sets httponly `kos_session` cookie.
 
+### `POST /api/v1/auth/mobile-login`
+
+Authenticates an existing user and starts an iOS bearer-token session. The raw token is returned only in this response.
+
+Request:
+
+```json
+{
+  "email": "you@example.com",
+  "password": "correct horse battery staple",
+  "device_name": "Keigo's iPhone"
+}
+```
+
+Response:
+
+```json
+{
+  "token": "opaque-mobile-token-returned-once",
+  "expires_at": "2026-06-16T00:00:00Z",
+  "user": {
+    "id": "uuid",
+    "email": "you@example.com",
+    "display_name": "You",
+    "created_at": "2026-05-14T00:00:00Z"
+  }
+}
+```
+
+Status codes: `200`, `401`, `422`.
+
+Side effect: creates a `sessions` row with `client_type="ios"` and optional `device_name`. No cookie is set.
+
 ### `POST /api/v1/auth/logout`
 
 Invalidates the current session.
@@ -163,6 +199,28 @@ Status codes: `200`, `401`.
 
 Side effect: clears or invalidates `kos_session`.
 
+### `POST /api/v1/auth/mobile-logout`
+
+Revokes the bearer token supplied in the `Authorization` header.
+
+Request body: none.
+
+Headers:
+
+```http
+Authorization: Bearer opaque-mobile-token
+```
+
+Response:
+
+```json
+{
+  "ok": true
+}
+```
+
+Status codes: `200`, `401`.
+
 ### `GET /api/v1/auth/me`
 
 Returns the authenticated user.
@@ -177,6 +235,39 @@ Response:
     "id": "uuid",
     "email": "you@example.com",
     "display_name": "You"
+  }
+}
+```
+
+Status codes: `200`, `401`.
+
+### `GET /api/v1/mobile/bootstrap`
+
+Returns the current user plus mobile capability flags. The flags are boolean-only and do not expose secrets or configuration values.
+
+Request body: none.
+
+Headers:
+
+```http
+Authorization: Bearer opaque-mobile-token
+```
+
+Response:
+
+```json
+{
+  "user": {
+    "id": "uuid",
+    "email": "you@example.com",
+    "display_name": "You",
+    "created_at": "2026-05-14T00:00:00Z"
+  },
+  "capabilities": {
+    "ai_enabled": true,
+    "embeddings_enabled": true,
+    "upload_enabled": true,
+    "mobile_api_version": 1
   }
 }
 ```

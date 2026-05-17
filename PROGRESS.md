@@ -733,3 +733,25 @@ See [`project-phases/PHASE-13D.md`](project-phases/PHASE-13D.md) for the full sp
 - [x] PROGRESS.md updated (this entry)
 
 **Blocks unblocked:** PHASE-PHONE-01A (backend auth), PHASE-PHONE-01B (Mac↔iPhone networking), PHASE-PHONE-01C (iOS scaffold)
+
+---
+
+## Phase PHONE-01A — Mobile Backend Auth & API ✅ Complete
+
+**Goal:** Add mobile bearer-token auth while fixing the existing web cookie session resolver.
+
+**Branch:** `phase-phone-01a-backend-auth` · **Worktree:** `../kos-phone-01a` · **Scope:** backend auth/API, API auth tests, and API/security docs only.
+
+- [x] Kickoff: phase doc and iPhone app concept reviewed; implementation isolated in `../kos-phone-01a`.
+- [x] Add mobile session metadata migration and model fields.
+- [x] Replace stub `get_current_user()` with real session resolution for bearer tokens, cookies, and existing MCP internal-token auth.
+- [x] Add mobile login/logout/bootstrap endpoints.
+- [x] Add mobile auth regressions and cookie-auth regressions.
+- [x] Update API/security docs and run validation gates.
+
+**Checkpoint:** targeted auth suite passing — `cd tests && UV_CACHE_DIR=/private/tmp/kos-phone-01a-uv-cache PYTHONPATH=../services/api uv run pytest api/test_auth.py api/test_auth_mobile.py api/test_mcp_auth.py -q` → 25 passed.
+
+**Final validation:**
+- `cd services/api && UV_CACHE_DIR=/private/tmp/kos-phone-01a-uv-cache uv run ruff check .` → passed.
+- `cd services/api && DATABASE_URL=postgresql+asyncpg://kos:kospass@127.0.0.1:5433/knowledgeos_test UV_CACHE_DIR=/private/tmp/kos-phone-01a-uv-cache uv run alembic upgrade head && ... downgrade -1 && ... upgrade head` → passed on clean `knowledgeos_test`.
+- `cd tests && UV_CACHE_DIR=/private/tmp/kos-phone-01a-uv-cache PYTHONPATH=../services/api uv run pytest api/ -q` → 256 passed, 1 existing Qdrant compatibility warning.

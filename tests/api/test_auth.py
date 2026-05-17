@@ -96,6 +96,7 @@ async def test_login_wrong_password_returns_401(client: AsyncClient):
 async def test_me_without_cookie_returns_401(client: AsyncClient):
     resp = await client.get("/api/v1/auth/me")
     assert resp.status_code == 401
+    assert resp.json()["code"] == "unauthenticated"
 
 
 @pytest.mark.asyncio
@@ -112,3 +113,4 @@ async def test_logout_clears_session(auth_client: AsyncClient):
     # After logout, me should return 401
     resp2 = await auth_client.get("/api/v1/auth/me")
     assert resp2.status_code == 401
+    assert resp2.json()["code"] == "unauthenticated"

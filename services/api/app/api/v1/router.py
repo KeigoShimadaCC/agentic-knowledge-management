@@ -8,6 +8,7 @@ from app.api.v1.chats import router as chats_router
 from app.api.v1.edges import router as edges_router
 from app.api.v1.health import router as health_router
 from app.api.v1.mcp_connections import router as mcp_connections_router
+from app.api.v1.mobile import router as mobile_router
 from app.api.v1.objects import router as objects_router
 from app.api.v1.pages import router as pages_router
 from app.api.v1.projects import router as projects_router
@@ -18,6 +19,7 @@ from app.api.v1.workspaces import router as workspaces_router
 
 api_router = APIRouter(prefix="/api/v1")
 api_router.include_router(auth_router)
+api_router.include_router(mobile_router)
 api_router.include_router(health_router)
 api_router.include_router(objects_router)
 api_router.include_router(pages_router)

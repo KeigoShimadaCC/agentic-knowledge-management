@@ -4,7 +4,8 @@
 
 - Simple email/password login
 - Session token = `secrets.token_urlsafe(32)`, stored as `sha256(token)` in DB
-- HTTP-only cookie `kos_session`, SameSite=Lax, 30-day expiry
+- Web auth uses HTTP-only cookie `kos_session`, SameSite=Lax, 30-day expiry
+- Native mobile auth uses `Authorization: Bearer <opaque_mobile_token>` with the same DB-backed session table
 - Optional `Secure` flag via env `COOKIE_SECURE=true` when the API is served over HTTPS
 - All services bind to `127.0.0.1` by default
 - Browser CORS allows **`http://localhost:3000`** and **`http://127.0.0.1:3000`** (the UI is reachable on either host; they are different origins, so both must be listed for `fetch` to the API to succeed).
@@ -24,10 +25,20 @@
 
 Sessions are DB-backed opaque tokens — not signed cookies.
 
-- Login creates a `secrets.token_urlsafe(32)` value, stores `sha256(token)` in `sessions.token_hash`, and sets an HTTP-only `kos_session` cookie with the raw token.
-- Each authenticated request looks up the hash in Postgres; if the row is missing or expired the request is rejected.
+- Web login creates a `secrets.token_urlsafe(32)` value, stores `sha256(token)` in `sessions.token_hash`, and sets an HTTP-only `kos_session` cookie with the raw token.
+- Mobile login creates the same kind of opaque session token, stores only its SHA-256 hash, marks the row with `client_type="ios"`, records optional `device_name`, and returns the raw token exactly once.
+- Each authenticated request looks up the hash in Postgres; if the row is missing, expired, or belongs to a deleted user the request is rejected.
 - 30-day TTL enforced server-side; logout deletes the row immediately.
+- `last_seen` is updated on authenticated requests.
 - `SESSION_SECRET` in `infra/.env` is **not currently used** — it is reserved for future CSRF tokens or signed password-reset URLs. It does not affect session cookie integrity. Leaving it unset is safe.
+
+## Mobile bearer tokens
+
+- Mobile tokens are opaque bearer credentials for the private iPhone/iPad client. They are not JWTs and are not signed cookies.
+- The raw token is returned only by `POST /api/v1/auth/mobile-login`; later responses such as `/auth/me` and `/mobile/bootstrap` never echo it.
+- `POST /api/v1/auth/mobile-logout` revokes the presented bearer token by deleting the matching session row.
+- The iOS app must store the token in Keychain, never `UserDefaults`, and must redact it from logs.
+- The internal MCP credential must never be reused as a phone token. MCP internal auth and mobile bearer auth are separate credentials.
 
 ## Optional secrets
 
@@ -94,7 +105,7 @@ FastAPI accepts an `X-KOS-Internal-Token` header as an alternative to the sessio
 **How it works:**
 
 1. `MCP_INTERNAL_TOKEN` is set in `infra/.env` (gitignored, never committed).
-2. FastAPI `get_current_user` in `core/deps.py` checks the header before the cookie.
+2. FastAPI `get_current_user` in `core/deps.py` checks mobile bearer auth first, then this internal header, then the web cookie.
 3. Match is verified with `secrets.compare_digest` (timing-safe).
 4. On match: loads the first non-deleted user (single-user local appliance).
 5. If token config is empty: header is silently ignored; no authentication bypass.

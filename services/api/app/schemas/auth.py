@@ -15,6 +15,10 @@ class LoginRequest(BaseModel):
     password: str
 
 
+class MobileLoginRequest(LoginRequest):
+    device_name: str | None = Field(default=None, max_length=255)
+
+
 class UserOut(BaseModel):
     id: uuid.UUID
     email: str
@@ -26,3 +30,19 @@ class UserOut(BaseModel):
 
 class AuthResponse(BaseModel):
     user: UserOut
+
+
+class MobileLoginResponse(AuthResponse):
+    token: str
+    expires_at: datetime
+
+
+class MobileCapabilities(BaseModel):
+    ai_enabled: bool
+    embeddings_enabled: bool
+    upload_enabled: bool
+    mobile_api_version: int
+
+
+class MobileBootstrapResponse(AuthResponse):
+    capabilities: MobileCapabilities

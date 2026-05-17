@@ -15,6 +15,8 @@ class Session(Base):
     token_hash: Mapped[str] = mapped_column(String, unique=True, nullable=False)
     user_agent: Mapped[str | None] = mapped_column(String, nullable=True)
     ip_address: Mapped[str | None] = mapped_column(String, nullable=True)
+    client_type: Mapped[str] = mapped_column(String(16), server_default="web", nullable=False)
+    device_name: Mapped[str | None] = mapped_column(String(255), nullable=True)
     expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=text("now()")
