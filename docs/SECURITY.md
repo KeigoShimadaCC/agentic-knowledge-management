@@ -40,6 +40,8 @@ Sessions are DB-backed opaque tokens — not signed cookies.
 - The iOS app must store the token in Keychain, never `UserDefaults`, and must redact it from logs.
 - The internal MCP credential must never be reused as a phone token. MCP internal auth and mobile bearer auth are separate credentials.
 
+Full contract and endpoint tables: [`MOBILE_API_CONTRACT.md`](MOBILE_API_CONTRACT.md). LAN/Tailscale exposure rules and ATS strategy: [`MOBILE_NETWORKING.md`](MOBILE_NETWORKING.md) — only the API is ever exposed beyond loopback; Postgres / Redis / Qdrant remain loopback-only.
+
 ## Optional secrets
 
 - `SESSION_SECRET`: reserved for future CSRF or signed URLs; sessions are DB-backed and do not depend on it (see Session model above).

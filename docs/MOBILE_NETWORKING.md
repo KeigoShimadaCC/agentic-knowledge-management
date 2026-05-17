@@ -222,3 +222,69 @@ The Connect screen calls `GET /api/v1/health` and shows the JSON status. Any non
 | `scripts/mobile_network_check.sh` | PHONE-01B |
 | `apps/ios/KnowledgeOS/Resources/Info.plist` ATS exceptions | PHONE-01C |
 | Bearer auth on `/api/v1/auth/mobile-login` etc. | PHONE-01A |
+
+---
+
+## 10. Operator runbook (PHONE-01B)
+
+The override file and check script designed in §3 / §7 are now live. This runbook is the operator's day-to-day reference.
+
+### 10.1 Simulator-only (default — safest)
+
+Loopback `127.0.0.1:8001` is reachable from the iOS Simulator on the same Mac. No override needed.
+
+```bash
+docker compose -f infra/docker-compose.yml up -d
+bash scripts/mobile_network_check.sh
+```
+
+Expected script output: every check `PASS`; section 5 reports `simulator-only profile (loopback only)`; the final summary prints the suggested Simulator URL (and LAN / Tailscale URLs as informational).
+
+### 10.2 Same-Wi-Fi (physical iPhone on the LAN)
+
+Layer the mobile override on top of the base file:
+
+```bash
+docker compose \
+  -f infra/docker-compose.yml \
+  -f infra/docker-compose.mobile.yml \
+  up -d
+bash scripts/mobile_network_check.sh
+```
+
+Expected: API also reachable on `0.0.0.0:8001`; section 5 reports `mobile profile ACTIVE (LAN reachable)`; the safety audit still `PASS`es on postgres / redis / qdrant (loopback only). Configure the iPhone Connect screen with the LAN URL printed at the end (`http://<mac-lan-ip>:8001`).
+
+The mobile override uses Compose's `!override` directive on `api.ports` so the merged port list contains only `0.0.0.0:8001:8000`. Without `!override`, Compose would *add* the new port to the base `127.0.0.1:8001:8000` and Docker would fail with `address already in use` (the two bindings collide on the same host port). A `0.0.0.0` binding still accepts loopback traffic, so the Simulator URL keeps working when the override is active.
+
+macOS firewall: keep on. The first run will prompt to allow `com.docker.backend` to accept incoming connections on port 8001.
+
+### 10.3 Tailscale (private remote)
+
+The mobile override is **optional** for Tailscale. Two viable shapes:
+
+- **Override on:** API binds `0.0.0.0:8001`; Tailscale tunnel reaches it on the tailnet IP. Use the same `up -d` command as §10.2.
+- **Override off:** Use `tailscale serve` to forward `<mac-tailnet-name>:8001` → `127.0.0.1:8001`. API stays loopback-bound at the Docker layer; Tailscale userspace owns LAN exposure.
+
+The override-off shape is preferred when only Tailscale clients ever connect, because the API stays off the LAN entirely.
+
+### 10.4 Teardown — return to loopback-only
+
+```bash
+docker compose -f infra/docker-compose.yml up -d
+bash scripts/mobile_network_check.sh
+```
+
+Bringing the stack up *without* the `-f infra/docker-compose.mobile.yml` flag re-applies the base loopback binding. Verify with `lsof -nP -iTCP:8001 -sTCP:LISTEN` — only `127.0.0.1:8001` should be listed, and the script's section 5 should report `simulator-only profile`.
+
+### 10.5 What the check script verifies
+
+`scripts/mobile_network_check.sh` exits **non-zero** if any of the following is true:
+
+1. The API is not reachable on `http://127.0.0.1:8001/api/v1/health`.
+2. **Any** of postgres `:5433`, redis `:6379`, qdrant HTTP `:6333`, qdrant gRPC `:6334` is listening on something other than `127.0.0.1` / `[::1]`.
+
+LAN / Tailscale URL suggestions, and the `:8001` binding readout, are informational — they emit `WARN` (not `FAIL`) when the profile is unavailable. A missing LAN IP (Wi-Fi off) or a missing `tailscale` binary will not fail the script.
+
+### 10.6 Optional env: `MOBILE_API_BIND_HOST`
+
+Reserved name for a future variant of `infra/docker-compose.mobile.yml` that interpolates the bind host (e.g. binding to a specific LAN interface address instead of `0.0.0.0`). PHASE-PHONE-01B does not consume this variable; the current override hard-codes `0.0.0.0:8001`. It is documented in `infra/.env.example` so operators know the name is reserved.

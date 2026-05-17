@@ -44,6 +44,9 @@ See [`PROGRESS.md`](PROGRESS.md) for the canonical progress tracker.
 | Hardening — Search Quality / Multilingual | 🚧 Partial (ILIKE fallback only) |
 | Phase 8 — Multi-Pane Workspaces | ⬜ Planned |
 | Phase 9 — Career & Project Memory | ⬜ Planned |
+| PHASE-PHONE-00 — Mobile Architecture & Contract | ✅ Complete (docs only) |
+| PHASE-PHONE-01A/B/C — Mobile Auth + Networking + iOS Scaffold | ⬜ Planned |
+| PHASE-PHONE-02A/B → 06 — iOS client, capture, AI, edit-lite, offline, device install | ⬜ Planned |
 
 **Test counts (as of 2026-05-15):**
 - Frontend unit/component tests: 27 in `apps/web/src/**/__tests__/`
@@ -100,6 +103,7 @@ MCP Server (:8765)
 | Asset storage | Local filesystem, content-addressed by SHA-256 |
 | AI | OpenAI API (Phase 5+); Ollama local LLMs (later) |
 | Deployment | Docker Compose on Mac |
+| iPhone client *(planned)* | SwiftUI native iOS + XcodeGen (`apps/ios/`, Phase PHONE-01C onward) |
 
 ---
 
@@ -265,6 +269,10 @@ To restore manually, stop the app, restore `postgres.dump` into a clean Postgres
 │       ├── lib/           API client, SWR hooks
 │       └── types/         Shared TypeScript types
 │
+├── apps/ios/              SwiftUI iPhone client (planned — Phase PHONE-01C scaffolds it)
+│   ├── project.yml        XcodeGen source of truth
+│   └── KnowledgeOS/       App / Core / Features / Resources
+│
 ├── services/api/          FastAPI backend
 │   └── app/
 │       ├── api/v1/        Route handlers (auth, objects, pages, assets, health)
@@ -342,6 +350,8 @@ The complete product is built across 9 phases. Phases 1–6B, Phase 7A, and Phas
 | **MCP write tools** | `create_page`, `update_page`, `create_edge`, `archive_object`, `ingest_url`, `ingest_file` | 7B | ✅ |
 | **Multi-pane workspaces** | Persistent layouts, drag-across-pane, workspace-scoped AI | 8 | ⬜ |
 | **Career/project memory** | Project schema, evidence-linked resume bullets, STAR stories | 9 | ⬜ |
+| **iPhone client — contract** | Mobile spec docs: MOBILE_APP, MOBILE_API_CONTRACT, MOBILE_NETWORKING | PHONE-00 | ✅ |
+| **iPhone client — MVP** | Bearer auth, SwiftUI scaffold, read/search/capture/AI on iOS Simulator + device | PHONE-01A/B/C → 03C | ⬜ Planned |
 
 ---
 
@@ -366,6 +376,15 @@ The complete product is built across 9 phases. Phases 1–6B, Phase 7A, and Phas
 | 7B — MCP Write Tools | `create_page`, `update_page`, `create_edge`, `archive_object`, `ingest_url`, `ingest_file` | **Done** |
 | 8 — Multi-Pane Workspaces | Persistent layout engine, saved workspaces, workspace-scoped AI | Planned |
 | 9 — Career Memory | Project schema UI, resume bullet generator, STAR story generator | Planned |
+| PHONE-00 — Mobile Architecture & Contract | MOBILE_APP, MOBILE_API_CONTRACT, MOBILE_NETWORKING docs | **Done** |
+| PHONE-01A — Mobile Backend Auth & API | Bearer tokens, `/auth/mobile-login`, `/mobile/bootstrap`, fix `get_current_user` stub | Planned |
+| PHONE-01B — Mac ↔ iPhone Networking | `infra/docker-compose.mobile.yml`, `scripts/mobile_network_check.sh`, ATS strategy | Planned |
+| PHONE-01C — iOS App Scaffold | SwiftUI app + XcodeGen `project.yml`, Connect screen, health check | Planned |
+| PHONE-02A/B — API Client & Simulator QA | Typed API client, Keychain auth store, simulator MCP smoke tests | Planned |
+| PHONE-03A/B/C — Read & Search / Capture / AI MVP | Hybrid search, page/source/chat/project readers, capture, KB Q&A on iPhone | Planned |
+| PHONE-04 — Edit-Lite | Title/tags/plain-body edits with Tiptap JSON safety | Planned |
+| PHONE-05 — Offline Cache & Queue | Recent-object cache + outgoing note queue | Planned |
+| PHONE-06 — Device Install & Private Release | Physical iPhone install via Xcode, TestFlight checklist | Planned |
 
 Each phase has a detailed spec in [`project-phases/`](project-phases/).
 
@@ -399,6 +418,30 @@ To enable write tools, also set `MCP_ALLOW_WRITE_TOOLS=true`.
 - API keys and session secrets are never returned in tool outputs
 
 See [`docs/MCP_TOOLS.md`](docs/MCP_TOOLS.md) for the full tool spec and [`docs/SECURITY.md`](docs/SECURITY.md) for the auth and audit design.
+
+---
+
+## iPhone App *(planned)*
+
+A native SwiftUI iPhone client lives alongside `apps/web/` at `apps/ios/` (scaffold lands in Phase PHONE-01C). It is a thin client — reads, searches, captures, and asks grounded questions through the same `/api/v1` surface the browser uses. No second backend; no direct DB or filesystem access from the phone.
+
+**Phase PHONE-00 (docs-only) is complete.** The contract is fixed; implementation phases are planned:
+
+- [`docs/MOBILE_APP.md`](docs/MOBILE_APP.md) — product spec, MVP scope, screen map, endpoints intentionally NOT exposed on mobile
+- [`docs/MOBILE_API_CONTRACT.md`](docs/MOBILE_API_CONTRACT.md) — bearer auth contract (proposed for Phase 01A), verified read-side endpoint table, error envelope, pagination
+- [`docs/MOBILE_NETWORKING.md`](docs/MOBILE_NETWORKING.md) — Simulator / LAN / Tailscale profiles, `infra/docker-compose.mobile.yml` design, ATS strategy
+
+Implementation phases live under [`project-phases/PHASE-PHONE-*.md`](project-phases/) (PHONE-01A backend auth → PHONE-06 device install). The big picture is in [`project-phases/IDEA-iPHONE-APP.md`](project-phases/IDEA-iPHONE-APP.md).
+
+**How to open it in Xcode (once Phase PHONE-01C lands):**
+
+```bash
+cd apps/ios
+xcodegen generate                 # produces KnowledgeOS.xcodeproj
+open KnowledgeOS.xcodeproj
+```
+
+TestFlight distribution is Phase PHONE-06.
 
 ---
 
@@ -461,3 +504,7 @@ If you are a coding agent (Claude, Codex, Cursor) working in this repo:
 | [`docs/AGENT_GUIDE.md`](docs/AGENT_GUIDE.md) | Rules for AI agents writing to this system |
 | [`project-phases/IDEA-DRAFT.md`](project-phases/IDEA-DRAFT.md) | Original full product spec |
 | [`project-phases/PHASE-1-FOUNDATION.md`](project-phases/PHASE-1-FOUNDATION.md) | Phase 1 subtask spec |
+| [`docs/MOBILE_APP.md`](docs/MOBILE_APP.md) | iPhone app product spec — MVP scope, screen map, endpoint exclusion list |
+| [`docs/MOBILE_API_CONTRACT.md`](docs/MOBILE_API_CONTRACT.md) | iPhone bearer-auth contract + verified read-side endpoint table |
+| [`docs/MOBILE_NETWORKING.md`](docs/MOBILE_NETWORKING.md) | Simulator / LAN / Tailscale profiles + ATS strategy |
+| [`project-phases/IDEA-iPHONE-APP.md`](project-phases/IDEA-iPHONE-APP.md) | Canonical iPhone-track concept and phase plan |

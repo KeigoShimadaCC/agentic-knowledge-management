@@ -16,6 +16,8 @@ Versioned API prefix:
 
 All JSON examples show the stable shape clients should rely on. Extra fields may be returned as the implementation grows.
 
+> **iPhone client:** the mobile-specific endpoint subset, bearer-auth shapes, and error envelope are documented in [`MOBILE_API_CONTRACT.md`](MOBILE_API_CONTRACT.md). The proposed `POST /auth/mobile-login`, `POST /auth/mobile-logout`, and `GET /mobile/bootstrap` endpoints are not yet implemented — Phase PHONE-01A adds them.
+
 ## Authentication
 
 KnowledgeOS supports two user-facing session surfaces:

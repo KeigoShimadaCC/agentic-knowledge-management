@@ -1,0 +1,30 @@
+# infra/docker-compose.mobile.yml
+#
+# LAYER ON TOP of infra/docker-compose.yml when an iPhone on the same Wi-Fi
+# needs to reach the FastAPI backend. Never use this in production or on an
+# untrusted network.
+#
+# Usage:
+#   docker compose \
+#     -f infra/docker-compose.yml \
+#     -f infra/docker-compose.mobile.yml \
+#     up -d
+#
+# Teardown (return to loopback-only):
+#   docker compose -f infra/docker-compose.yml up -d
+#
+# STRICT RULE: only `api` is exposed to 0.0.0.0. postgres / redis / qdrant /
+# worker / web stay loopback-only — their base bindings are NOT overridden
+# here, and must not be added here in any future edit. Verified by
+# scripts/mobile_network_check.sh.
+
+services:
+  api:
+    # !override replaces the entire `ports` list from the base file (which is
+    # 127.0.0.1:8001:8000). Without !override, Compose merges the two entries
+    # and Docker fails: "address already in use" because 0.0.0.0 collides with
+    # the loopback binding on the same host port.
+    # Note: 0.0.0.0:8001 still accepts loopback traffic, so the Simulator profile
+    # (http://127.0.0.1:8001) continues to work when this override is active.
+    ports: !override
+      - "0.0.0.0:8001:8000"
