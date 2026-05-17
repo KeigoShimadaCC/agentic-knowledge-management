@@ -1,0 +1,18 @@
+{
+  "title": "E-commerce Platform Rebuild",
+  "description": "Led full rebuild of legacy PHP monolith into React FastAPI microservices",
+  "role": "Lead Engineer",
+  "organization": "RetailCo",
+  "period_start": "2023-01-01",
+  "period_end": "2023-12-31",
+  "problem": "Legacy PHP app had 4s average page load and 40% cart abandonment rate",
+  "actions": "Decomposed monolith into 6 FastAPI services migrated frontend to Next.js added Redis caching",
+  "results": "Reduced page load to 800ms decreased cart abandonment by 22%",
+  "metrics": {
+    "page_load_ms": 800,
+    "cart_abandonment_reduction_pct": 22
+  },
+  "skills": ["Python", "FastAPI", "React", "Next.js", "Redis", "PostgreSQL"],
+  "status": "completed",
+  "confidence": "manual"
+}

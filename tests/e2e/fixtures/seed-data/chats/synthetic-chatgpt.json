@@ -1,0 +1,2504 @@
+{
+  "conversations": [
+    {
+      "id": "conv-001",
+      "title": "Scenario 001: pricing strategy",
+      "create_time": 1700000000,
+      "update_time": 1700001800,
+      "mapping": {
+        "msg-001-1": {
+          "id": "msg-001-1",
+          "message": {
+            "id": "msg-001-1",
+            "author": {
+              "role": "user"
+            },
+            "create_time": 1700000000,
+            "content": {
+              "content_type": "text",
+              "parts": [
+                "Help me reason about pricing strategy for scenario 001."
+              ]
+            },
+            "status": "finished_successfully",
+            "metadata": {}
+          },
+          "parent": null,
+          "children": [
+            "msg-001-2"
+          ]
+        },
+        "msg-001-2": {
+          "id": "msg-001-2",
+          "message": {
+            "id": "msg-001-2",
+            "author": {
+              "role": "assistant"
+            },
+            "create_time": 1700000060,
+            "content": {
+              "content_type": "text",
+              "parts": [
+                "Here is a concise plan for pricing strategy: define the goal, list constraints, compare options, and choose the next measurable action."
+              ]
+            },
+            "status": "finished_successfully",
+            "metadata": {}
+          },
+          "parent": "msg-001-1",
+          "children": []
+        }
+      }
+    },
+    {
+      "id": "conv-002",
+      "title": "Scenario 002: competitor analysis",
+      "create_time": 1700003600,
+      "update_time": 1700005400,
+      "mapping": {
+        "msg-002-1": {
+          "id": "msg-002-1",
+          "message": {
+            "id": "msg-002-1",
+            "author": {
+              "role": "user"
+            },
+            "create_time": 1700003600,
+            "content": {
+              "content_type": "text",
+              "parts": [
+                "Help me reason about competitor analysis for scenario 002."
+              ]
+            },
+            "status": "finished_successfully",
+            "metadata": {}
+          },
+          "parent": null,
+          "children": [
+            "msg-002-2"
+          ]
+        },
+        "msg-002-2": {
+          "id": "msg-002-2",
+          "message": {
+            "id": "msg-002-2",
+            "author": {
+              "role": "assistant"
+            },
+            "create_time": 1700003660,
+            "content": {
+              "content_type": "text",
+              "parts": [
+                "Here is a concise plan for competitor analysis: define the goal, list constraints, compare options, and choose the next measurable action."
+              ]
+            },
+            "status": "finished_successfully",
+            "metadata": {}
+          },
+          "parent": "msg-002-1",
+          "children": []
+        }
+      }
+    },
+    {
+      "id": "conv-003",
+      "title": "Scenario 003: async await JavaScript",
+      "create_time": 1700007200,
+      "update_time": 1700009000,
+      "mapping": {
+        "msg-003-1": {
+          "id": "msg-003-1",
+          "message": {
+            "id": "msg-003-1",
+            "author": {
+              "role": "user"
+            },
+            "create_time": 1700007200,
+            "content": {
+              "content_type": "text",
+              "parts": [
+                "Help me reason about async await JavaScript for scenario 003."
+              ]
+            },
+            "status": "finished_successfully",
+            "metadata": {}
+          },
+          "parent": null,
+          "children": [
+            "msg-003-2"
+          ]
+        },
+        "msg-003-2": {
+          "id": "msg-003-2",
+          "message": {
+            "id": "msg-003-2",
+            "author": {
+              "role": "assistant"
+            },
+            "create_time": 1700007260,
+            "content": {
+              "content_type": "text",
+              "parts": [
+                "Here is a concise plan for async await JavaScript: define the goal, list constraints, compare options, and choose the next measurable action."
+              ]
+            },
+            "status": "finished_successfully",
+            "metadata": {}
+          },
+          "parent": "msg-003-1",
+          "children": []
+        }
+      }
+    },
+    {
+      "id": "conv-004",
+      "title": "Scenario 004: JavaScript closures",
+      "create_time": 1700010800,
+      "update_time": 1700012600,
+      "mapping": {
+        "msg-004-1": {
+          "id": "msg-004-1",
+          "message": {
+            "id": "msg-004-1",
+            "author": {
+              "role": "user"
+            },
+            "create_time": 1700010800,
+            "content": {
+              "content_type": "text",
+              "parts": [
+                "Help me reason about JavaScript closures for scenario 004."
+              ]
+            },
+            "status": "finished_successfully",
+            "metadata": {}
+          },
+          "parent": null,
+          "children": [
+            "msg-004-2"
+          ]
+        },
+        "msg-004-2": {
+          "id": "msg-004-2",
+          "message": {
+            "id": "msg-004-2",
+            "author": {
+              "role": "assistant"
+            },
+            "create_time": 1700010860,
+            "content": {
+              "content_type": "text",
+              "parts": [
+                "Here is a concise plan for JavaScript closures: define the goal, list constraints, compare options, and choose the next measurable action."
+              ]
+            },
+            "status": "finished_successfully",
+            "metadata": {}
+          },
+          "parent": "msg-004-1",
+          "children": []
+        }
+      }
+    },
+    {
+      "id": "conv-005",
+      "title": "Scenario 005: interview prep",
+      "create_time": 1700014400,
+      "update_time": 1700016200,
+      "mapping": {
+        "msg-005-1": {
+          "id": "msg-005-1",
+          "message": {
+            "id": "msg-005-1",
+            "author": {
+              "role": "user"
+            },
+            "create_time": 1700014400,
+            "content": {
+              "content_type": "text",
+              "parts": [
+                "Help me reason about interview prep for scenario 005."
+              ]
+            },
+            "status": "finished_successfully",
+            "metadata": {}
+          },
+          "parent": null,
+          "children": [
+            "msg-005-2"
+          ]
+        },
+        "msg-005-2": {
+          "id": "msg-005-2",
+          "message": {
+            "id": "msg-005-2",
+            "author": {
+              "role": "assistant"
+            },
+            "create_time": 1700014460,
+            "content": {
+              "content_type": "text",
+              "parts": [
+                "Here is a concise plan for interview prep: define the goal, list constraints, compare options, and choose the next measurable action."
+              ]
+            },
+            "status": "finished_successfully",
+            "metadata": {}
+          },
+          "parent": "msg-005-1",
+          "children": []
+        }
+      }
+    },
+    {
+      "id": "conv-006",
+      "title": "Scenario 006: portfolio project",
+      "create_time": 1700018000,
+      "update_time": 1700019800,
+      "mapping": {
+        "msg-006-1": {
+          "id": "msg-006-1",
+          "message": {
+            "id": "msg-006-1",
+            "author": {
+              "role": "user"
+            },
+            "create_time": 1700018000,
+            "content": {
+              "content_type": "text",
+              "parts": [
+                "Help me reason about portfolio project for scenario 006."
+              ]
+            },
+            "status": "finished_successfully",
+            "metadata": {}
+          },
+          "parent": null,
+          "children": [
+            "msg-006-2"
+          ]
+        },
+        "msg-006-2": {
+          "id": "msg-006-2",
+          "message": {
+            "id": "msg-006-2",
+            "author": {
+              "role": "assistant"
+            },
+            "create_time": 1700018060,
+            "content": {
+              "content_type": "text",
+              "parts": [
+                "Here is a concise plan for portfolio project: define the goal, list constraints, compare options, and choose the next measurable action."
+              ]
+            },
+            "status": "finished_successfully",
+            "metadata": {}
+          },
+          "parent": "msg-006-1",
+          "children": []
+        }
+      }
+    },
+    {
+      "id": "conv-007",
+      "title": "Scenario 007: product roadmap",
+      "create_time": 1700021600,
+      "update_time": 1700023400,
+      "mapping": {
+        "msg-007-1": {
+          "id": "msg-007-1",
+          "message": {
+            "id": "msg-007-1",
+            "author": {
+              "role": "user"
+            },
+            "create_time": 1700021600,
+            "content": {
+              "content_type": "text",
+              "parts": [
+                "Help me reason about product roadmap for scenario 007."
+              ]
+            },
+            "status": "finished_successfully",
+            "metadata": {}
+          },
+          "parent": null,
+          "children": [
+            "msg-007-2"
+          ]
+        },
+        "msg-007-2": {
+          "id": "msg-007-2",
+          "message": {
+            "id": "msg-007-2",
+            "author": {
+              "role": "assistant"
+            },
+            "create_time": 1700021660,
+            "content": {
+              "content_type": "text",
+              "parts": [
+                "Here is a concise plan for product roadmap: define the goal, list constraints, compare options, and choose the next measurable action."
+              ]
+            },
+            "status": "finished_successfully",
+            "metadata": {}
+          },
+          "parent": "msg-007-1",
+          "children": []
+        }
+      }
+    },
+    {
+      "id": "conv-008",
+      "title": "Scenario 008: technical debt",
+      "create_time": 1700025200,
+      "update_time": 1700027000,
+      "mapping": {
+        "msg-008-1": {
+          "id": "msg-008-1",
+          "message": {
+            "id": "msg-008-1",
+            "author": {
+              "role": "user"
+            },
+            "create_time": 1700025200,
+            "content": {
+              "content_type": "text",
+              "parts": [
+                "Help me reason about technical debt for scenario 008."
+              ]
+            },
+            "status": "finished_successfully",
+            "metadata": {}
+          },
+          "parent": null,
+          "children": [
+            "msg-008-2"
+          ]
+        },
+        "msg-008-2": {
+          "id": "msg-008-2",
+          "message": {
+            "id": "msg-008-2",
+            "author": {
+              "role": "assistant"
+            },
+            "create_time": 1700025260,
+            "content": {
+              "content_type": "text",
+              "parts": [
+                "Here is a concise plan for technical debt: define the goal, list constraints, compare options, and choose the next measurable action."
+              ]
+            },
+            "status": "finished_successfully",
+            "metadata": {}
+          },
+          "parent": "msg-008-1",
+          "children": []
+        }
+      }
+    },
+    {
+      "id": "conv-009",
+      "title": "Scenario 009: pricing strategy",
+      "create_time": 1700028800,
+      "update_time": 1700030600,
+      "mapping": {
+        "msg-009-1": {
+          "id": "msg-009-1",
+          "message": {
+            "id": "msg-009-1",
+            "author": {
+              "role": "user"
+            },
+            "create_time": 1700028800,
+            "content": {
+              "content_type": "text",
+              "parts": [
+                "Help me reason about pricing strategy for scenario 009."
+              ]
+            },
+            "status": "finished_successfully",
+            "metadata": {}
+          },
+          "parent": null,
+          "children": [
+            "msg-009-2"
+          ]
+        },
+        "msg-009-2": {
+          "id": "msg-009-2",
+          "message": {
+            "id": "msg-009-2",
+            "author": {
+              "role": "assistant"
+            },
+            "create_time": 1700028860,
+            "content": {
+              "content_type": "text",
+              "parts": [
+                "Here is a concise plan for pricing strategy: define the goal, list constraints, compare options, and choose the next measurable action."
+              ]
+            },
+            "status": "finished_successfully",
+            "metadata": {}
+          },
+          "parent": "msg-009-1",
+          "children": []
+        }
+      }
+    },
+    {
+      "id": "conv-010",
+      "title": "Scenario 010: competitor analysis",
+      "create_time": 1700032400,
+      "update_time": 1700034200,
+      "mapping": {
+        "msg-010-1": {
+          "id": "msg-010-1",
+          "message": {
+            "id": "msg-010-1",
+            "author": {
+              "role": "user"
+            },
+            "create_time": 1700032400,
+            "content": {
+              "content_type": "text",
+              "parts": [
+                "Help me reason about competitor analysis for scenario 010."
+              ]
+            },
+            "status": "finished_successfully",
+            "metadata": {}
+          },
+          "parent": null,
+          "children": [
+            "msg-010-2"
+          ]
+        },
+        "msg-010-2": {
+          "id": "msg-010-2",
+          "message": {
+            "id": "msg-010-2",
+            "author": {
+              "role": "assistant"
+            },
+            "create_time": 1700032460,
+            "content": {
+              "content_type": "text",
+              "parts": [
+                "Here is a concise plan for competitor analysis: define the goal, list constraints, compare options, and choose the next measurable action."
+              ]
+            },
+            "status": "finished_successfully",
+            "metadata": {}
+          },
+          "parent": "msg-010-1",
+          "children": []
+        }
+      }
+    },
+    {
+      "id": "conv-011",
+      "title": "Scenario 011: async await JavaScript",
+      "create_time": 1700036000,
+      "update_time": 1700037800,
+      "mapping": {
+        "msg-011-1": {
+          "id": "msg-011-1",
+          "message": {
+            "id": "msg-011-1",
+            "author": {
+              "role": "user"
+            },
+            "create_time": 1700036000,
+            "content": {
+              "content_type": "text",
+              "parts": [
+                "Help me reason about async await JavaScript for scenario 011."
+              ]
+            },
+            "status": "finished_successfully",
+            "metadata": {}
+          },
+          "parent": null,
+          "children": [
+            "msg-011-2"
+          ]
+        },
+        "msg-011-2": {
+          "id": "msg-011-2",
+          "message": {
+            "id": "msg-011-2",
+            "author": {
+              "role": "assistant"
+            },
+            "create_time": 1700036060,
+            "content": {
+              "content_type": "text",
+              "parts": [
+                "Here is a concise plan for async await JavaScript: define the goal, list constraints, compare options, and choose the next measurable action."
+              ]
+            },
+            "status": "finished_successfully",
+            "metadata": {}
+          },
+          "parent": "msg-011-1",
+          "children": []
+        }
+      }
+    },
+    {
+      "id": "conv-012",
+      "title": "Scenario 012: JavaScript closures",
+      "create_time": 1700039600,
+      "update_time": 1700041400,
+      "mapping": {
+        "msg-012-1": {
+          "id": "msg-012-1",
+          "message": {
+            "id": "msg-012-1",
+            "author": {
+              "role": "user"
+            },
+            "create_time": 1700039600,
+            "content": {
+              "content_type": "text",
+              "parts": [
+                "Help me reason about JavaScript closures for scenario 012."
+              ]
+            },
+            "status": "finished_successfully",
+            "metadata": {}
+          },
+          "parent": null,
+          "children": [
+            "msg-012-2"
+          ]
+        },
+        "msg-012-2": {
+          "id": "msg-012-2",
+          "message": {
+            "id": "msg-012-2",
+            "author": {
+              "role": "assistant"
+            },
+            "create_time": 1700039660,
+            "content": {
+              "content_type": "text",
+              "parts": [
+                "Here is a concise plan for JavaScript closures: define the goal, list constraints, compare options, and choose the next measurable action."
+              ]
+            },
+            "status": "finished_successfully",
+            "metadata": {}
+          },
+          "parent": "msg-012-1",
+          "children": []
+        }
+      }
+    },
+    {
+      "id": "conv-013",
+      "title": "Scenario 013: interview prep",
+      "create_time": 1700043200,
+      "update_time": 1700045000,
+      "mapping": {
+        "msg-013-1": {
+          "id": "msg-013-1",
+          "message": {
+            "id": "msg-013-1",
+            "author": {
+              "role": "user"
+            },
+            "create_time": 1700043200,
+            "content": {
+              "content_type": "text",
+              "parts": [
+                "Help me reason about interview prep for scenario 013."
+              ]
+            },
+            "status": "finished_successfully",
+            "metadata": {}
+          },
+          "parent": null,
+          "children": [
+            "msg-013-2"
+          ]
+        },
+        "msg-013-2": {
+          "id": "msg-013-2",
+          "message": {
+            "id": "msg-013-2",
+            "author": {
+              "role": "assistant"
+            },
+            "create_time": 1700043260,
+            "content": {
+              "content_type": "text",
+              "parts": [
+                "Here is a concise plan for interview prep: define the goal, list constraints, compare options, and choose the next measurable action."
+              ]
+            },
+            "status": "finished_successfully",
+            "metadata": {}
+          },
+          "parent": "msg-013-1",
+          "children": []
+        }
+      }
+    },
+    {
+      "id": "conv-014",
+      "title": "Scenario 014: portfolio project",
+      "create_time": 1700046800,
+      "update_time": 1700048600,
+      "mapping": {
+        "msg-014-1": {
+          "id": "msg-014-1",
+          "message": {
+            "id": "msg-014-1",
+            "author": {
+              "role": "user"
+            },
+            "create_time": 1700046800,
+            "content": {
+              "content_type": "text",
+              "parts": [
+                "Help me reason about portfolio project for scenario 014."
+              ]
+            },
+            "status": "finished_successfully",
+            "metadata": {}
+          },
+          "parent": null,
+          "children": [
+            "msg-014-2"
+          ]
+        },
+        "msg-014-2": {
+          "id": "msg-014-2",
+          "message": {
+            "id": "msg-014-2",
+            "author": {
+              "role": "assistant"
+            },
+            "create_time": 1700046860,
+            "content": {
+              "content_type": "text",
+              "parts": [
+                "Here is a concise plan for portfolio project: define the goal, list constraints, compare options, and choose the next measurable action."
+              ]
+            },
+            "status": "finished_successfully",
+            "metadata": {}
+          },
+          "parent": "msg-014-1",
+          "children": []
+        }
+      }
+    },
+    {
+      "id": "conv-015",
+      "title": "Scenario 015: product roadmap",
+      "create_time": 1700050400,
+      "update_time": 1700052200,
+      "mapping": {
+        "msg-015-1": {
+          "id": "msg-015-1",
+          "message": {
+            "id": "msg-015-1",
+            "author": {
+              "role": "user"
+            },
+            "create_time": 1700050400,
+            "content": {
+              "content_type": "text",
+              "parts": [
+                "Help me reason about product roadmap for scenario 015."
+              ]
+            },
+            "status": "finished_successfully",
+            "metadata": {}
+          },
+          "parent": null,
+          "children": [
+            "msg-015-2"
+          ]
+        },
+        "msg-015-2": {
+          "id": "msg-015-2",
+          "message": {
+            "id": "msg-015-2",
+            "author": {
+              "role": "assistant"
+            },
+            "create_time": 1700050460,
+            "content": {
+              "content_type": "text",
+              "parts": [
+                "Here is a concise plan for product roadmap: define the goal, list constraints, compare options, and choose the next measurable action."
+              ]
+            },
+            "status": "finished_successfully",
+            "metadata": {}
+          },
+          "parent": "msg-015-1",
+          "children": []
+        }
+      }
+    },
+    {
+      "id": "conv-016",
+      "title": "Scenario 016: technical debt",
+      "create_time": 1700054000,
+      "update_time": 1700055800,
+      "mapping": {
+        "msg-016-1": {
+          "id": "msg-016-1",
+          "message": {
+            "id": "msg-016-1",
+            "author": {
+              "role": "user"
+            },
+            "create_time": 1700054000,
+            "content": {
+              "content_type": "text",
+              "parts": [
+                "Help me reason about technical debt for scenario 016."
+              ]
+            },
+            "status": "finished_successfully",
+            "metadata": {}
+          },
+          "parent": null,
+          "children": [
+            "msg-016-2"
+          ]
+        },
+        "msg-016-2": {
+          "id": "msg-016-2",
+          "message": {
+            "id": "msg-016-2",
+            "author": {
+              "role": "assistant"
+            },
+            "create_time": 1700054060,
+            "content": {
+              "content_type": "text",
+              "parts": [
+                "Here is a concise plan for technical debt: define the goal, list constraints, compare options, and choose the next measurable action."
+              ]
+            },
+            "status": "finished_successfully",
+            "metadata": {}
+          },
+          "parent": "msg-016-1",
+          "children": []
+        }
+      }
+    },
+    {
+      "id": "conv-017",
+      "title": "Scenario 017: pricing strategy",
+      "create_time": 1700057600,
+      "update_time": 1700059400,
+      "mapping": {
+        "msg-017-1": {
+          "id": "msg-017-1",
+          "message": {
+            "id": "msg-017-1",
+            "author": {
+              "role": "user"
+            },
+            "create_time": 1700057600,
+            "content": {
+              "content_type": "text",
+              "parts": [
+                "Help me reason about pricing strategy for scenario 017."
+              ]
+            },
+            "status": "finished_successfully",
+            "metadata": {}
+          },
+          "parent": null,
+          "children": [
+            "msg-017-2"
+          ]
+        },
+        "msg-017-2": {
+          "id": "msg-017-2",
+          "message": {
+            "id": "msg-017-2",
+            "author": {
+              "role": "assistant"
+            },
+            "create_time": 1700057660,
+            "content": {
+              "content_type": "text",
+              "parts": [
+                "Here is a concise plan for pricing strategy: define the goal, list constraints, compare options, and choose the next measurable action."
+              ]
+            },
+            "status": "finished_successfully",
+            "metadata": {}
+          },
+          "parent": "msg-017-1",
+          "children": []
+        }
+      }
+    },
+    {
+      "id": "conv-018",
+      "title": "Scenario 018: competitor analysis",
+      "create_time": 1700061200,
+      "update_time": 1700063000,
+      "mapping": {
+        "msg-018-1": {
+          "id": "msg-018-1",
+          "message": {
+            "id": "msg-018-1",
+            "author": {
+              "role": "user"
+            },
+            "create_time": 1700061200,
+            "content": {
+              "content_type": "text",
+              "parts": [
+                "Help me reason about competitor analysis for scenario 018."
+              ]
+            },
+            "status": "finished_successfully",
+            "metadata": {}
+          },
+          "parent": null,
+          "children": [
+            "msg-018-2"
+          ]
+        },
+        "msg-018-2": {
+          "id": "msg-018-2",
+          "message": {
+            "id": "msg-018-2",
+            "author": {
+              "role": "assistant"
+            },
+            "create_time": 1700061260,
+            "content": {
+              "content_type": "text",
+              "parts": [
+                "Here is a concise plan for competitor analysis: define the goal, list constraints, compare options, and choose the next measurable action."
+              ]
+            },
+            "status": "finished_successfully",
+            "metadata": {}
+          },
+          "parent": "msg-018-1",
+          "children": []
+        }
+      }
+    },
+    {
+      "id": "conv-019",
+      "title": "Scenario 019: async await JavaScript",
+      "create_time": 1700064800,
+      "update_time": 1700066600,
+      "mapping": {
+        "msg-019-1": {
+          "id": "msg-019-1",
+          "message": {
+            "id": "msg-019-1",
+            "author": {
+              "role": "user"
+            },
+            "create_time": 1700064800,
+            "content": {
+              "content_type": "text",
+              "parts": [
+                "Help me reason about async await JavaScript for scenario 019."
+              ]
+            },
+            "status": "finished_successfully",
+            "metadata": {}
+          },
+          "parent": null,
+          "children": [
+            "msg-019-2"
+          ]
+        },
+        "msg-019-2": {
+          "id": "msg-019-2",
+          "message": {
+            "id": "msg-019-2",
+            "author": {
+              "role": "assistant"
+            },
+            "create_time": 1700064860,
+            "content": {
+              "content_type": "text",
+              "parts": [
+                "Here is a concise plan for async await JavaScript: define the goal, list constraints, compare options, and choose the next measurable action."
+              ]
+            },
+            "status": "finished_successfully",
+            "metadata": {}
+          },
+          "parent": "msg-019-1",
+          "children": []
+        }
+      }
+    },
+    {
+      "id": "conv-020",
+      "title": "Scenario 020: JavaScript closures",
+      "create_time": 1700068400,
+      "update_time": 1700070200,
+      "mapping": {
+        "msg-020-1": {
+          "id": "msg-020-1",
+          "message": {
+            "id": "msg-020-1",
+            "author": {
+              "role": "user"
+            },
+            "create_time": 1700068400,
+            "content": {
+              "content_type": "text",
+              "parts": [
+                "Help me reason about JavaScript closures for scenario 020."
+              ]
+            },
+            "status": "finished_successfully",
+            "metadata": {}
+          },
+          "parent": null,
+          "children": [
+            "msg-020-2"
+          ]
+        },
+        "msg-020-2": {
+          "id": "msg-020-2",
+          "message": {
+            "id": "msg-020-2",
+            "author": {
+              "role": "assistant"
+            },
+            "create_time": 1700068460,
+            "content": {
+              "content_type": "text",
+              "parts": [
+                "Here is a concise plan for JavaScript closures: define the goal, list constraints, compare options, and choose the next measurable action."
+              ]
+            },
+            "status": "finished_successfully",
+            "metadata": {}
+          },
+          "parent": "msg-020-1",
+          "children": []
+        }
+      }
+    },
+    {
+      "id": "conv-021",
+      "title": "Scenario 021: interview prep",
+      "create_time": 1700072000,
+      "update_time": 1700073800,
+      "mapping": {
+        "msg-021-1": {
+          "id": "msg-021-1",
+          "message": {
+            "id": "msg-021-1",
+            "author": {
+              "role": "user"
+            },
+            "create_time": 1700072000,
+            "content": {
+              "content_type": "text",
+              "parts": [
+                "Help me reason about interview prep for scenario 021."
+              ]
+            },
+            "status": "finished_successfully",
+            "metadata": {}
+          },
+          "parent": null,
+          "children": [
+            "msg-021-2"
+          ]
+        },
+        "msg-021-2": {
+          "id": "msg-021-2",
+          "message": {
+            "id": "msg-021-2",
+            "author": {
+              "role": "assistant"
+            },
+            "create_time": 1700072060,
+            "content": {
+              "content_type": "text",
+              "parts": [
+                "Here is a concise plan for interview prep: define the goal, list constraints, compare options, and choose the next measurable action."
+              ]
+            },
+            "status": "finished_successfully",
+            "metadata": {}
+          },
+          "parent": "msg-021-1",
+          "children": []
+        }
+      }
+    },
+    {
+      "id": "conv-022",
+      "title": "Scenario 022: portfolio project",
+      "create_time": 1700075600,
+      "update_time": 1700077400,
+      "mapping": {
+        "msg-022-1": {
+          "id": "msg-022-1",
+          "message": {
+            "id": "msg-022-1",
+            "author": {
+              "role": "user"
+            },
+            "create_time": 1700075600,
+            "content": {
+              "content_type": "text",
+              "parts": [
+                "Help me reason about portfolio project for scenario 022."
+              ]
+            },
+            "status": "finished_successfully",
+            "metadata": {}
+          },
+          "parent": null,
+          "children": [
+            "msg-022-2"
+          ]
+        },
+        "msg-022-2": {
+          "id": "msg-022-2",
+          "message": {
+            "id": "msg-022-2",
+            "author": {
+              "role": "assistant"
+            },
+            "create_time": 1700075660,
+            "content": {
+              "content_type": "text",
+              "parts": [
+                "Here is a concise plan for portfolio project: define the goal, list constraints, compare options, and choose the next measurable action."
+              ]
+            },
+            "status": "finished_successfully",
+            "metadata": {}
+          },
+          "parent": "msg-022-1",
+          "children": []
+        }
+      }
+    },
+    {
+      "id": "conv-023",
+      "title": "Scenario 023: product roadmap",
+      "create_time": 1700079200,
+      "update_time": 1700081000,
+      "mapping": {
+        "msg-023-1": {
+          "id": "msg-023-1",
+          "message": {
+            "id": "msg-023-1",
+            "author": {
+              "role": "user"
+            },
+            "create_time": 1700079200,
+            "content": {
+              "content_type": "text",
+              "parts": [
+                "Help me reason about product roadmap for scenario 023."
+              ]
+            },
+            "status": "finished_successfully",
+            "metadata": {}
+          },
+          "parent": null,
+          "children": [
+            "msg-023-2"
+          ]
+        },
+        "msg-023-2": {
+          "id": "msg-023-2",
+          "message": {
+            "id": "msg-023-2",
+            "author": {
+              "role": "assistant"
+            },
+            "create_time": 1700079260,
+            "content": {
+              "content_type": "text",
+              "parts": [
+                "Here is a concise plan for product roadmap: define the goal, list constraints, compare options, and choose the next measurable action."
+              ]
+            },
+            "status": "finished_successfully",
+            "metadata": {}
+          },
+          "parent": "msg-023-1",
+          "children": []
+        }
+      }
+    },
+    {
+      "id": "conv-024",
+      "title": "Scenario 024: technical debt",
+      "create_time": 1700082800,
+      "update_time": 1700084600,
+      "mapping": {
+        "msg-024-1": {
+          "id": "msg-024-1",
+          "message": {
+            "id": "msg-024-1",
+            "author": {
+              "role": "user"
+            },
+            "create_time": 1700082800,
+            "content": {
+              "content_type": "text",
+              "parts": [
+                "Help me reason about technical debt for scenario 024."
+              ]
+            },
+            "status": "finished_successfully",
+            "metadata": {}
+          },
+          "parent": null,
+          "children": [
+            "msg-024-2"
+          ]
+        },
+        "msg-024-2": {
+          "id": "msg-024-2",
+          "message": {
+            "id": "msg-024-2",
+            "author": {
+              "role": "assistant"
+            },
+            "create_time": 1700082860,
+            "content": {
+              "content_type": "text",
+              "parts": [
+                "Here is a concise plan for technical debt: define the goal, list constraints, compare options, and choose the next measurable action."
+              ]
+            },
+            "status": "finished_successfully",
+            "metadata": {}
+          },
+          "parent": "msg-024-1",
+          "children": []
+        }
+      }
+    },
+    {
+      "id": "conv-025",
+      "title": "Scenario 025: pricing strategy",
+      "create_time": 1700086400,
+      "update_time": 1700088200,
+      "mapping": {
+        "msg-025-1": {
+          "id": "msg-025-1",
+          "message": {
+            "id": "msg-025-1",
+            "author": {
+              "role": "user"
+            },
+            "create_time": 1700086400,
+            "content": {
+              "content_type": "text",
+              "parts": [
+                "Help me reason about pricing strategy for scenario 025."
+              ]
+            },
+            "status": "finished_successfully",
+            "metadata": {}
+          },
+          "parent": null,
+          "children": [
+            "msg-025-2"
+          ]
+        },
+        "msg-025-2": {
+          "id": "msg-025-2",
+          "message": {
+            "id": "msg-025-2",
+            "author": {
+              "role": "assistant"
+            },
+            "create_time": 1700086460,
+            "content": {
+              "content_type": "text",
+              "parts": [
+                "Here is a concise plan for pricing strategy: define the goal, list constraints, compare options, and choose the next measurable action."
+              ]
+            },
+            "status": "finished_successfully",
+            "metadata": {}
+          },
+          "parent": "msg-025-1",
+          "children": []
+        }
+      }
+    },
+    {
+      "id": "conv-026",
+      "title": "Scenario 026: competitor analysis",
+      "create_time": 1700090000,
+      "update_time": 1700091800,
+      "mapping": {
+        "msg-026-1": {
+          "id": "msg-026-1",
+          "message": {
+            "id": "msg-026-1",
+            "author": {
+              "role": "user"
+            },
+            "create_time": 1700090000,
+            "content": {
+              "content_type": "text",
+              "parts": [
+                "Help me reason about competitor analysis for scenario 026."
+              ]
+            },
+            "status": "finished_successfully",
+            "metadata": {}
+          },
+          "parent": null,
+          "children": [
+            "msg-026-2"
+          ]
+        },
+        "msg-026-2": {
+          "id": "msg-026-2",
+          "message": {
+            "id": "msg-026-2",
+            "author": {
+              "role": "assistant"
+            },
+            "create_time": 1700090060,
+            "content": {
+              "content_type": "text",
+              "parts": [
+                "Here is a concise plan for competitor analysis: define the goal, list constraints, compare options, and choose the next measurable action."
+              ]
+            },
+            "status": "finished_successfully",
+            "metadata": {}
+          },
+          "parent": "msg-026-1",
+          "children": []
+        }
+      }
+    },
+    {
+      "id": "conv-027",
+      "title": "Scenario 027: async await JavaScript",
+      "create_time": 1700093600,
+      "update_time": 1700095400,
+      "mapping": {
+        "msg-027-1": {
+          "id": "msg-027-1",
+          "message": {
+            "id": "msg-027-1",
+            "author": {
+              "role": "user"
+            },
+            "create_time": 1700093600,
+            "content": {
+              "content_type": "text",
+              "parts": [
+                "Help me reason about async await JavaScript for scenario 027."
+              ]
+            },
+            "status": "finished_successfully",
+            "metadata": {}
+          },
+          "parent": null,
+          "children": [
+            "msg-027-2"
+          ]
+        },
+        "msg-027-2": {
+          "id": "msg-027-2",
+          "message": {
+            "id": "msg-027-2",
+            "author": {
+              "role": "assistant"
+            },
+            "create_time": 1700093660,
+            "content": {
+              "content_type": "text",
+              "parts": [
+                "Here is a concise plan for async await JavaScript: define the goal, list constraints, compare options, and choose the next measurable action."
+              ]
+            },
+            "status": "finished_successfully",
+            "metadata": {}
+          },
+          "parent": "msg-027-1",
+          "children": []
+        }
+      }
+    },
+    {
+      "id": "conv-028",
+      "title": "Scenario 028: JavaScript closures",
+      "create_time": 1700097200,
+      "update_time": 1700099000,
+      "mapping": {
+        "msg-028-1": {
+          "id": "msg-028-1",
+          "message": {
+            "id": "msg-028-1",
+            "author": {
+              "role": "user"
+            },
+            "create_time": 1700097200,
+            "content": {
+              "content_type": "text",
+              "parts": [
+                "Help me reason about JavaScript closures for scenario 028."
+              ]
+            },
+            "status": "finished_successfully",
+            "metadata": {}
+          },
+          "parent": null,
+          "children": [
+            "msg-028-2"
+          ]
+        },
+        "msg-028-2": {
+          "id": "msg-028-2",
+          "message": {
+            "id": "msg-028-2",
+            "author": {
+              "role": "assistant"
+            },
+            "create_time": 1700097260,
+            "content": {
+              "content_type": "text",
+              "parts": [
+                "Here is a concise plan for JavaScript closures: define the goal, list constraints, compare options, and choose the next measurable action."
+              ]
+            },
+            "status": "finished_successfully",
+            "metadata": {}
+          },
+          "parent": "msg-028-1",
+          "children": []
+        }
+      }
+    },
+    {
+      "id": "conv-029",
+      "title": "Scenario 029: interview prep",
+      "create_time": 1700100800,
+      "update_time": 1700102600,
+      "mapping": {
+        "msg-029-1": {
+          "id": "msg-029-1",
+          "message": {
+            "id": "msg-029-1",
+            "author": {
+              "role": "user"
+            },
+            "create_time": 1700100800,
+            "content": {
+              "content_type": "text",
+              "parts": [
+                "Help me reason about interview prep for scenario 029."
+              ]
+            },
+            "status": "finished_successfully",
+            "metadata": {}
+          },
+          "parent": null,
+          "children": [
+            "msg-029-2"
+          ]
+        },
+        "msg-029-2": {
+          "id": "msg-029-2",
+          "message": {
+            "id": "msg-029-2",
+            "author": {
+              "role": "assistant"
+            },
+            "create_time": 1700100860,
+            "content": {
+              "content_type": "text",
+              "parts": [
+                "Here is a concise plan for interview prep: define the goal, list constraints, compare options, and choose the next measurable action."
+              ]
+            },
+            "status": "finished_successfully",
+            "metadata": {}
+          },
+          "parent": "msg-029-1",
+          "children": []
+        }
+      }
+    },
+    {
+      "id": "conv-030",
+      "title": "Scenario 030: portfolio project",
+      "create_time": 1700104400,
+      "update_time": 1700106200,
+      "mapping": {
+        "msg-030-1": {
+          "id": "msg-030-1",
+          "message": {
+            "id": "msg-030-1",
+            "author": {
+              "role": "user"
+            },
+            "create_time": 1700104400,
+            "content": {
+              "content_type": "text",
+              "parts": [
+                "Help me reason about portfolio project for scenario 030."
+              ]
+            },
+            "status": "finished_successfully",
+            "metadata": {}
+          },
+          "parent": null,
+          "children": [
+            "msg-030-2"
+          ]
+        },
+        "msg-030-2": {
+          "id": "msg-030-2",
+          "message": {
+            "id": "msg-030-2",
+            "author": {
+              "role": "assistant"
+            },
+            "create_time": 1700104460,
+            "content": {
+              "content_type": "text",
+              "parts": [
+                "Here is a concise plan for portfolio project: define the goal, list constraints, compare options, and choose the next measurable action."
+              ]
+            },
+            "status": "finished_successfully",
+            "metadata": {}
+          },
+          "parent": "msg-030-1",
+          "children": []
+        }
+      }
+    },
+    {
+      "id": "conv-031",
+      "title": "Scenario 031: product roadmap",
+      "create_time": 1700108000,
+      "update_time": 1700109800,
+      "mapping": {
+        "msg-031-1": {
+          "id": "msg-031-1",
+          "message": {
+            "id": "msg-031-1",
+            "author": {
+              "role": "user"
+            },
+            "create_time": 1700108000,
+            "content": {
+              "content_type": "text",
+              "parts": [
+                "Help me reason about product roadmap for scenario 031."
+              ]
+            },
+            "status": "finished_successfully",
+            "metadata": {}
+          },
+          "parent": null,
+          "children": [
+            "msg-031-2"
+          ]
+        },
+        "msg-031-2": {
+          "id": "msg-031-2",
+          "message": {
+            "id": "msg-031-2",
+            "author": {
+              "role": "assistant"
+            },
+            "create_time": 1700108060,
+            "content": {
+              "content_type": "text",
+              "parts": [
+                "Here is a concise plan for product roadmap: define the goal, list constraints, compare options, and choose the next measurable action."
+              ]
+            },
+            "status": "finished_successfully",
+            "metadata": {}
+          },
+          "parent": "msg-031-1",
+          "children": []
+        }
+      }
+    },
+    {
+      "id": "conv-032",
+      "title": "Scenario 032: technical debt",
+      "create_time": 1700111600,
+      "update_time": 1700113400,
+      "mapping": {
+        "msg-032-1": {
+          "id": "msg-032-1",
+          "message": {
+            "id": "msg-032-1",
+            "author": {
+              "role": "user"
+            },
+            "create_time": 1700111600,
+            "content": {
+              "content_type": "text",
+              "parts": [
+                "Help me reason about technical debt for scenario 032."
+              ]
+            },
+            "status": "finished_successfully",
+            "metadata": {}
+          },
+          "parent": null,
+          "children": [
+            "msg-032-2"
+          ]
+        },
+        "msg-032-2": {
+          "id": "msg-032-2",
+          "message": {
+            "id": "msg-032-2",
+            "author": {
+              "role": "assistant"
+            },
+            "create_time": 1700111660,
+            "content": {
+              "content_type": "text",
+              "parts": [
+                "Here is a concise plan for technical debt: define the goal, list constraints, compare options, and choose the next measurable action."
+              ]
+            },
+            "status": "finished_successfully",
+            "metadata": {}
+          },
+          "parent": "msg-032-1",
+          "children": []
+        }
+      }
+    },
+    {
+      "id": "conv-033",
+      "title": "Scenario 033: pricing strategy",
+      "create_time": 1700115200,
+      "update_time": 1700117000,
+      "mapping": {
+        "msg-033-1": {
+          "id": "msg-033-1",
+          "message": {
+            "id": "msg-033-1",
+            "author": {
+              "role": "user"
+            },
+            "create_time": 1700115200,
+            "content": {
+              "content_type": "text",
+              "parts": [
+                "Help me reason about pricing strategy for scenario 033."
+              ]
+            },
+            "status": "finished_successfully",
+            "metadata": {}
+          },
+          "parent": null,
+          "children": [
+            "msg-033-2"
+          ]
+        },
+        "msg-033-2": {
+          "id": "msg-033-2",
+          "message": {
+            "id": "msg-033-2",
+            "author": {
+              "role": "assistant"
+            },
+            "create_time": 1700115260,
+            "content": {
+              "content_type": "text",
+              "parts": [
+                "Here is a concise plan for pricing strategy: define the goal, list constraints, compare options, and choose the next measurable action."
+              ]
+            },
+            "status": "finished_successfully",
+            "metadata": {}
+          },
+          "parent": "msg-033-1",
+          "children": []
+        }
+      }
+    },
+    {
+      "id": "conv-034",
+      "title": "Scenario 034: competitor analysis",
+      "create_time": 1700118800,
+      "update_time": 1700120600,
+      "mapping": {
+        "msg-034-1": {
+          "id": "msg-034-1",
+          "message": {
+            "id": "msg-034-1",
+            "author": {
+              "role": "user"
+            },
+            "create_time": 1700118800,
+            "content": {
+              "content_type": "text",
+              "parts": [
+                "Help me reason about competitor analysis for scenario 034."
+              ]
+            },
+            "status": "finished_successfully",
+            "metadata": {}
+          },
+          "parent": null,
+          "children": [
+            "msg-034-2"
+          ]
+        },
+        "msg-034-2": {
+          "id": "msg-034-2",
+          "message": {
+            "id": "msg-034-2",
+            "author": {
+              "role": "assistant"
+            },
+            "create_time": 1700118860,
+            "content": {
+              "content_type": "text",
+              "parts": [
+                "Here is a concise plan for competitor analysis: define the goal, list constraints, compare options, and choose the next measurable action."
+              ]
+            },
+            "status": "finished_successfully",
+            "metadata": {}
+          },
+          "parent": "msg-034-1",
+          "children": []
+        }
+      }
+    },
+    {
+      "id": "conv-035",
+      "title": "Scenario 035: async await JavaScript",
+      "create_time": 1700122400,
+      "update_time": 1700124200,
+      "mapping": {
+        "msg-035-1": {
+          "id": "msg-035-1",
+          "message": {
+            "id": "msg-035-1",
+            "author": {
+              "role": "user"
+            },
+            "create_time": 1700122400,
+            "content": {
+              "content_type": "text",
+              "parts": [
+                "Help me reason about async await JavaScript for scenario 035."
+              ]
+            },
+            "status": "finished_successfully",
+            "metadata": {}
+          },
+          "parent": null,
+          "children": [
+            "msg-035-2"
+          ]
+        },
+        "msg-035-2": {
+          "id": "msg-035-2",
+          "message": {
+            "id": "msg-035-2",
+            "author": {
+              "role": "assistant"
+            },
+            "create_time": 1700122460,
+            "content": {
+              "content_type": "text",
+              "parts": [
+                "Here is a concise plan for async await JavaScript: define the goal, list constraints, compare options, and choose the next measurable action."
+              ]
+            },
+            "status": "finished_successfully",
+            "metadata": {}
+          },
+          "parent": "msg-035-1",
+          "children": []
+        }
+      }
+    },
+    {
+      "id": "conv-036",
+      "title": "Scenario 036: JavaScript closures",
+      "create_time": 1700126000,
+      "update_time": 1700127800,
+      "mapping": {
+        "msg-036-1": {
+          "id": "msg-036-1",
+          "message": {
+            "id": "msg-036-1",
+            "author": {
+              "role": "user"
+            },
+            "create_time": 1700126000,
+            "content": {
+              "content_type": "text",
+              "parts": [
+                "Help me reason about JavaScript closures for scenario 036."
+              ]
+            },
+            "status": "finished_successfully",
+            "metadata": {}
+          },
+          "parent": null,
+          "children": [
+            "msg-036-2"
+          ]
+        },
+        "msg-036-2": {
+          "id": "msg-036-2",
+          "message": {
+            "id": "msg-036-2",
+            "author": {
+              "role": "assistant"
+            },
+            "create_time": 1700126060,
+            "content": {
+              "content_type": "text",
+              "parts": [
+                "Here is a concise plan for JavaScript closures: define the goal, list constraints, compare options, and choose the next measurable action."
+              ]
+            },
+            "status": "finished_successfully",
+            "metadata": {}
+          },
+          "parent": "msg-036-1",
+          "children": []
+        }
+      }
+    },
+    {
+      "id": "conv-037",
+      "title": "Scenario 037: interview prep",
+      "create_time": 1700129600,
+      "update_time": 1700131400,
+      "mapping": {
+        "msg-037-1": {
+          "id": "msg-037-1",
+          "message": {
+            "id": "msg-037-1",
+            "author": {
+              "role": "user"
+            },
+            "create_time": 1700129600,
+            "content": {
+              "content_type": "text",
+              "parts": [
+                "Help me reason about interview prep for scenario 037."
+              ]
+            },
+            "status": "finished_successfully",
+            "metadata": {}
+          },
+          "parent": null,
+          "children": [
+            "msg-037-2"
+          ]
+        },
+        "msg-037-2": {
+          "id": "msg-037-2",
+          "message": {
+            "id": "msg-037-2",
+            "author": {
+              "role": "assistant"
+            },
+            "create_time": 1700129660,
+            "content": {
+              "content_type": "text",
+              "parts": [
+                "Here is a concise plan for interview prep: define the goal, list constraints, compare options, and choose the next measurable action."
+              ]
+            },
+            "status": "finished_successfully",
+            "metadata": {}
+          },
+          "parent": "msg-037-1",
+          "children": []
+        }
+      }
+    },
+    {
+      "id": "conv-038",
+      "title": "Scenario 038: portfolio project",
+      "create_time": 1700133200,
+      "update_time": 1700135000,
+      "mapping": {
+        "msg-038-1": {
+          "id": "msg-038-1",
+          "message": {
+            "id": "msg-038-1",
+            "author": {
+              "role": "user"
+            },
+            "create_time": 1700133200,
+            "content": {
+              "content_type": "text",
+              "parts": [
+                "Help me reason about portfolio project for scenario 038."
+              ]
+            },
+            "status": "finished_successfully",
+            "metadata": {}
+          },
+          "parent": null,
+          "children": [
+            "msg-038-2"
+          ]
+        },
+        "msg-038-2": {
+          "id": "msg-038-2",
+          "message": {
+            "id": "msg-038-2",
+            "author": {
+              "role": "assistant"
+            },
+            "create_time": 1700133260,
+            "content": {
+              "content_type": "text",
+              "parts": [
+                "Here is a concise plan for portfolio project: define the goal, list constraints, compare options, and choose the next measurable action."
+              ]
+            },
+            "status": "finished_successfully",
+            "metadata": {}
+          },
+          "parent": "msg-038-1",
+          "children": []
+        }
+      }
+    },
+    {
+      "id": "conv-039",
+      "title": "Scenario 039: product roadmap",
+      "create_time": 1700136800,
+      "update_time": 1700138600,
+      "mapping": {
+        "msg-039-1": {
+          "id": "msg-039-1",
+          "message": {
+            "id": "msg-039-1",
+            "author": {
+              "role": "user"
+            },
+            "create_time": 1700136800,
+            "content": {
+              "content_type": "text",
+              "parts": [
+                "Help me reason about product roadmap for scenario 039."
+              ]
+            },
+            "status": "finished_successfully",
+            "metadata": {}
+          },
+          "parent": null,
+          "children": [
+            "msg-039-2"
+          ]
+        },
+        "msg-039-2": {
+          "id": "msg-039-2",
+          "message": {
+            "id": "msg-039-2",
+            "author": {
+              "role": "assistant"
+            },
+            "create_time": 1700136860,
+            "content": {
+              "content_type": "text",
+              "parts": [
+                "Here is a concise plan for product roadmap: define the goal, list constraints, compare options, and choose the next measurable action."
+              ]
+            },
+            "status": "finished_successfully",
+            "metadata": {}
+          },
+          "parent": "msg-039-1",
+          "children": []
+        }
+      }
+    },
+    {
+      "id": "conv-040",
+      "title": "Scenario 040: technical debt",
+      "create_time": 1700140400,
+      "update_time": 1700142200,
+      "mapping": {
+        "msg-040-1": {
+          "id": "msg-040-1",
+          "message": {
+            "id": "msg-040-1",
+            "author": {
+              "role": "user"
+            },
+            "create_time": 1700140400,
+            "content": {
+              "content_type": "text",
+              "parts": [
+                "Help me reason about technical debt for scenario 040."
+              ]
+            },
+            "status": "finished_successfully",
+            "metadata": {}
+          },
+          "parent": null,
+          "children": [
+            "msg-040-2"
+          ]
+        },
+        "msg-040-2": {
+          "id": "msg-040-2",
+          "message": {
+            "id": "msg-040-2",
+            "author": {
+              "role": "assistant"
+            },
+            "create_time": 1700140460,
+            "content": {
+              "content_type": "text",
+              "parts": [
+                "Here is a concise plan for technical debt: define the goal, list constraints, compare options, and choose the next measurable action."
+              ]
+            },
+            "status": "finished_successfully",
+            "metadata": {}
+          },
+          "parent": "msg-040-1",
+          "children": []
+        }
+      }
+    },
+    {
+      "id": "conv-041",
+      "title": "Scenario 041: pricing strategy",
+      "create_time": 1700144000,
+      "update_time": 1700145800,
+      "mapping": {
+        "msg-041-1": {
+          "id": "msg-041-1",
+          "message": {
+            "id": "msg-041-1",
+            "author": {
+              "role": "user"
+            },
+            "create_time": 1700144000,
+            "content": {
+              "content_type": "text",
+              "parts": [
+                "Help me reason about pricing strategy for scenario 041."
+              ]
+            },
+            "status": "finished_successfully",
+            "metadata": {}
+          },
+          "parent": null,
+          "children": [
+            "msg-041-2"
+          ]
+        },
+        "msg-041-2": {
+          "id": "msg-041-2",
+          "message": {
+            "id": "msg-041-2",
+            "author": {
+              "role": "assistant"
+            },
+            "create_time": 1700144060,
+            "content": {
+              "content_type": "text",
+              "parts": [
+                "Here is a concise plan for pricing strategy: define the goal, list constraints, compare options, and choose the next measurable action."
+              ]
+            },
+            "status": "finished_successfully",
+            "metadata": {}
+          },
+          "parent": "msg-041-1",
+          "children": []
+        }
+      }
+    },
+    {
+      "id": "conv-042",
+      "title": "Scenario 042: competitor analysis",
+      "create_time": 1700147600,
+      "update_time": 1700149400,
+      "mapping": {
+        "msg-042-1": {
+          "id": "msg-042-1",
+          "message": {
+            "id": "msg-042-1",
+            "author": {
+              "role": "user"
+            },
+            "create_time": 1700147600,
+            "content": {
+              "content_type": "text",
+              "parts": [
+                "Help me reason about competitor analysis for scenario 042."
+              ]
+            },
+            "status": "finished_successfully",
+            "metadata": {}
+          },
+          "parent": null,
+          "children": [
+            "msg-042-2"
+          ]
+        },
+        "msg-042-2": {
+          "id": "msg-042-2",
+          "message": {
+            "id": "msg-042-2",
+            "author": {
+              "role": "assistant"
+            },
+            "create_time": 1700147660,
+            "content": {
+              "content_type": "text",
+              "parts": [
+                "Here is a concise plan for competitor analysis: define the goal, list constraints, compare options, and choose the next measurable action."
+              ]
+            },
+            "status": "finished_successfully",
+            "metadata": {}
+          },
+          "parent": "msg-042-1",
+          "children": []
+        }
+      }
+    },
+    {
+      "id": "conv-043",
+      "title": "Scenario 043: async await JavaScript",
+      "create_time": 1700151200,
+      "update_time": 1700153000,
+      "mapping": {
+        "msg-043-1": {
+          "id": "msg-043-1",
+          "message": {
+            "id": "msg-043-1",
+            "author": {
+              "role": "user"
+            },
+            "create_time": 1700151200,
+            "content": {
+              "content_type": "text",
+              "parts": [
+                "Help me reason about async await JavaScript for scenario 043."
+              ]
+            },
+            "status": "finished_successfully",
+            "metadata": {}
+          },
+          "parent": null,
+          "children": [
+            "msg-043-2"
+          ]
+        },
+        "msg-043-2": {
+          "id": "msg-043-2",
+          "message": {
+            "id": "msg-043-2",
+            "author": {
+              "role": "assistant"
+            },
+            "create_time": 1700151260,
+            "content": {
+              "content_type": "text",
+              "parts": [
+                "Here is a concise plan for async await JavaScript: define the goal, list constraints, compare options, and choose the next measurable action."
+              ]
+            },
+            "status": "finished_successfully",
+            "metadata": {}
+          },
+          "parent": "msg-043-1",
+          "children": []
+        }
+      }
+    },
+    {
+      "id": "conv-044",
+      "title": "Scenario 044: JavaScript closures",
+      "create_time": 1700154800,
+      "update_time": 1700156600,
+      "mapping": {
+        "msg-044-1": {
+          "id": "msg-044-1",
+          "message": {
+            "id": "msg-044-1",
+            "author": {
+              "role": "user"
+            },
+            "create_time": 1700154800,
+            "content": {
+              "content_type": "text",
+              "parts": [
+                "Help me reason about JavaScript closures for scenario 044."
+              ]
+            },
+            "status": "finished_successfully",
+            "metadata": {}
+          },
+          "parent": null,
+          "children": [
+            "msg-044-2"
+          ]
+        },
+        "msg-044-2": {
+          "id": "msg-044-2",
+          "message": {
+            "id": "msg-044-2",
+            "author": {
+              "role": "assistant"
+            },
+            "create_time": 1700154860,
+            "content": {
+              "content_type": "text",
+              "parts": [
+                "Here is a concise plan for JavaScript closures: define the goal, list constraints, compare options, and choose the next measurable action."
+              ]
+            },
+            "status": "finished_successfully",
+            "metadata": {}
+          },
+          "parent": "msg-044-1",
+          "children": []
+        }
+      }
+    },
+    {
+      "id": "conv-045",
+      "title": "Scenario 045: interview prep",
+      "create_time": 1700158400,
+      "update_time": 1700160200,
+      "mapping": {
+        "msg-045-1": {
+          "id": "msg-045-1",
+          "message": {
+            "id": "msg-045-1",
+            "author": {
+              "role": "user"
+            },
+            "create_time": 1700158400,
+            "content": {
+              "content_type": "text",
+              "parts": [
+                "Help me reason about interview prep for scenario 045."
+              ]
+            },
+            "status": "finished_successfully",
+            "metadata": {}
+          },
+          "parent": null,
+          "children": [
+            "msg-045-2"
+          ]
+        },
+        "msg-045-2": {
+          "id": "msg-045-2",
+          "message": {
+            "id": "msg-045-2",
+            "author": {
+              "role": "assistant"
+            },
+            "create_time": 1700158460,
+            "content": {
+              "content_type": "text",
+              "parts": [
+                "Here is a concise plan for interview prep: define the goal, list constraints, compare options, and choose the next measurable action."
+              ]
+            },
+            "status": "finished_successfully",
+            "metadata": {}
+          },
+          "parent": "msg-045-1",
+          "children": []
+        }
+      }
+    },
+    {
+      "id": "conv-046",
+      "title": "Scenario 046: portfolio project",
+      "create_time": 1700162000,
+      "update_time": 1700163800,
+      "mapping": {
+        "msg-046-1": {
+          "id": "msg-046-1",
+          "message": {
+            "id": "msg-046-1",
+            "author": {
+              "role": "user"
+            },
+            "create_time": 1700162000,
+            "content": {
+              "content_type": "text",
+              "parts": [
+                "Help me reason about portfolio project for scenario 046."
+              ]
+            },
+            "status": "finished_successfully",
+            "metadata": {}
+          },
+          "parent": null,
+          "children": [
+            "msg-046-2"
+          ]
+        },
+        "msg-046-2": {
+          "id": "msg-046-2",
+          "message": {
+            "id": "msg-046-2",
+            "author": {
+              "role": "assistant"
+            },
+            "create_time": 1700162060,
+            "content": {
+              "content_type": "text",
+              "parts": [
+                "Here is a concise plan for portfolio project: define the goal, list constraints, compare options, and choose the next measurable action."
+              ]
+            },
+            "status": "finished_successfully",
+            "metadata": {}
+          },
+          "parent": "msg-046-1",
+          "children": []
+        }
+      }
+    },
+    {
+      "id": "conv-047",
+      "title": "Scenario 047: product roadmap",
+      "create_time": 1700165600,
+      "update_time": 1700167400,
+      "mapping": {
+        "msg-047-1": {
+          "id": "msg-047-1",
+          "message": {
+            "id": "msg-047-1",
+            "author": {
+              "role": "user"
+            },
+            "create_time": 1700165600,
+            "content": {
+              "content_type": "text",
+              "parts": [
+                "Help me reason about product roadmap for scenario 047."
+              ]
+            },
+            "status": "finished_successfully",
+            "metadata": {}
+          },
+          "parent": null,
+          "children": [
+            "msg-047-2"
+          ]
+        },
+        "msg-047-2": {
+          "id": "msg-047-2",
+          "message": {
+            "id": "msg-047-2",
+            "author": {
+              "role": "assistant"
+            },
+            "create_time": 1700165660,
+            "content": {
+              "content_type": "text",
+              "parts": [
+                "Here is a concise plan for product roadmap: define the goal, list constraints, compare options, and choose the next measurable action."
+              ]
+            },
+            "status": "finished_successfully",
+            "metadata": {}
+          },
+          "parent": "msg-047-1",
+          "children": []
+        }
+      }
+    },
+    {
+      "id": "conv-048",
+      "title": "Scenario 048: technical debt",
+      "create_time": 1700169200,
+      "update_time": 1700171000,
+      "mapping": {
+        "msg-048-1": {
+          "id": "msg-048-1",
+          "message": {
+            "id": "msg-048-1",
+            "author": {
+              "role": "user"
+            },
+            "create_time": 1700169200,
+            "content": {
+              "content_type": "text",
+              "parts": [
+                "Help me reason about technical debt for scenario 048."
+              ]
+            },
+            "status": "finished_successfully",
+            "metadata": {}
+          },
+          "parent": null,
+          "children": [
+            "msg-048-2"
+          ]
+        },
+        "msg-048-2": {
+          "id": "msg-048-2",
+          "message": {
+            "id": "msg-048-2",
+            "author": {
+              "role": "assistant"
+            },
+            "create_time": 1700169260,
+            "content": {
+              "content_type": "text",
+              "parts": [
+                "Here is a concise plan for technical debt: define the goal, list constraints, compare options, and choose the next measurable action."
+              ]
+            },
+            "status": "finished_successfully",
+            "metadata": {}
+          },
+          "parent": "msg-048-1",
+          "children": []
+        }
+      }
+    },
+    {
+      "id": "conv-049",
+      "title": "Scenario 049: pricing strategy",
+      "create_time": 1700172800,
+      "update_time": 1700174600,
+      "mapping": {
+        "msg-049-1": {
+          "id": "msg-049-1",
+          "message": {
+            "id": "msg-049-1",
+            "author": {
+              "role": "user"
+            },
+            "create_time": 1700172800,
+            "content": {
+              "content_type": "text",
+              "parts": [
+                "Help me reason about pricing strategy for scenario 049."
+              ]
+            },
+            "status": "finished_successfully",
+            "metadata": {}
+          },
+          "parent": null,
+          "children": [
+            "msg-049-2"
+          ]
+        },
+        "msg-049-2": {
+          "id": "msg-049-2",
+          "message": {
+            "id": "msg-049-2",
+            "author": {
+              "role": "assistant"
+            },
+            "create_time": 1700172860,
+            "content": {
+              "content_type": "text",
+              "parts": [
+                "Here is a concise plan for pricing strategy: define the goal, list constraints, compare options, and choose the next measurable action."
+              ]
+            },
+            "status": "finished_successfully",
+            "metadata": {}
+          },
+          "parent": "msg-049-1",
+          "children": []
+        }
+      }
+    },
+    {
+      "id": "conv-050",
+      "title": "Scenario 050: competitor analysis",
+      "create_time": 1700176400,
+      "update_time": 1700178200,
+      "mapping": {
+        "msg-050-1": {
+          "id": "msg-050-1",
+          "message": {
+            "id": "msg-050-1",
+            "author": {
+              "role": "user"
+            },
+            "create_time": 1700176400,
+            "content": {
+              "content_type": "text",
+              "parts": [
+                "Help me reason about competitor analysis for scenario 050."
+              ]
+            },
+            "status": "finished_successfully",
+            "metadata": {}
+          },
+          "parent": null,
+          "children": [
+            "msg-050-2"
+          ]
+        },
+        "msg-050-2": {
+          "id": "msg-050-2",
+          "message": {
+            "id": "msg-050-2",
+            "author": {
+              "role": "assistant"
+            },
+            "create_time": 1700176460,
+            "content": {
+              "content_type": "text",
+              "parts": [
+                "Here is a concise plan for competitor analysis: define the goal, list constraints, compare options, and choose the next measurable action."
+              ]
+            },
+            "status": "finished_successfully",
+            "metadata": {}
+          },
+          "parent": "msg-050-1",
+          "children": []
+        }
+      }
+    }
+  ]
+}
