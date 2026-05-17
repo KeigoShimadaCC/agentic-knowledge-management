@@ -75,6 +75,15 @@ final class CaptureFeatureTests: XCTestCase {
             XCTFail("Expected ready upload state")
         }
     }
+
+    func testCreatedPageWebURLUsesWebPortAndPageRoute() throws {
+        let id = UUID()
+        let url = try XCTUnwrap(
+            CaptureViewModel.webPageURL(for: id, apiBaseURL: URL(string: "http://127.0.0.1:8001")!)
+        )
+
+        XCTAssertEqual(url.absoluteString, "http://127.0.0.1:3000/app/pages/\(id.uuidString)")
+    }
 }
 
 private final class MockCaptureAPI: CaptureAPIProtocol, @unchecked Sendable {

@@ -7,6 +7,7 @@ final class CaptureViewModel {
     struct CreatedNote: Identifiable, Equatable {
         let id: UUID
         let title: String
+        let webURL: URL?
     }
 
     struct UploadItem: Identifiable, Equatable {
@@ -27,14 +28,16 @@ final class CaptureViewModel {
     }
 
     private let api: any CaptureAPIProtocol
+    private let serverConfig: ServerConfig
     private(set) var isSavingNote = false
     private(set) var createdNote: CreatedNote?
     private(set) var noteError: String?
     private(set) var uploads: [UploadItem] = []
     var activeSourceID: UUID?
 
-    init(api: any CaptureAPIProtocol) {
+    init(api: any CaptureAPIProtocol, serverConfig: ServerConfig = .shared) {
         self.api = api
+        self.serverConfig = serverConfig
     }
 
     func saveQuickNote(title: String, body: String) async {
@@ -50,7 +53,11 @@ final class CaptureViewModel {
 
         do {
             let response = try await api.createQuickNote(title: title, body: trimmedBody)
-            createdNote = CreatedNote(id: response.object.id, title: response.object.title)
+            createdNote = CreatedNote(
+                id: response.object.id,
+                title: response.object.title,
+                webURL: Self.webPageURL(for: response.object.id, apiBaseURL: serverConfig.baseURL)
+            )
         } catch let error as APIError {
             noteError = error.userMessage
         } catch {
@@ -130,5 +137,16 @@ final class CaptureViewModel {
         }
         uploads[index].state = state
         uploads[index].progress = progress
+    }
+
+    static func webPageURL(for pageID: UUID, apiBaseURL: URL) -> URL? {
+        guard var components = URLComponents(url: apiBaseURL, resolvingAgainstBaseURL: false) else {
+            return nil
+        }
+        components.port = 3000
+        components.path = "/app/pages/\(pageID.uuidString)"
+        components.query = nil
+        components.fragment = nil
+        return components.url
     }
 }

@@ -825,9 +825,10 @@ cd apps/ios && xcodegen generate && xcodebuild ... test  # TEST SUCCEEDED
 - [x] Phase doc and iPhone app concept reviewed
 - [x] Isolated worktree created from `main`
 - [x] PHONE-02A iOS API/session baseline materialized from the existing `../kos-phone-02a` worktree because 03B depends on `APIClient`, `MultipartUpload`, and the tab skeleton, but those files are not committed on `main`
-- [x] Quick note UI implemented with title/body fields, clipboard paste, Tiptap JSON page creation, success link, and `kos.capture.*` accessibility identifiers
+- [x] Quick note UI implemented with title/body fields, clipboard paste, Tiptap JSON page creation, success toast, created-page handoff, web page link, and `kos.capture.*` accessibility identifiers
 - [x] Photo/file upload implemented with `PhotosPicker`, `fileImporter`, `MultipartUpload`, default `create_source=true`, per-item progress/status rows, and retryable in-memory failed uploads
 - [x] Source ingestion status view polls `GET /api/v1/sources/{id}` every 2s for up to 60s, then exposes manual refresh
 - [x] Capture tests added for Tiptap wrapping, required note body validation, retry queue behavior, and ready-source refresh state
 - [x] Validation: `xcodegen generate` passed
 - [x] Validation: `xcodebuild -project KnowledgeOS.xcodeproj -scheme KnowledgeOS -destination 'platform=iOS Simulator,name=iPhone 16' -derivedDataPath /private/tmp/kos-phone-03b-test-derived test` passed (28 unit tests + 2 UI tests)
+- [ ] Post-polish validation rerun blocked: approval system rejected the required CoreSimulator escalation due to usage limit; Docker live DoD also blocked by Docker socket approval rejection and no API listening on `127.0.0.1:8001`

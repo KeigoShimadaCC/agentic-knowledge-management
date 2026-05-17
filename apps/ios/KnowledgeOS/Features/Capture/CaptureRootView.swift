@@ -8,6 +8,7 @@ struct CaptureRootView: View {
     @State private var bodyText = ""
     @State private var selectedPhotos: [PhotosPickerItem] = []
     @State private var showFileImporter = false
+    @State private var showSuccessToast = false
 
     var body: some View {
         List {
@@ -30,7 +31,7 @@ struct CaptureRootView: View {
                     Spacer()
 
                     Button {
-                        Task { await viewModel.saveQuickNote(title: title, body: bodyText) }
+                        Task { await saveQuickNote() }
                     } label: {
                         if viewModel.isSavingNote {
                             ProgressView()
@@ -81,6 +82,17 @@ struct CaptureRootView: View {
         }
         .navigationTitle("Capture")
         .accessibilityIdentifier(Kos.Capture.screen)
+        .overlay(alignment: .bottom) {
+            if showSuccessToast, let createdNote = viewModel.createdNote {
+                Label("Saved \(createdNote.title)", systemImage: "checkmark.circle.fill")
+                    .font(.subheadline.weight(.semibold))
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 10)
+                    .background(.regularMaterial, in: Capsule())
+                    .padding(.bottom, 20)
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
+            }
+        }
         .fileImporter(
             isPresented: $showFileImporter,
             allowedContentTypes: [.image, .pdf, .plainText, .commaSeparatedText, .data, .item],
@@ -99,6 +111,20 @@ struct CaptureRootView: View {
     private func pasteClipboard() {
         guard let clipboard = UIPasteboard.general.string, !clipboard.isEmpty else { return }
         bodyText = bodyText.isEmpty ? clipboard : "\(bodyText)\n\(clipboard)"
+    }
+
+    private func saveQuickNote() async {
+        await viewModel.saveQuickNote(title: title, body: bodyText)
+        guard viewModel.createdNote != nil else { return }
+        bodyText = ""
+        title = ""
+        withAnimation {
+            showSuccessToast = true
+        }
+        try? await Task.sleep(nanoseconds: 2_000_000_000)
+        withAnimation {
+            showSuccessToast = false
+        }
     }
 
     private func handlePhotos(_ items: [PhotosPickerItem]) async {
@@ -204,6 +230,11 @@ private struct CreatedPageView: View {
             Text(note.id.uuidString)
                 .font(.footnote.monospaced())
                 .foregroundStyle(.secondary)
+            if let webURL = note.webURL {
+                Link(destination: webURL) {
+                    Label("Open in KnowledgeOS Web", systemImage: "safari")
+                }
+            }
             Spacer()
         }
         .frame(maxWidth: .infinity, alignment: .leading)
