@@ -876,10 +876,12 @@ xcodebuild ... -only-testing:KnowledgeOSUITests/BootSmokeTests test  # ⇒ passe
 cd apps/ios && xcodegen generate                                         # ⇒ passed
 xcodebuild -project KnowledgeOS.xcodeproj -scheme KnowledgeOS \
   -destination 'platform=iOS Simulator,name=iPhone 16' build              # ⇒ BUILD SUCCEEDED
-xcodebuild ... -only-testing:KnowledgeOSTests test                        # ⇒ 32/32 unit tests pass (8 new AI tests)
+xcodebuild ... -only-testing:KnowledgeOSTests test                        # ⇒ 33/33 unit tests pass (9 new AI tests + 1 live-backend smoke)
 # Manual launch on iPhone 16 simulator → app boots to Connect screen cleanly.
 ```
 
-**Backend dependency note:** validating the live "ask → grounded answer + citation" flow requires `OPENAI_API_KEY` set in `infra/.env` AND a server-side fix for a pre-existing `Citation` Pydantic validation bug in `services/api/app/services/ai_service.py::answer_question` that surfaces when calling `/api/v1/ai/answer` with the demo seed. That is a backend issue out of 03C's scope; the iOS client correctly decodes a well-formed response per `Fixtures/answer.json`.
+**Live-backend smoke test:** `KnowledgeOSTests/LiveBackendSmokeTests.swift` exercises the full mobile flow (login → bootstrap → hybrid search → read detail → AI answer) through `APIClient` + the feature view-models without using XCUITest. Auto-skips when `127.0.0.1:8001/api/v1/health` is unreachable so CI without docker stays green; set `KOS_LIVE_SMOKE=1` to force-run. Replaces the XCUITest-based `LoginEndToEndSmokeTests` flow as the live integration gate (the XCUITest path remains in `KnowledgeOSUITests/` for future iOS releases that fix the tab-bar hit-point geometry).
+
+**Backend dependency satisfied:** the `Citation` Pydantic validation bug in `services/api/app/services/ai_service.py::answer_question` is fixed in branch `fix-ai-citation-snippet` (commit `73122f7`). With that fix and `OPENAI_API_KEY` set in `infra/.env`, `/api/v1/ai/answer` returns a grounded answer + ≥1 citation against the demo seed (verified by the new smoke test in 3.3s).
 
 **Blocks unblocked:** none (03C is a leaf in Wave 3).
