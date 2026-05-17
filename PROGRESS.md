@@ -793,6 +793,29 @@ See [`project-phases/PHASE-13D.md`](project-phases/PHASE-13D.md) for the full sp
 
 ---
 
+## Phase PHONE-02A — iOS API Client & Session ✅ Complete
+
+**Goal:** Typed `APIClient`, Keychain-backed bearer token storage, login/logout/bootstrap, full DTO set, TabView nav skeleton, and unit tests.
+
+**Branch:** `phase-phone-02a-ios-api-client` · **Worktree:** `../kos-phone-02a` · **Scope:** `apps/ios/KnowledgeOS/Core/**`, `apps/ios/KnowledgeOSTests/**`, minimal `Features/Auth` + `Features/Root`, `PROGRESS.md`
+
+- [x] `APIClient` + `APIError` + bearer injection + redacted logging (path/method/status only)
+- [x] `KeychainStore` (`os.knowledgeos.bearer`) + `AuthStore` + `LoginViewModel`
+- [x] Full DTO layer mirroring live FastAPI schemas + 18 JSON fixtures + `DTOTests` round-trips (incl. split `UserDTO.swift`)
+- [x] `APIClientTests` covers PATCH/PUT/DELETE verbs; E2E logout via `KOS_UI_LOGOUT` relaunch (TabView XCTest limitation)
+- [x] `LoginView` + `MainTabView` (Home/Search/Capture/AI/Settings tab order) + `RootView` Connect → Login → Tabs
+- [x] `MultipartUpload` + `NetworkMonitor` (`NWPathMonitor`)
+- [x] Base URL change clears Keychain session via `AppState.onBaseURLWillChange`
+- [x] 401 from any request triggers idempotent local logout
+
+**Validation:** `xcodegen generate` ✅ · `xcodebuild … test` on iPhone 16 simulator → **37 tests passed** (35 unit + 2 UI) ✅ · Live API smoke: health, mobile-login, bootstrap, logout ✅ · Live UI smoke: Connect → Login → Home (username) → relaunch logout (`KOS_UI_LOGOUT`) → Sign In ✅
+
+**Operator note:** Run `alembic upgrade head` (migration `0013` mobile session columns) if mobile-login returns HTTP 500.
+
+**Blocks unblocked:** PHASE-PHONE-03A (read/search), 03B (capture), 03C (mobile AI)
+
+---
+
 ## Phase PHONE-02B — Simulator Automation & QA ✅ Complete
 
 **Goal:** Give AI coders eyes/hands inside the iOS Simulator — MCP setup docs, reusable QA prompts, `kos.*` accessibility-ID contract, and boot/screenshot helper scripts.

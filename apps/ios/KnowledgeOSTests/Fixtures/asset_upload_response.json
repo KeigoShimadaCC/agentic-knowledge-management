@@ -1,0 +1,31 @@
+{
+  "object": {
+    "id": "55555555-5555-5555-5555-555555555555",
+    "user_id": "11111111-1111-1111-1111-111111111111",
+    "kind": "asset",
+    "title": "photo.jpg",
+    "description": null,
+    "tags": [],
+    "metadata": {},
+    "is_pinned": false,
+    "is_archived": false,
+    "ai_generated": false,
+    "created_at": "2026-05-17T10:00:00.000Z",
+    "updated_at": "2026-05-17T10:00:00.000Z",
+    "deleted_at": null
+  },
+  "asset": {
+    "id": "44444444-4444-4444-4444-444444444444",
+    "filename": "photo.jpg",
+    "content_type": "image/jpeg",
+    "size_bytes": 2048,
+    "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "storage_path": "assets/aa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/original.jpg",
+    "status": "ready",
+    "width": 800,
+    "height": 600,
+    "duration_secs": null,
+    "created_at": "2026-05-17T10:00:00.000Z",
+    "updated_at": "2026-05-17T10:00:00.000Z"
+  }
+}

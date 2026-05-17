@@ -49,6 +49,8 @@ targets:
     platform: iOS
     sources:
       - path: KnowledgeOSTests
+    resources:
+      - path: KnowledgeOSTests/Fixtures
     dependencies:
       - target: KnowledgeOS
     settings:
