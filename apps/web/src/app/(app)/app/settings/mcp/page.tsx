@@ -26,6 +26,7 @@ export default function McpSettingsPage() {
   const [error, setError] = useState<string | null>(null);
   const [testingIds, setTestingIds] = useState<Set<string>>(new Set());
   const [testResults, setTestResults] = useState<Record<string, McpConnectionTestResult>>({});
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   async function loadConnections() {
     setError(null);
@@ -69,9 +70,9 @@ export default function McpSettingsPage() {
     }
   }
 
-  async function handleDelete(connection: McpConnectionOut) {
-    if (!window.confirm(`Delete MCP connection "${connection.name}"?`)) return;
-    await deleteMcpConnection(connection.id);
+  async function handleDelete(id: string) {
+    await deleteMcpConnection(id);
+    setDeletingId(null);
     await loadConnections();
   }
 
@@ -155,13 +156,32 @@ export default function McpSettingsPage() {
                     >
                       {testingIds.has(connection.id) ? "Testing..." : "Test"}
                     </button>
-                    <button
-                      type="button"
-                      onClick={() => void handleDelete(connection)}
-                      className="rounded-md border border-red-900/70 px-3 py-2 text-sm text-red-200 hover:bg-red-950/50"
-                    >
-                      Delete
-                    </button>
+                    {deletingId === connection.id ? (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => setDeletingId(null)}
+                          className="rounded-md border border-gray-700 px-3 py-2 text-sm text-gray-300 hover:bg-gray-800"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => void handleDelete(connection.id)}
+                          className="rounded-md border border-red-900/70 bg-red-950/40 px-3 py-2 text-sm font-medium text-red-200 hover:bg-red-950/80"
+                        >
+                          Confirm delete
+                        </button>
+                      </>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => setDeletingId(connection.id)}
+                        className="rounded-md border border-red-900/70 px-3 py-2 text-sm text-red-200 hover:bg-red-950/50"
+                      >
+                        Delete
+                      </button>
+                    )}
                   </div>
                 </div>
               </article>

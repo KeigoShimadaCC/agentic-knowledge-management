@@ -23,6 +23,26 @@ test("shortcut overlay lists shortcut rows", async ({ page }) => {
   await expect(page.getByText(/Open Search|Cmd\+K|⌘K/i).first()).toBeVisible();
 });
 
+test("non-matching Meta key does NOT toggle sidebar", async ({ page }) => {
+  await page.goto("/app");
+  const sidebar = page.locator('[data-tutorial="sidebar"]');
+  await expect(sidebar).toHaveClass(/w-60/, { timeout: 3_000 });
+
+  // Dispatch Meta+A — should not trigger the sidebar toggle (key is "\", not "a")
+  await page.evaluate(() => {
+    document.dispatchEvent(new KeyboardEvent("keydown", {
+      key: "a",
+      code: "KeyA",
+      metaKey: true,
+      bubbles: true,
+      cancelable: true,
+    }));
+  });
+
+  // Sidebar must still have w-60 (not toggled)
+  await expect(sidebar).toHaveClass(/w-60/);
+});
+
 test("sidebar collapse via keyboard shortcut (Meta+\\)", async ({ page }) => {
   await page.goto("/app");
   const sidebar = page.locator('[data-tutorial="sidebar"]');
