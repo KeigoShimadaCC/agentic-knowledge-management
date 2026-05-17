@@ -55,6 +55,38 @@ test("triage modal shows AI summary after Analyze click", async ({ page, api }) 
   void id;
 });
 
+test("bulk triage fires route and shows success toast", async ({ page, api }) => {
+  const title1 = `Bulk triage A ${crypto.randomUUID()}`;
+  const title2 = `Bulk triage B ${crypto.randomUUID()}`;
+  await seedInboxItem(api, title1);
+  await seedInboxItem(api, title2);
+
+  // Mock the triage endpoint for both items
+  await page.route("**/api/v1/ai/triage", async (route) => {
+    await route.fulfill({
+      json: {
+        suggested_tags: ["engineering"],
+        suggested_title: null,
+        summary: "Auto summary.",
+        agent_run_id: null,
+      },
+    });
+  });
+
+  await page.goto("/app/inbox");
+  await expect(page.getByText(title1)).toBeVisible({ timeout: 8_000 });
+  await expect(page.getByText(title2)).toBeVisible({ timeout: 8_000 });
+
+  // Select both items
+  await page.getByRole("checkbox", { name: new RegExp(title1) }).check();
+  await page.getByRole("checkbox", { name: new RegExp(title2) }).check();
+  await expect(page.getByText(/2 selected/)).toBeVisible();
+
+  // Click bulk-triage and assert success toast
+  await page.getByRole("button", { name: /Auto-triage selected/ }).click();
+  await expect(page.getByText(/auto-triaged/i)).toBeVisible({ timeout: 15_000 });
+});
+
 test("bulk select reveals bulk action bar", async ({ page, api }) => {
   const title = `Bulk inbox ${crypto.randomUUID()}`;
   await seedInboxItem(api, title);
