@@ -31,6 +31,8 @@ test_output*.txt
 tests/e2e/playwright-report/
 tests/e2e/test-results/
 tests/e2e/.tmp/
+.tmp/mobile-qa/*
+!.tmp/mobile-qa/.gitkeep
 
 # Docker data
 postgres-data/
