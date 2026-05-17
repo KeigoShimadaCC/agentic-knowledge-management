@@ -400,7 +400,12 @@ async def answer_question(
             r = result_map.get(sid)
             if r:
                 citations.append(
-                    Citation(object_id=r.id, title=r.title, kind=r.kind, snippet=r.snippet)
+                    Citation(
+                        object_id=r.id,
+                        title=r.title,
+                        kind=r.kind,
+                        snippet=r.snippet.text if r.snippet else None,
+                    )
                 )
 
     await db.commit()
