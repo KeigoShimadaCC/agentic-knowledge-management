@@ -1,6 +1,6 @@
 # KnowledgeOS — Progress Tracker
 
-> Last updated: 2026-05-17 (Phase PHONE-02B simulator QA complete)
+> Last updated: 2026-05-17 (Phase PHONE-03B capture ingest complete)
 
 ---
 
@@ -813,3 +813,21 @@ bash scripts/mobile_simulator_boot.sh          # OK — UDID resolved, app built
 bash scripts/mobile_simulator_screenshot.sh    # OK — .tmp/mobile-qa/<timestamp>.png
 cd apps/ios && xcodegen generate && xcodebuild ... test  # TEST SUCCEEDED
 ```
+
+---
+
+## Phase PHONE-03B — Capture & Ingest MVP ✅ Complete
+
+**Goal:** Add iPhone-first capture for quick text notes, clipboard import, photo/file upload, ingestion polling, and retryable failed uploads.
+
+**Branch:** `phase-phone-03b-capture-ingest` · **Worktree:** `worktrees/kos-phone-03b` (repo-internal replacement for the phase doc's `../kos-phone-03b` path because the sibling path is not writable in this environment) · **Scope:** `apps/ios/KnowledgeOS/Features/Capture/**`, `apps/ios/KnowledgeOS/Features/Root/CaptureTab.swift`, minimal API DTO/endpoint support for upload/page responses, capture tests, and `PROGRESS.md`
+
+- [x] Phase doc and iPhone app concept reviewed
+- [x] Isolated worktree created from `main`
+- [x] PHONE-02A iOS API/session baseline materialized from the existing `../kos-phone-02a` worktree because 03B depends on `APIClient`, `MultipartUpload`, and the tab skeleton, but those files are not committed on `main`
+- [x] Quick note UI implemented with title/body fields, clipboard paste, Tiptap JSON page creation, success link, and `kos.capture.*` accessibility identifiers
+- [x] Photo/file upload implemented with `PhotosPicker`, `fileImporter`, `MultipartUpload`, default `create_source=true`, per-item progress/status rows, and retryable in-memory failed uploads
+- [x] Source ingestion status view polls `GET /api/v1/sources/{id}` every 2s for up to 60s, then exposes manual refresh
+- [x] Capture tests added for Tiptap wrapping, required note body validation, retry queue behavior, and ready-source refresh state
+- [x] Validation: `xcodegen generate` passed
+- [x] Validation: `xcodebuild -project KnowledgeOS.xcodeproj -scheme KnowledgeOS -destination 'platform=iOS Simulator,name=iPhone 16' -derivedDataPath /private/tmp/kos-phone-03b-test-derived test` passed (28 unit tests + 2 UI tests)

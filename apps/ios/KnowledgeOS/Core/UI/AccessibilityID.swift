@@ -37,15 +37,21 @@ enum Kos {
     }
 
     enum Capture {
+        static let entry = "kos.capture.entry"
         static let screen = "kos.capture.screen"
+        static let titleField = "kos.capture.titleField"
         static let noteField = "kos.capture.noteField"
+        static let pasteButton = "kos.capture.pasteButton"
         static let saveButton = "kos.capture.saveButton"
+        static let successLink = "kos.capture.successLink"
     }
 
     enum Upload {
         static let screen = "kos.upload.screen"
+        static let photoButton = "kos.upload.photoButton"
         static let pickButton = "kos.upload.pickButton"
         static let statusLabel = "kos.upload.statusLabel"
+        static let retryButton = "kos.upload.retryButton"
     }
 
     enum AI {

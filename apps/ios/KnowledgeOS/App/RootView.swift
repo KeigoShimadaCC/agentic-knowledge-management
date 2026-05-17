@@ -2,22 +2,23 @@ import SwiftUI
 
 struct RootView: View {
     @EnvironmentObject private var appState: AppState
+    @Bindable var authStore: AuthStore
 
     var body: some View {
-        NavigationStack {
-            Group {
-                if appState.isConnected {
-                    HomePlaceholderView()
-                } else {
+        Group {
+            if !appState.isConnected {
+                NavigationStack {
                     ConnectView()
+                        .navigationTitle("Connect")
                 }
+            } else if !authStore.isAuthenticated {
+                NavigationStack {
+                    LoginView()
+                        .navigationTitle("Sign In")
+                }
+            } else {
+                MainTabView()
             }
-            .navigationTitle(appState.isConnected ? "KnowledgeOS" : "Connect")
         }
     }
-}
-
-#Preview {
-    RootView()
-        .environmentObject(AppState(serverConfig: ServerConfig(storage: .init(suiteName: "preview")!)))
 }

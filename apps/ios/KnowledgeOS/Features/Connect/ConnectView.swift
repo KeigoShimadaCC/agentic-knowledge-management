@@ -14,7 +14,7 @@ struct ConnectView: View {
                 .textInputAutocapitalization(.never)
                 .autocorrectionDisabled()
                 .keyboardType(.URL)
-                .accessibilityIdentifier(Kos.Connect.urlField)
+                .accessibilityIdentifier("connect.baseURL")
             }
 
             Section {
@@ -37,14 +37,14 @@ struct ConnectView: View {
                     }
                 }
                 .disabled(isTesting)
-                .accessibilityIdentifier(Kos.Connect.testConnectionButton)
+                .accessibilityIdentifier("connect.testConnection")
             }
 
             Section {
                 statusView
             }
         }
-        .accessibilityIdentifier(Kos.Connect.screen)
+        .accessibilityIdentifier("connect.screen")
     }
 
     private var isTesting: Bool {
@@ -60,21 +60,21 @@ struct ConnectView: View {
         case .idle:
             Text("Enter the Mac API URL and test the connection.")
                 .foregroundStyle(.secondary)
-                .accessibilityIdentifier(Kos.Connect.statusIdle)
+                .accessibilityIdentifier("connect.status.idle")
         case .loading:
             HStack {
                 ProgressView()
                 Text("Checking /api/v1/health")
             }
-            .accessibilityIdentifier(Kos.Connect.statusLoading)
+            .accessibilityIdentifier("connect.status.loading")
         case let .success(message):
             Label(message, systemImage: "checkmark.circle.fill")
                 .foregroundStyle(.green)
-                .accessibilityIdentifier(Kos.Connect.statusSuccess)
+                .accessibilityIdentifier("connect.status.success")
         case let .failure(message):
             Label(message, systemImage: "xmark.octagon.fill")
                 .foregroundStyle(.red)
-                .accessibilityIdentifier(Kos.Connect.statusFailure)
+                .accessibilityIdentifier("connect.status.failure")
         }
     }
 }
