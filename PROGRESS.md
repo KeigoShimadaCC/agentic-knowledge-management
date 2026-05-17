@@ -1,6 +1,6 @@
 # KnowledgeOS — Progress Tracker
 
-> Last updated: 2026-05-17 (Phase PHONE-03A read/search MVP complete; build + unit + boot UI tests green)
+> Last updated: 2026-05-17 (Phase PHONE-03C mobile AI complete; 32 unit tests green)
 
 ---
 
@@ -851,3 +851,35 @@ xcodebuild ... -only-testing:KnowledgeOSUITests/BootSmokeTests test  # ⇒ passe
 **Known limitation — live-backend `LoginEndToEndSmokeTests`:** on iOS 26 simulators, `XCUIApplication.tabBars.buttons[...]` and `.element(boundBy:)` report tab-bar buttons with hit point `{-1, -1}`, so XCUI cannot programmatically tap the Search/Settings tabs even though the buttons are present and the tab bar's `frame` reports a midY that does not match the rendered position. Replicates with multiple SF Symbols (`magnifyingglass`, `text.magnifyingglass`, `doc.text.magnifyingglass`) and via both label lookup and index lookup. Captured during validation against the live backend (demo seed). The functional code is correct: the tab bar, search field (`kos.search.input`), and result row (`kos.search.resultRow`) are all wired up — the issue is an iOS 26 simulator + SwiftUI `TabView` interaction that surfaces only inside XCUITest. Test left in `KnowledgeOSUITests/LoginEndToEndSmokeTests.swift` with robust coordinate-based fallbacks for when iOS 26 fixes the tab-bar geometry. Manual run against a physical device — or running the same flow via `ios-simulator` MCP outside XCUITest — works.
 
 **Blocks unblocked:** PHASE-PHONE-03C (depends on `Features/AI/AIActionsBar.swift` stub shipped here), PHASE-PHONE-04 (page detail stable), PHASE-PHONE-05 (offline can extend read paths).
+
+---
+
+## Phase PHONE-03C — Mobile AI ✅ Complete
+
+**Goal:** Expose mobile AI actions: grounded KB Q&A, object summarize, suggest links, citations, and AI-disabled handling. Branch is rebased onto `phase-phone-03a-read-search` so it inherits the 02A/03A foundation (API client, AuthStore, detail views, AIActionsBar stub).
+
+**Branch:** `phase-phone-03c-mobile-ai` · **Worktree:** `../kos-phone-03c` · **Scope:** `apps/ios/KnowledgeOS/Features/AI/**`, `Features/Root/AITab.swift` body, replacement body of `Features/AI/AIActionsBar.swift`; reuses existing `AIDTO`, `APIError.aiDisabled`, and `aiAnswer`/`aiSummarize`/`aiSuggestLinks` endpoints already shipped by 03A's foundation.
+
+- [x] Kickoff: phase doc reviewed; isolated worktree rebased onto 03A.
+- [x] `Features/AI/AIAPI.swift` — thin `AIAPI` wrapper over `APIClient` for `/api/v1/ai/answer`, `/summarize`, `/suggest-links`.
+- [x] `Features/AI/AskKBView.swift` + `AskKBViewModel.swift` — Ask KnowledgeOS screen. Multi-line text field (`kos.ai.askInput`), send button (`kos.ai.askSend`), non-streamed answer rendering, citations with kind badges and tap-to-open via shared `ObjectRoute`/`ObjectDetailView`, web citations as `Link` to URL.
+- [x] `Features/Root/AITab.swift` — body replaced; navigation stack hosts `AskKBView` with `ObjectRoute` destination.
+- [x] `Features/AI/AIActionsBar.swift` — real body. Renders **Summarize** (pages and sources) and **Suggest Links** (any object) buttons. Greyed + popover-hint when AI disabled. Sheets host `SummarizeSheet` and `SuggestLinksSheet`. Never auto-fires.
+- [x] `Features/AI/SummarizeSheet.swift` and `SuggestLinksSheet.swift` — sheet presentations that call the AI API on `task` and render result / cached / error / suggestions list with tappable rows.
+- [x] `Features/AI/CitationRow.swift` and `AIDisabledBanner.swift` — reusable cells/banners.
+- [x] AI-disabled handling: reads `AuthStore.capabilities.aiEnabled`; `AskKBView` shows `AIDisabledBanner`; `AIActionsBar` greys buttons + shows popover; any `APIError.aiDisabled` returned mid-flight (503 + `code: "ai_disabled"`) flips the view-model state.
+- [x] Tests: `KnowledgeOSTests/AIFeatureTests.swift` (8 tests) — DTO decoding (Summarize, SuggestLinks), `APIError.aiDisabled` mapping (503-only contract), `AskKBViewModel` happy path + AI-disabled flow + blank-query guard + `canSubmit` invariants. Fixtures `ai_summarize.json`, `ai_suggest_links.json`, `error_ai_disabled.json` added.
+
+**Validation performed:**
+
+```bash
+cd apps/ios && xcodegen generate                                         # ⇒ passed
+xcodebuild -project KnowledgeOS.xcodeproj -scheme KnowledgeOS \
+  -destination 'platform=iOS Simulator,name=iPhone 16' build              # ⇒ BUILD SUCCEEDED
+xcodebuild ... -only-testing:KnowledgeOSTests test                        # ⇒ 32/32 unit tests pass (8 new AI tests)
+# Manual launch on iPhone 16 simulator → app boots to Connect screen cleanly.
+```
+
+**Backend dependency note:** validating the live "ask → grounded answer + citation" flow requires `OPENAI_API_KEY` set in `infra/.env` AND a server-side fix for a pre-existing `Citation` Pydantic validation bug in `services/api/app/services/ai_service.py::answer_question` that surfaces when calling `/api/v1/ai/answer` with the demo seed. That is a backend issue out of 03C's scope; the iOS client correctly decodes a well-formed response per `Fixtures/answer.json`.
+
+**Blocks unblocked:** none (03C is a leaf in Wave 3).
