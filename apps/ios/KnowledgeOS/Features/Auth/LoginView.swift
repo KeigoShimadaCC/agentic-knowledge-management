@@ -11,6 +11,13 @@ struct LoginView: View {
 private struct LoginForm: View {
     @Environment(AuthStore.self) private var authStore
     @StateObject private var viewModel: LoginViewModel
+    @FocusState private var focusedField: Field?
+
+    private enum Field {
+        case email
+        case password
+        case deviceName
+    }
 
     init(authStore: AuthStore) {
         _viewModel = StateObject(wrappedValue: LoginViewModel(authStore: authStore))
@@ -23,14 +30,17 @@ private struct LoginForm: View {
                     .textInputAutocapitalization(.never)
                     .autocorrectionDisabled()
                     .keyboardType(.emailAddress)
+                    .focused($focusedField, equals: .email)
                     .accessibilityIdentifier("login.email")
 
                 SecureField("Password", text: $viewModel.password)
+                    .focused($focusedField, equals: .password)
                     .accessibilityIdentifier("login.password")
             }
 
             Section("Device") {
                 TextField("Device name", text: $viewModel.deviceName)
+                    .focused($focusedField, equals: .deviceName)
                     .accessibilityIdentifier("login.deviceName")
             }
 
@@ -44,6 +54,7 @@ private struct LoginForm: View {
 
             Section {
                 Button {
+                    focusedField = nil
                     Task { await viewModel.login() }
                 } label: {
                     HStack {

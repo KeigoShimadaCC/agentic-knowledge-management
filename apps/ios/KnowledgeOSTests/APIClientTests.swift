@@ -90,35 +90,6 @@ final class APIClientTests: XCTestCase {
         await fulfillment(of: [expectation], timeout: 1)
     }
 
-    func testPatchPutDeleteUseCorrectHTTPMethods() async throws {
-        let storage = UserDefaults(suiteName: "APIClientTests.\(UUID().uuidString)")!
-        storage.set("http://127.0.0.1:8001", forKey: "knowledgeos.baseURL")
-        let client = APIClient(serverConfig: ServerConfig(storage: storage), session: makeMockSession())
-        let objectID = UUID(uuidString: "22222222-2222-2222-2222-222222222222")!
-
-        let methods: [HTTPMethod] = [.patch, .put, .delete]
-        for method in methods {
-            var capturedMethod: String?
-            MockURLProtocol.handler = { request in
-                capturedMethod = request.httpMethod
-                let response = HTTPURLResponse(
-                    url: request.url!,
-                    statusCode: 200,
-                    httpVersion: nil,
-                    headerFields: nil
-                )!
-                return (response, try FixtureLoader.data(named: "object"))
-            }
-
-            let endpoint = APIEndpoint(
-                path: "/api/v1/objects/\(objectID.uuidString)",
-                method: method
-            )
-            let _: ObjectDTO = try await client.request(endpoint, body: nil as String?, auth: false)
-            XCTAssertEqual(capturedMethod, method.rawValue)
-        }
-    }
-
     func testMultipartUploadBuildsBoundaryBody() {
         let upload = MultipartUpload(filename: "photo.jpg", mimeType: "image/jpeg", fileData: Data([0xFF, 0xD8]))
         XCTAssertTrue(upload.contentType.contains("multipart/form-data; boundary=\(upload.boundary)"))

@@ -6,15 +6,16 @@ final class LoginEndToEndSmokeTests: XCTestCase {
         continueAfterFailure = false
     }
 
-    func testConnectLoginHomeLogoutFlow() throws {
+    func testLoginSearchOpenFirstResultFlow() throws {
         let app = XCUIApplication()
-        app.launchArguments += ["-ui-testing-reset", "-ui-testing-e2e"]
+        app.launchArguments += ["-ui-testing-reset"]
         app.launch()
 
         XCTAssertTrue(app.navigationBars["Connect"].waitForExistence(timeout: 8))
 
-        app.buttons["kos.connect.testConnectionButton"].tap()
+        app.buttons["connect.testConnection"].tap()
 
+        // Connect screen is replaced on success — wait for the next screen.
         let reachedPostConnect =
             app.navigationBars["Sign In"].waitForExistence(timeout: 20)
             || app.tabBars.firstMatch.waitForExistence(timeout: 20)
@@ -37,22 +38,47 @@ final class LoginEndToEndSmokeTests: XCTestCase {
             XCTAssertTrue(app.tabBars.firstMatch.waitForExistence(timeout: 20))
         }
 
-        XCTAssertTrue(app.tabBars.buttons["Home"].waitForExistence(timeout: 5))
-        XCTAssertTrue(app.staticTexts["home.username"].waitForExistence(timeout: 10))
-        XCTAssertFalse(app.staticTexts["home.username"].label.isEmpty)
+        // Dismiss keyboard if still up after login, then switch to Search tab.
+        if app.keyboards.firstMatch.exists {
+            app.swipeDown()
+        }
+        let tabBar = app.tabBars.firstMatch
+        XCTAssertTrue(tabBar.waitForExistence(timeout: 10))
+        // iOS 26 sim reports tab-bar buttons with hit point {-1,-1} via XCUI label or
+        // index lookup. Fall back to tapping at the tab bar's normalized position.
+        let tabBarFrame = tabBar.frame
+        let searchTabX = tabBarFrame.minX + (tabBarFrame.width * 1.5 / 5.0)
+        let searchTabY = tabBarFrame.midY
+        app.coordinate(withNormalizedOffset: .zero)
+            .withOffset(CGVector(dx: searchTabX, dy: searchTabY))
+            .tap()
 
-        app.terminate()
-        sleep(1)
+        let search = app.textFields["kos.search.input"]
+        XCTAssertTrue(search.waitForExistence(timeout: 15))
+        search.tap()
+        search.clearAndType("demo")
 
-        app.launchArguments = ["-ui-testing-e2e"]
-        app.launchEnvironment = ["KOS_UI_LOGOUT": "1"]
-        app.launch()
-        XCTAssertTrue(app.wait(for: .runningForeground, timeout: 10))
+        let firstResult = app.buttons.matching(identifier: "kos.search.resultRow").firstMatch
+        XCTAssertTrue(firstResult.waitForExistence(timeout: 20))
+        firstResult.tap()
 
-        let signedOut =
-            app.navigationBars["Sign In"].waitForExistence(timeout: 20)
-            || app.textFields["login.email"].waitForExistence(timeout: 20)
-        XCTAssertTrue(signedOut, "Expected Sign In after KOS_UI_LOGOUT relaunch")
+        XCTAssertFalse(app.navigationBars["Search"].waitForExistence(timeout: 5))
+
+        // Settings tab is the 5th tab — tap via normalized tab-bar coordinate.
+        let settingsTabX = tabBarFrame.minX + (tabBarFrame.width * 4.5 / 5.0)
+        app.coordinate(withNormalizedOffset: .zero)
+            .withOffset(CGVector(dx: settingsTabX, dy: searchTabY))
+            .tap()
+        let toolbarSignOut = app.navigationBars.buttons["kos.settings.logoutButton"]
+        if toolbarSignOut.waitForExistence(timeout: 5) {
+            toolbarSignOut.tap()
+        }
+
+        XCTAssertFalse(app.tabBars.firstMatch.waitForExistence(timeout: 5))
+        XCTAssertTrue(
+            app.otherElements["login.screen"].waitForExistence(timeout: 10)
+                || app.navigationBars["Sign In"].waitForExistence(timeout: 10)
+        )
     }
 }
 

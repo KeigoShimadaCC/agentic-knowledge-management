@@ -1,30 +1,81 @@
 import SwiftUI
 
 struct HomeTab: View {
-    @Environment(AuthStore.self) private var authStore
+    @State private var viewModel = HomeViewModel()
 
     var body: some View {
         NavigationStack {
-            VStack(alignment: .leading, spacing: 16) {
-                ObjectKindBadge(kind: "home")
+            Group {
+                if viewModel.isLoading && viewModel.objects.isEmpty {
+                    LoadingView(message: "Loading recent objects...")
+                } else if let message = viewModel.errorMessage, viewModel.objects.isEmpty {
+                    ErrorView(title: "Could not load recent objects", message: message) {
+                        Task { await viewModel.refresh() }
+                    }
+                    .padding()
+                } else if viewModel.objects.isEmpty {
+                    EmptyStateView(
+                        title: "No objects yet",
+                        message: "Create pages, sources, chats, or projects on your Mac and they will appear here."
+                    )
+                } else {
+                    List {
+                        ForEach(viewModel.objects) { object in
+                            NavigationLink(value: ObjectRoute(id: object.id, kind: object.kind)) {
+                                ObjectRow(object: object)
+                            }
+                            .task {
+                                await viewModel.loadMoreIfNeeded(current: object)
+                            }
+                        }
 
-                Text("Welcome")
-                    .font(.title.weight(.semibold))
-
-                if let user = authStore.currentUser {
-                    Text(user.displayName.isEmpty ? user.email : user.displayName)
-                        .font(.title2)
-                        .accessibilityIdentifier("home.username")
+                        if viewModel.isLoading {
+                            ProgressView()
+                                .frame(maxWidth: .infinity)
+                        }
+                    }
+                    .accessibilityIdentifier("kos.home.recentList")
+                    .refreshable {
+                        await viewModel.refresh()
+                    }
                 }
-
-                Text("Home features arrive in PHONE-03A.")
-                    .foregroundStyle(.secondary)
-
-                Spacer()
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding()
             .navigationTitle("Home")
+            .navigationDestination(for: ObjectRoute.self) { route in
+                ObjectDetailView(route: route)
+            }
+            .task {
+                await viewModel.loadInitial()
+            }
         }
+        .accessibilityIdentifier("kos.home.screen")
+    }
+}
+
+private struct ObjectRow: View {
+    let object: ObjectDTO
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                ObjectKindBadge(kind: object.kind)
+                Spacer()
+                Text(object.updatedAt, style: .date)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+
+            Text(object.title)
+                .font(.headline)
+                .lineLimit(2)
+
+            if let description = object.description, !description.isEmpty {
+                Text(description)
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(2)
+            }
+        }
+        .padding(.vertical, 4)
     }
 }

@@ -2,6 +2,7 @@ import SwiftUI
 
 struct SettingsTab: View {
     @Environment(AuthStore.self) private var authStore
+    @EnvironmentObject private var appState: AppState
     let onLogout: () -> Void
 
     var body: some View {
@@ -15,7 +16,12 @@ struct SettingsTab: View {
                 }
 
                 if let capabilities = authStore.capabilities {
-                    Section("Capabilities") {
+                    Section("Server") {
+                        LabeledContent("Base URL", value: appState.baseURLString)
+                    }
+
+                    Section("About") {
+                        LabeledContent("Mobile API", value: "\(capabilities.mobileApiVersion)")
                         LabeledContent("AI", value: capabilities.aiEnabled ? "On" : "Off")
                         LabeledContent("Embeddings", value: capabilities.embeddingsEnabled ? "On" : "Off")
                         LabeledContent("Upload", value: capabilities.uploadEnabled ? "On" : "Off")
@@ -24,12 +30,13 @@ struct SettingsTab: View {
 
             }
             .navigationTitle("Settings")
+            .accessibilityIdentifier("kos.settings.screen")
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button("Sign Out", role: .destructive) {
                         onLogout()
                     }
-                    .accessibilityIdentifier("settings.logout")
+                    .accessibilityIdentifier("kos.settings.logoutButton")
                 }
             }
         }

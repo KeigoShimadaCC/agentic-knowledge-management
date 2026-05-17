@@ -2,6 +2,7 @@ import SwiftUI
 
 struct RootView: View {
     @EnvironmentObject private var appState: AppState
+    @Bindable var authStore: AuthStore
 
     var body: some View {
         Group {
@@ -10,7 +11,7 @@ struct RootView: View {
                     ConnectView()
                         .navigationTitle("Connect")
                 }
-            } else if !appState.isSessionAuthenticated {
+            } else if !authStore.isAuthenticated {
                 NavigationStack {
                     LoginView()
                         .navigationTitle("Sign In")

@@ -1,45 +1,38 @@
 import SwiftUI
 
-@main
-struct KnowledgeOSApp: App {
-    @StateObject private var appState = AppState()
-    @State private var authStore: AuthStore
-    private let apiClient: APIClient
-    private let networkMonitor: NetworkMonitor
+@MainActor
+final class AppDependencies {
+    let networkMonitor = NetworkMonitor()
+    let apiClient: APIClient
+    let authStore: AuthStore
 
     init() {
-        let monitor = NetworkMonitor()
-        let client = APIClient(networkMonitor: monitor)
-        networkMonitor = monitor
-        apiClient = client
-        _authStore = State(initialValue: AuthStore(apiClient: client))
-
+        apiClient = APIClient(networkMonitor: networkMonitor)
+        authStore = AuthStore(apiClient: apiClient)
         if ProcessInfo.processInfo.arguments.contains("-ui-testing-reset") {
             ServerConfig.shared.reset()
             try? SystemKeychainStore().deleteToken()
         }
     }
+}
+
+@main
+struct KnowledgeOSApp: App {
+    @StateObject private var appState = AppState()
+    @State private var dependencies = AppDependencies()
 
     var body: some Scene {
         WindowGroup {
-            RootView()
+            RootView(authStore: dependencies.authStore)
                 .environmentObject(appState)
-                .environment(authStore)
-                .task {
-                    authStore.onAuthenticationChange = { authenticated in
-                        appState.isSessionAuthenticated = authenticated
-                    }
-                    appState.isSessionAuthenticated = authStore.isAuthenticated
+                .environment(dependencies.authStore)
+                .onAppear {
                     appState.onBaseURLWillChange = { oldURL, newURL in
-                        authStore.onBaseURLChanged(from: oldURL, to: newURL)
+                        dependencies.authStore.onBaseURLChanged(from: oldURL, to: newURL)
                     }
-                    await authStore.restoreSessionIfNeeded()
-                    appState.isSessionAuthenticated = authStore.isAuthenticated
-
-                    if ProcessInfo.processInfo.shouldLogoutOnLaunch, authStore.isAuthenticated {
-                        appState.isSessionAuthenticated = false
-                        await authStore.logout()
-                    }
+                }
+                .task {
+                    await dependencies.authStore.restoreSessionIfNeeded()
                 }
         }
     }

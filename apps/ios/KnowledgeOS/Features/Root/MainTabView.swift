@@ -1,49 +1,42 @@
 import SwiftUI
 
 struct MainTabView: View {
-    @EnvironmentObject private var appState: AppState
     @Environment(AuthStore.self) private var authStore
-    @State private var selectedTab: MainTab = .home
 
     var body: some View {
-        TabView(selection: $selectedTab) {
+        TabView {
             HomeTab()
                 .tabItem {
                     Label("Home", systemImage: "house")
                 }
-                .tag(MainTab.home)
+                .accessibilityIdentifier("tab.home")
 
             SearchTab()
                 .tabItem {
                     Label("Search", systemImage: "magnifyingglass")
                 }
-                .tag(MainTab.search)
+                .accessibilityIdentifier("tab.search")
 
             CaptureTab()
                 .tabItem {
                     Label("Capture", systemImage: "plus.circle")
                 }
-                .tag(MainTab.capture)
+                .accessibilityIdentifier("tab.capture")
 
             AITab()
                 .tabItem {
                     Label("AI", systemImage: "sparkles")
                 }
-                .tag(MainTab.ai)
+                .accessibilityIdentifier("tab.ai")
 
             SettingsTab(onLogout: {
-                appState.isSessionAuthenticated = false
                 Task { await authStore.logout() }
             })
             .tabItem {
                 Label("Settings", systemImage: "gearshape")
             }
-            .tag(MainTab.settings)
+            .accessibilityIdentifier("tab.settings")
         }
-        .onAppear {
-            if let tab = UITestConfig.initialTab {
-                selectedTab = tab
-            }
-        }
+        .accessibilityIdentifier("main.tabs")
     }
 }

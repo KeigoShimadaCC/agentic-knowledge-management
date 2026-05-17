@@ -23,3 +23,36 @@ struct IndexStatusDTO: Codable, Equatable {
     let status: String
     let lastEmbeddedAt: Date?
 }
+
+struct ObjectSummaryDTO: Codable, Equatable, Identifiable {
+    let id: UUID
+    let kind: String
+    let title: String
+    let description: String?
+    let tags: [String]
+    let deletedAt: Date?
+}
+
+struct EdgeDTO: Codable, Equatable, Identifiable {
+    let id: UUID
+    let userId: UUID
+    let sourceId: UUID
+    let targetId: UUID
+    let kind: String
+    let weight: Double
+    let metadata: [String: AnyCodable]
+    let createdAt: Date
+    let deletedAt: Date?
+    let source: ObjectSummaryDTO
+    let target: ObjectSummaryDTO
+    let direction: String?
+}
+
+struct RelatedObjectDTO: Codable, Equatable, Identifiable {
+    let object: ObjectSummaryDTO
+    let distance: Int
+    let score: Double
+    let viaEdges: [EdgeDTO]
+
+    var id: UUID { object.id }
+}

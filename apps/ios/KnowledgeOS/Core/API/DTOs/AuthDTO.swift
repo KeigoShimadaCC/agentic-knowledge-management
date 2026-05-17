@@ -1,5 +1,12 @@
 import Foundation
 
+struct UserDTO: Codable, Equatable, Identifiable {
+    let id: UUID
+    let email: String
+    let displayName: String
+    let createdAt: Date?
+}
+
 struct MobileCapabilitiesDTO: Codable, Equatable {
     let aiEnabled: Bool
     let embeddingsEnabled: Bool

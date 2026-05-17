@@ -13,7 +13,6 @@ final class AuthStore {
     private let apiClient: any APIClientProtocol
     private let keychain: KeychainStore
     private var logoutInProgress = false
-    var onAuthenticationChange: ((Bool) -> Void)?
 
     init(apiClient: any APIClientProtocol, keychain: KeychainStore = SystemKeychainStore()) {
         self.apiClient = apiClient
@@ -95,7 +94,7 @@ final class AuthStore {
         )
         currentUser = bootstrap.user
         capabilities = bootstrap.capabilities
-        markAuthenticated()
+        isAuthenticated = true
     }
 
     private func handleUnauthorized() async {
@@ -112,9 +111,7 @@ final class AuthStore {
         apiClient.setBearerToken(nil)
         clearLocalState()
 
-        guard revokeRemote, let token else { return }
-
-        Task {
+        if revokeRemote, token != nil {
             apiClient.setBearerToken(token)
             let _: OkResponse? = try? await apiClient.request(
                 .mobileLogout,
@@ -129,11 +126,5 @@ final class AuthStore {
         currentUser = nil
         capabilities = nil
         isAuthenticated = false
-        onAuthenticationChange?(false)
-    }
-
-    private func markAuthenticated() {
-        isAuthenticated = true
-        onAuthenticationChange?(true)
     }
 }
