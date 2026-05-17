@@ -21,3 +21,8 @@ struct PageDTO: Codable, Equatable, Identifiable {
     let createdAt: Date
     let updatedAt: Date
 }
+
+struct PageCreateResponseDTO: Decodable {
+    let object: ObjectDTO
+    let page: PageDTO
+}

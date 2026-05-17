@@ -1,6 +1,6 @@
 # KnowledgeOS — Progress Tracker
 
-> Last updated: 2026-05-17 (Phase PHONE-03A read/search MVP complete; build + unit + boot UI tests green)
+> Last updated: 2026-05-18 (Wave 3 mobile phases merged to main — 03A read/search, 03B capture/ingest, 03C mobile AI)
 
 ---
 
@@ -874,3 +874,19 @@ xcodebuild ... -only-testing:KnowledgeOSUITests/BootSmokeTests test  # ⇒ passe
 **Known limitation — live-backend `LoginEndToEndSmokeTests`:** on iOS 26 simulators, `XCUIApplication.tabBars.buttons[...]` and `.element(boundBy:)` report tab-bar buttons with hit point `{-1, -1}`, so XCUI cannot programmatically tap the Search/Settings tabs even though the buttons are present and the tab bar's `frame` reports a midY that does not match the rendered position. Replicates with multiple SF Symbols (`magnifyingglass`, `text.magnifyingglass`, `doc.text.magnifyingglass`) and via both label lookup and index lookup. Captured during validation against the live backend (demo seed). The functional code is correct: the tab bar, search field (`kos.search.input`), and result row (`kos.search.resultRow`) are all wired up — the issue is an iOS 26 simulator + SwiftUI `TabView` interaction that surfaces only inside XCUITest. Test left in `KnowledgeOSUITests/LoginEndToEndSmokeTests.swift` with robust coordinate-based fallbacks for when iOS 26 fixes the tab-bar geometry. Manual run against a physical device — or running the same flow via `ios-simulator` MCP outside XCUITest — works.
 
 **Blocks unblocked:** PHASE-PHONE-03C (depends on `Features/AI/AIActionsBar.swift` stub shipped here), PHASE-PHONE-04 (page detail stable), PHASE-PHONE-05 (offline can extend read paths).
+
+---
+
+## Phase PHONE-03B — Capture & Ingest MVP ✅ Complete
+
+**Goal:** Add iPhone-first capture for quick text notes, clipboard import, photo/file upload, ingestion polling, and retryable failed uploads.
+
+**Branch:** `phase-phone-03b-capture-ingest` · **Worktree:** `worktrees/kos-phone-03b` · **Scope:** `apps/ios/KnowledgeOS/Features/Capture/**`, `apps/ios/KnowledgeOS/Features/Root/CaptureTab.swift`, minimal API DTO/endpoint support for upload/page responses, capture tests, and `PROGRESS.md`
+
+- [x] Phase doc and iPhone app concept reviewed
+- [x] Isolated worktree created from `main`
+- [x] Quick note UI implemented with title/body fields, clipboard paste, Tiptap JSON page creation, success toast, created-page handoff, web page link, and `kos.capture.*` accessibility identifiers
+- [x] Photo/file upload implemented with `PhotosPicker`, `fileImporter`, `MultipartUpload`, default `create_source=true`, per-item progress/status rows, and retryable in-memory failed uploads
+- [x] Source ingestion status view polls `GET /api/v1/sources/{id}` every 2s for up to 60s, then exposes manual refresh
+- [x] Capture tests added for Tiptap wrapping, required note body validation, retry queue behavior, and ready-source refresh state
+- [x] Validation: `xcodegen generate` passed; `xcodebuild ... test` passed (28 unit tests + 2 UI tests)

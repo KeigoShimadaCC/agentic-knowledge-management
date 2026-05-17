@@ -10,7 +10,7 @@ final class AuthStore {
     private(set) var isLoading = false
     private(set) var lastError: String?
 
-    private let apiClient: any APIClientProtocol
+    let apiClient: any APIClientProtocol
     private let keychain: KeychainStore
     private var logoutInProgress = false
 

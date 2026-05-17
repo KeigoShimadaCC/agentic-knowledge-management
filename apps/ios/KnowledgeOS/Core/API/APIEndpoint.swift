@@ -61,7 +61,13 @@ struct APIEndpoint {
         APIEndpoint(path: "/api/v1/assets/\(id.uuidString)/download", method: .get)
     }
 
-    static let assetUpload = APIEndpoint(path: "/api/v1/assets/upload", method: .post)
+    static func assetUpload(createSource: Bool = false) -> APIEndpoint {
+        APIEndpoint(
+            path: "/api/v1/assets/upload",
+            method: .post,
+            queryItems: createSource ? [URLQueryItem(name: "create_source", value: "true")] : []
+        )
+    }
 
     static func chat(id: UUID) -> APIEndpoint {
         APIEndpoint(path: "/api/v1/chats/\(id.uuidString)", method: .get)

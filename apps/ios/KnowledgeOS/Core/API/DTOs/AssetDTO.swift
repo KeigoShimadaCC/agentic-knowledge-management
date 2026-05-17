@@ -19,3 +19,8 @@ struct AssetUploadResponseDTO: Decodable {
     let object: ObjectDTO
     let asset: AssetDTO
 }
+
+struct AssetSourceUploadResponseDTO: Decodable {
+    let object: AssetDTO
+    let source: SourceDTO
+}
