@@ -8,6 +8,7 @@ from pydantic import BaseModel, Field
 class McpConnectionTransport(str, Enum):
     stdio = "stdio"
     sse = "sse"
+    http = "http"
 
 
 class McpToolDefinition(BaseModel):

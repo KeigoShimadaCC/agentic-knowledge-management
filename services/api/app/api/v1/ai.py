@@ -123,6 +123,7 @@ async def inbox(
         .where(
             KosObject.user_id == user.id,
             KosObject.deleted_at.is_(None),
+            KosObject.ai_generated.is_(False),
             or_(KosObject.tags == [], KosObject.tags.is_(None)),
             or_(KosObject.description.is_(None), KosObject.description == ""),
             KosObject.created_at > cutoff,

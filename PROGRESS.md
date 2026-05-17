@@ -1,6 +1,6 @@
 # KnowledgeOS — Progress Tracker
 
-> Last updated: 2026-05-16 (Phase 12C AI Augmentation complete — all phases through 12C done)
+> Last updated: 2026-05-17 (Phase 15 AI Feature Testing complete — 20 new real-AI E2E specs passing)
 
 ---
 
@@ -599,8 +599,9 @@ See [`project-phases/PHASE-13D.md`](project-phases/PHASE-13D.md) for the full sp
 | **13** | **Frontend Health Check & Debug** | ✅ Complete | 21 / 21 subtasks (3 tracks) |
 | **13D** | **Testing Follow-up & Bug Fix Sprint** | ✅ Complete | 2 bugs fixed + 6 new tests |
 | **14** | **Scenario Simulation & User Journey Testing** | ✅ Complete | 5 scenarios · 27 new E2E tests |
+| **15** | **AI Feature Testing** | ✅ Complete | 4 scenarios · 20 new real-AI E2E tests |
 
-**Active:** All phases complete. Final test totals: ~395 (frontend 60 · API/unit 232 · worker 29 · MCP 56 · E2E 114 [108 passing + 6 pre-existing skips]). Phase 14 added 5 user-journey scenario specs (S01 Researcher, S02 Freelance Engineer, S03 PM Chat Mining, S04 AI Developer MCP, S05 Bootcamp Grad) plus shared fixture helpers and synthetic seed data. All 27 new scenario tests pass; no regressions in the 82 existing E2E specs.
+**Active:** All phases complete. Final test totals: ~415 (frontend 60 · API/unit 232 · worker 29 · MCP 56 · E2E 134 [129 passing + 6 pre-existing skips]). Phase 15 added 4 real-AI scenario specs (SAI01 Career AI, SAI02 Page Intelligence, SAI03 Inbox Triage, SAI04 Context7 MCP) — all asserting real AI-generated content with no mocks. Also fixed 11 production bugs uncovered during testing, including a critical `PageView.tsx` auto-save bug that was silently blanking `content_text` on every fresh page load, and full streamable-HTTP transport support for the MCP stack.
 
 **Key cross-cutting concepts to track:**
 - Inbox/Triage (Phase 5): AI-classified staging area for unprocessed items
@@ -691,3 +692,28 @@ See [`project-phases/PHASE-13D.md`](project-phases/PHASE-13D.md) for the full sp
 - [x] **E2E tests** (`tests/e2e/specs/12-tutorial.spec.ts`): 17 tests covering seed API idempotency, reset, sidebar button state, full tour navigation, Escape/Stop dismissal, spotlight overlay rendering, localStorage completion flag
 
 *Quality gates:* `pnpm typecheck` ✅ · `pnpm lint` ✅ · `ruff check` ✅ · `ruff format --check` ✅ · 17/17 E2E tests ✅
+
+---
+
+## Phase 15 — AI Feature Testing ✅ Complete
+
+**Goal:** Prove that every AI-backed feature works end-to-end in a real browser with real AI responses — no mocks. Four scenarios across Career AI, Page Intelligence, Inbox Triage, and Context7 MCP docs enrichment.
+
+**Branch:** `phase-15a-ai-specs` · **Tests:** 20/20 passing · **Regression:** 129/129 (+ 6 pre-existing skips)
+
+- [x] **SAI01 Career AI** (`tests/e2e/specs/29-sai01-career-ai.spec.ts`): resume bullets ≥3, each ≥10 words, STAR story all 4 sections populated, story renders in UI
+- [x] **SAI02 Page Intelligence** (`tests/e2e/specs/30-sai02-page-intelligence.spec.ts`): summarize returns paragraph ≥50 chars, extract claims returns ≥2 items, claims reference seeded topic (TypeScript)
+- [x] **SAI03 Inbox Triage** (`tests/e2e/specs/31-sai03-inbox-triage.spec.ts`): seeded item appears in inbox, triage modal opens, AI analyze returns real summary, applying tags closes modal
+- [x] **SAI04 Context7 MCP** (`tests/e2e/specs/32-sai04-context7-mcp.spec.ts`): HTTP transport connection shown in settings, capabilities populated after test, enrich-page calls Context7 2-step flow, enriched sources appear in sources list
+
+**Production bugs fixed during Phase 15:**
+- [x] **PageView.tsx `onCreate` fix** (P0): `textRef.current` was `""` on load; `onUpdate` only fired on edits; auto-save at 800ms silently blanked `content_text` in DB — breaking all AI features on fresh page views
+- [x] **Inbox `ai_generated` filter** (P0): AI-generated claim objects were flooding inbox page 1; added `ai_generated.is_(False)` to inbox query
+- [x] **MCP SSE transport** (P0): `McpClientSession` now supports SSE via `AsyncExitStack + sse_client + ClientSession`
+- [x] **MCP streamable HTTP transport** (P0): Added `http` transport enum, DB migration `0012`, `streamablehttp_client` branch in `client.py` and `mcp_connections.py`
+- [x] **Context7Adapter patterns** (P1): Added `resolve-library*` and `query-docs*` to match Context7's dash-separated tool names
+- [x] **`enrich_page_with_context7` 2-step flow** (P1): Updated to call `resolve-library-id` → extract library ID → `query-docs` with `context7CompatibleLibraryID`
+- [x] **Source URL fallback for Context7 docs** (P1): Context7 text responses have no URL field; added library-ID-derived fallback URL
+- [x] **SAI03 strict-mode selectors** (P1): Fixed inbox row locator and triage modal summary selector
+
+*Quality gates:* `ruff check services/api` ✅ · 20/20 new AI E2E specs ✅ · 129/129 full regression ✅ · 6 pre-existing skips unchanged ✅

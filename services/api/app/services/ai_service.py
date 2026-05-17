@@ -451,6 +451,16 @@ async def triage_object(
     )
 
 
+def _extract_context7_library_id(raw: dict) -> str | None:
+    """Extract the first Context7-compatible library ID from a resolve-library-id response."""
+    for part in (raw.get("content") or []):
+        text = part.get("text", "") if isinstance(part, dict) else str(part)
+        m = re.search(r"Context7-compatible library ID:\s*(\S+)", text)
+        if m:
+            return m.group(1)
+    return None
+
+
 async def enrich_page_with_context7(
     db: AsyncSession,
     user_id: uuid.UUID,
@@ -467,8 +477,11 @@ async def enrich_page_with_context7(
             detail="no_context7_connection: Configure a Context7 MCP connection first.",
         )
 
-    matched_tool = _first_matching_tool(ctx7_conn.capabilities, ctx7_patterns)
-    if matched_tool is None:
+    resolve_patterns = ["resolve-library*", "resolve_library*"]
+    query_patterns = ["query-docs*", "get_library_docs*", "context7*"]
+    resolve_tool = _first_matching_tool(ctx7_conn.capabilities, resolve_patterns)
+    query_tool = _first_matching_tool(ctx7_conn.capabilities, query_patterns)
+    if resolve_tool is None and query_tool is None:
         raise HTTPException(
             status_code=422,
             detail="no_context7_connection: No matching tool found.",
@@ -479,19 +492,46 @@ async def enrich_page_with_context7(
     edges_created: list[uuid.UUID] = []
 
     try:
-        async with McpClientSession(ctx7_conn, timeout=30) as session:
-            raw = await session.call_tool(matched_tool, {"query": query})
+        lib_id: str | None = None
+        async with McpClientSession(ctx7_conn, timeout=60) as session:
+            if resolve_tool and query_tool:
+                resolve_raw = await session.call_tool(
+                    resolve_tool, {"libraryName": query, "query": query}
+                )
+                lib_id = _extract_context7_library_id(resolve_raw)
+                effective_lib_id = lib_id or query
+                raw = await session.call_tool(
+                    query_tool,
+                    {
+                        "context7CompatibleLibraryID": effective_lib_id,
+                        "query": query,
+                        "tokens": 3000,
+                    },
+                )
+            elif query_tool:
+                raw = await session.call_tool(query_tool, {"query": query, "tokens": 3000})
+            else:
+                raw = await session.call_tool(resolve_tool, {"libraryName": query, "query": query})
+
+        ctx7_base_url = (
+            f"https://context7.com{lib_id}" if lib_id and lib_id.startswith("/") else None
+        )
 
         adapter = Context7Adapter()
         inputs = adapter.adapt(raw, "source")
 
         for item in inputs:
+            title = (
+                item.title
+                if item.title and not item.title.startswith("MCP result ")
+                else f"Context7 docs: {query}"
+            )
             sc = SourceCreate(
                 source_type="web",
-                title=item.title or query,
+                title=title,
                 description=None,
                 tags=[],
-                url=item.url,
+                url=item.url or ctx7_base_url or f"https://context7.com/search?q={query}",
             )
             kos_obj, _source, _job = await source_service.create_source(db, user_id, sc)
             sources_created.append(kos_obj.id)

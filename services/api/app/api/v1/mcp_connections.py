@@ -6,6 +6,9 @@ from contextlib import suppress
 from datetime import UTC, datetime
 
 from fastapi import APIRouter, Depends, HTTPException
+from mcp import ClientSession
+from mcp.client.sse import sse_client
+from mcp.client.streamable_http import streamablehttp_client
 from redis import Redis
 from rq import Queue
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -188,6 +191,48 @@ async def _run_stdio_test(conn: McpConnection, db: AsyncSession) -> McpConnectio
     raise HTTPException(status_code=422, detail=error_str)
 
 
+async def _run_sse_test(conn: McpConnection, db: AsyncSession) -> McpConnectionTestResult:
+    try:
+        if conn.transport == McpConnectionTransport.http.value:
+            ctx = streamablehttp_client(url=conn.url)
+            async with ctx as (read, write, _):
+                async with ClientSession(read, write) as session:
+                    await session.initialize()
+                    tools_result = await session.list_tools()
+        else:
+            async with sse_client(url=conn.url) as (read, write):
+                async with ClientSession(read, write) as session:
+                    await session.initialize()
+                    tools_result = await session.list_tools()
+
+        tools = [
+            {
+                "name": tool.name,
+                "description": tool.description or "",
+            }
+            for tool in tools_result.tools
+        ]
+        conn.capabilities = tools
+        conn.last_tested_at = datetime.now(UTC)
+        conn.last_error = None
+        conn.updated_at = datetime.now(UTC)
+        await db.flush()
+        await db.commit()
+        return McpConnectionTestResult(
+            ok=True,
+            tools=[
+                McpToolDefinition(name=tool["name"], description=tool["description"])
+                for tool in tools
+            ],
+        )
+    except Exception as exc:
+        error_str = str(exc)
+
+    await mcp_connection_service.record_test_error(db, conn, error_str)
+    await db.commit()
+    raise HTTPException(status_code=422, detail=error_str)
+
+
 @router.get("/", response_model=list[McpConnectionOut])
 async def list_connections_endpoint(
     user: User = Depends(get_current_user),
@@ -249,8 +294,8 @@ async def test_connection_endpoint(
     db: AsyncSession = Depends(get_db),
 ) -> McpConnectionTestResult:
     conn = await mcp_connection_service.get_or_404(db, connection_id, user.id)
-    if conn.transport == McpConnectionTransport.sse.value:
-        raise HTTPException(status_code=422, detail="SSE test-connection not yet supported")
+    if conn.transport in (McpConnectionTransport.sse.value, McpConnectionTransport.http.value):
+        return await _run_sse_test(conn, db)
     return await _run_stdio_test(conn, db)
 
 

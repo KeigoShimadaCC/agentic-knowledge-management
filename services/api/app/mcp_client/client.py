@@ -3,7 +3,11 @@
 import asyncio
 import json
 import os
-from contextlib import suppress
+from contextlib import AsyncExitStack, suppress
+
+from mcp import ClientSession
+from mcp.client.sse import sse_client
+from mcp.client.streamable_http import streamablehttp_client
 
 from app.mcp_client.crypto import decrypt_env_vars
 
@@ -25,10 +29,32 @@ class McpClientSession:
         self._timeout = timeout
         self._proc = None
         self._req_id = 0
+        self._stack = None
+        self._mcp_session = None
 
     async def __aenter__(self):
-        if self._conn.transport == "sse":
-            raise McpConnectionError("SSE transport not yet supported")
+        if self._conn.transport in ("sse", "http"):
+            self._stack = AsyncExitStack()
+            try:
+                if self._conn.transport == "http":
+                    read, write, _ = await self._stack.enter_async_context(
+                        streamablehttp_client(url=self._conn.url)
+                    )
+                else:
+                    read, write = await self._stack.enter_async_context(
+                        sse_client(url=self._conn.url)
+                    )
+                self._mcp_session = await self._stack.enter_async_context(
+                    ClientSession(read, write)
+                )
+                await self._mcp_session.initialize()
+            except Exception:
+                await self._stack.aclose()
+                self._stack = None
+                self._mcp_session = None
+                raise
+            return self
+
         decrypted = decrypt_env_vars(self._conn.env_vars or {})
         env = {
             key: value
@@ -51,6 +77,10 @@ class McpClientSession:
         return self
 
     async def __aexit__(self, *_):
+        if self._stack is not None:
+            await self._stack.aclose()
+            self._stack = None
+            self._mcp_session = None
         if self._proc is not None and self._proc.returncode is None:
             with suppress(ProcessLookupError):
                 self._proc.kill()
@@ -89,6 +119,13 @@ class McpClientSession:
         await self._send({"jsonrpc": "2.0", "method": "notifications/initialized"})
 
     async def list_tools(self) -> list[dict]:
+        if self._mcp_session is not None:
+            tools_result = await self._mcp_session.list_tools()
+            return [
+                {"name": tool.name, "description": tool.description or ""}
+                for tool in tools_result.tools
+            ]
+
         req_id = self._next_id()
         await self._send({"jsonrpc": "2.0", "id": req_id, "method": "tools/list", "params": {}})
         resp = await self._recv()
@@ -97,6 +134,12 @@ class McpClientSession:
         return resp.get("result", {}).get("tools", [])
 
     async def call_tool(self, tool_name: str, args: dict) -> dict:
+        if self._mcp_session is not None:
+            result = await self._mcp_session.call_tool(tool_name, arguments=args)
+            if hasattr(result, "model_dump"):
+                return result.model_dump(by_alias=True, exclude_none=True)
+            return {"content": [self._serialize_mcp_value(item) for item in result.content]}
+
         req_id = self._next_id()
         await self._send(
             {
@@ -110,3 +153,8 @@ class McpClientSession:
         if "error" in resp:
             raise McpConnectionError(str(resp["error"]))
         return resp.get("result", {})
+
+    def _serialize_mcp_value(self, value):
+        if hasattr(value, "model_dump"):
+            return value.model_dump(by_alias=True, exclude_none=True)
+        return value

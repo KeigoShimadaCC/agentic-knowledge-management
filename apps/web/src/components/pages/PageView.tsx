@@ -125,6 +125,10 @@ export function PageView({ pageId, initialTitle, initialContent }: PageViewProps
         class: "outline-none min-h-[400px] leading-relaxed text-gray-100",
       },
     },
+    onCreate: ({ editor: ed }) => {
+      textRef.current = ed.getText();
+      setWordCount(ed.getText().split(/\s+/).filter(Boolean).length);
+    },
     onUpdate: ({ editor: ed }) => {
       contentRef.current = ed.getJSON() as Record<string, unknown>;
       textRef.current = ed.getText();
