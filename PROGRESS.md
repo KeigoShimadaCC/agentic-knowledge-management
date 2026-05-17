@@ -1,6 +1,6 @@
 # KnowledgeOS — Progress Tracker
 
-> Last updated: 2026-05-17 (Phase PHONE-01B Mac↔iPhone networking landed)
+> Last updated: 2026-05-17 (Phase PHONE-01C iOS scaffold complete)
 
 ---
 
@@ -772,3 +772,21 @@ See [`project-phases/PHASE-13D.md`](project-phases/PHASE-13D.md) for the full sp
 **Validation performed:** `docker compose -f infra/docker-compose.yml -f infra/docker-compose.mobile.yml config` shows api → `0.0.0.0:8001` and postgres/redis/qdrant/web → `127.0.0.1:*`; base-profile script run → 0 FAIL / 0 WARN; mobile-profile script run → 0 FAIL / 0 WARN with section 5 reporting `mobile profile ACTIVE`; `curl http://172.16.80.50:8001/api/v1/health` succeeds from the host LAN IP; teardown to base profile returns `:8001` to loopback only.
 
 **Blocks unblocked:** PHASE-PHONE-06 (device install + private release).
+
+---
+
+## Phase PHONE-01C — iOS App Scaffold ✅ Complete
+
+**Goal:** Create a buildable SwiftUI iOS project at `apps/ios/` using XcodeGen. The first screen configures a KnowledgeOS API base URL and runs a raw `URLSession` health check against `/api/v1/health`.
+
+**Branch:** `phase-phone-01c-ios-scaffold` · **Worktree:** `worktrees/kos-phone-01c` (repo-internal replacement for the phase doc's `../kos-phone-01c` path) · **Scope:** `apps/ios/**`, `apps/ios/.gitignore`, `apps/ios/README.md`, and `PROGRESS.md`
+
+- [x] Phase doc and mobile concept reviewed
+- [x] Isolated worktree created from `origin/main`
+- [x] XcodeGen project scaffold added at `apps/ios/project.yml`; generated `.xcodeproj` stays ignored
+- [x] SwiftUI Connect + health-check screen implemented with raw `URLSession` and persisted base URL only
+- [x] iOS unit/UI smoke tests added (`AppStateTests`, `ServerConfigTests`, `BootSmokeTests`)
+- [x] `xcodegen generate` passed
+- [x] `xcodebuild -project KnowledgeOS.xcodeproj -scheme KnowledgeOS -destination 'platform=iOS Simulator,name=iPhone 16' clean build test` passed after creating the missing local `iPhone 16` simulator instance
+
+**Notes:** No backend, infra, or script files touched in this phase. Mobile bearer auth and bootstrap API live in PHONE-01A; later phases own Keychain token storage, a typed API client beyond health check, and login UI.
