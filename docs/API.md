@@ -16,6 +16,8 @@ Versioned API prefix:
 
 All JSON examples show the stable shape clients should rely on. Extra fields may be returned as the implementation grows.
 
+> **iPhone client:** the mobile-specific endpoint subset, bearer-auth shapes, and error envelope are documented in [`MOBILE_API_CONTRACT.md`](MOBILE_API_CONTRACT.md). The proposed `POST /auth/mobile-login`, `POST /auth/mobile-logout`, and `GET /mobile/bootstrap` endpoints are not yet implemented — Phase PHONE-01A adds them.
+
 ## Authentication
 
 KnowledgeOS uses a local httponly session cookie named `kos_session`. The cookie is created by `POST /api/v1/auth/register` or `POST /api/v1/auth/login` and is sent automatically by the browser on later requests.

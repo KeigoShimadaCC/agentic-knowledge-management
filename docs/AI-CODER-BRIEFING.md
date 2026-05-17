@@ -34,6 +34,16 @@ Spend ~15 minutes here before touching code. The order matters.
 | 9 | `project-phases/IDEA-DRAFT.md` | The product vision. North-star use cases. Long but skimmable; appendices contain the long-term schema. |
 | 10 | `project-phases/PHASE-FIX-0{1,2,3}-*.md` | The audit findings. Reading these tells you what was *claimed* but wasn't actually true, and what's been since fixed vs. is still pending. |
 
+**If you are working on the iPhone track (any `PHASE-PHONE-*` phase), read these in addition before touching code:**
+
+| # | File | Why |
+|---|---|---|
+| P1 | `project-phases/IDEA-iPHONE-APP.md` | The canonical iPhone-track concept: same-repo decision, SwiftUI + XcodeGen, phase plan, parallel-execution rules, file ownership table. |
+| P2 | `docs/MOBILE_APP.md` | Mobile product spec — MVP scope, non-goals, screen map, and the explicit list of backend endpoints intentionally **not exposed** to mobile (so you don't accidentally implement them). |
+| P3 | `docs/MOBILE_API_CONTRACT.md` | Bearer-auth contract (proposed for Phase 01A), verified read-side endpoint table, error envelope, pagination, mobile-specific hard rules. |
+| P4 | `docs/MOBILE_NETWORKING.md` | Simulator / LAN / Tailscale profiles, `infra/docker-compose.mobile.yml` design, ATS strategy, strict API-only exposure rule. |
+| P5 | `project-phases/PHASE-PHONE-<your-phase>.md` | Your specific phase. |
+
 After those: read the specific `PHASE-N-*.md` for whatever you're working on. Each phase doc is self-contained and has goals, non-goals, schema, endpoints, tests, commit sequence, and risks.
 
 **Do not** read every file in the repo. The codebase is medium-sized but the docs are the right entry points. Use `Grep` and `Glob` for everything else.

@@ -29,6 +29,22 @@ Sessions are DB-backed opaque tokens — not signed cookies.
 - 30-day TTL enforced server-side; logout deletes the row immediately.
 - `SESSION_SECRET` in `infra/.env` is **not currently used** — it is reserved for future CSRF tokens or signed password-reset URLs. It does not affect session cookie integrity. Leaving it unset is safe.
 
+## Mobile bearer auth *(planned — Phase PHONE-01A)*
+
+The iPhone client cannot rely on browser cookies. Phase PHONE-01A adds an opaque bearer-token surface that shares the existing `sessions` table and the same `get_current_user` resolution path. Full contract: [`MOBILE_API_CONTRACT.md` §2](MOBILE_API_CONTRACT.md).
+
+Summary of the invariants Phase 01A must enforce:
+
+- Header: `Authorization: Bearer <opaque_mobile_token>` (token issued by `POST /api/v1/auth/mobile-login`).
+- Raw token returned **once** at login; server stores only `sha256(token)` in the existing `sessions.token_hash` column.
+- `sessions` gains `client_type` (`"web"` | `"ios"`) and nullable `device_name`; existing rows backfill to `"web"`.
+- Bearer and cookie surfaces flow through the same dependency and the same ownership filters.
+- `MCP_INTERNAL_TOKEN` is **never** reused as a mobile credential.
+- Tokens are never logged and never returned in any response after issuance (asserted by Phase 01A tests).
+- `POST /api/v1/auth/mobile-logout` revokes the presented token server-side; iOS clients also clear the local Keychain copy.
+
+LAN/Tailscale exposure rules and ATS strategy for the mobile transport live in [`MOBILE_NETWORKING.md`](MOBILE_NETWORKING.md) — only the API is ever exposed beyond loopback; Postgres / Redis / Qdrant remain loopback-only.
+
 ## Optional secrets
 
 - `SESSION_SECRET`: reserved for future CSRF or signed URLs; sessions are DB-backed and do not depend on it (see Session model above).

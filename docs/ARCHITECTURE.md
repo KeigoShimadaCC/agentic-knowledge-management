@@ -25,6 +25,13 @@ FastAPI api (host :8001 -> container :8000)
   |
   \---- Filesystem        ~/KnowledgeOS/library/assets/{prefix}/{sha}/original{ext}
 
+iPhone client (planned — Phase PHONE-01C scaffolds it)
+  |
+  | HTTPS later; HTTP today over Simulator / LAN / Tailscale (see docs/MOBILE_NETWORKING.md)
+  | Authorization: Bearer <opaque_mobile_token>  (Phase PHONE-01A implements)
+  v
+FastAPI api  (same /api/v1/* surface; subset defined in docs/MOBILE_API_CONTRACT.md)
+
 MCP client
   |
   | stdio -> kos-mcp -> X-KOS-Internal-Token
@@ -39,6 +46,8 @@ RQ worker
 
 Qdrant (host/container :6333)  vector search index
 ```
+
+A native SwiftUI iPhone client lives at `apps/ios/` (scaffold lands in Phase PHONE-01C). It is a thin client — it reuses the existing `/api/v1` surface and never touches Postgres, Redis, Qdrant, or the filesystem directly. The mobile-specific surface (bearer auth, allowed endpoint subset, network profiles) is defined in [`MOBILE_APP.md`](MOBILE_APP.md), [`MOBILE_API_CONTRACT.md`](MOBILE_API_CONTRACT.md), and [`MOBILE_NETWORKING.md`](MOBILE_NETWORKING.md).
 
 ## Services
 
