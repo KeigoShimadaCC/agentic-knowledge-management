@@ -15,7 +15,7 @@ struct HomePlaceholderView: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding()
-        .accessibilityIdentifier("home.placeholder")
+        .accessibilityIdentifier(Kos.Home.placeholder)
     }
 }
 

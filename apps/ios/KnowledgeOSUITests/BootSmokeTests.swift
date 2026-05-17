@@ -10,7 +10,8 @@ final class BootSmokeTests: XCTestCase {
         app.launch()
 
         XCTAssertTrue(app.navigationBars["Connect"].waitForExistence(timeout: 5))
-        XCTAssertTrue(app.textFields["connect.baseURL"].exists)
-        XCTAssertTrue(app.buttons["connect.testConnection"].exists)
+        // Keep in sync with Kos.Connect in AccessibilityID.swift
+        XCTAssertTrue(app.textFields["kos.connect.urlField"].exists)
+        XCTAssertTrue(app.buttons["kos.connect.testConnectionButton"].exists)
     }
 }
