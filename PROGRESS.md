@@ -598,8 +598,9 @@ See [`project-phases/PHASE-13D.md`](project-phases/PHASE-13D.md) for the full sp
 | 12B | On-Demand Ingest Bridge | ✅ Complete | — |
 | **13** | **Frontend Health Check & Debug** | ✅ Complete | 21 / 21 subtasks (3 tracks) |
 | **13D** | **Testing Follow-up & Bug Fix Sprint** | ✅ Complete | 2 bugs fixed + 6 new tests |
+| **14** | **Scenario Simulation & User Journey Testing** | ✅ Complete | 5 scenarios · 27 new E2E tests |
 
-**Active:** All phases complete. Final test totals: ~368 (frontend 60 · API/unit 232 · worker 29 · MCP 56 · E2E 82). Phase 13D fixed `useShortcut` hook key-filter bug and `window.confirm` in MCP delete; added 6 new E2E tests covering triage AI mock, asset preview, resume copy, workspace save, shortcut negative, and MCP delete inline-confirm.
+**Active:** All phases complete. Final test totals: ~395 (frontend 60 · API/unit 232 · worker 29 · MCP 56 · E2E 114 [108 passing + 6 pre-existing skips]). Phase 14 added 5 user-journey scenario specs (S01 Researcher, S02 Freelance Engineer, S03 PM Chat Mining, S04 AI Developer MCP, S05 Bootcamp Grad) plus shared fixture helpers and synthetic seed data. All 27 new scenario tests pass; no regressions in the 82 existing E2E specs.
 
 **Key cross-cutting concepts to track:**
 - Inbox/Triage (Phase 5): AI-classified staging area for unprocessed items
