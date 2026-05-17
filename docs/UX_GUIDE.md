@@ -101,3 +101,12 @@ toast.error("Failed to save", { description: err.message });
 ```
 
 `<Toaster position="bottom-right" richColors />` is mounted once in `(app)/layout.tsx`.
+
+## Phase 13 UX Audit (2026-05-17)
+
+Gaps confirmed via 76 E2E tests across all major routes and features:
+
+- **ListPage modal pattern**: Modals and uploaders placed inside `ListPage.children` are not rendered in the empty state (`empty=true`). Always render modals outside `ListPage` using a fragment wrapper, or use the `emptyAction` prop for content that belongs in the empty state.
+- **Sidebar collapse transition**: The sidebar uses `transition-all duration-base` (180ms). UI tests must use polling (`expect.poll`) rather than a fixed assertion immediately after triggering collapse.
+- **Keyboard shortcut overlay**: `?` key opens the overlay. `Meta+\` toggles sidebar. `Cmd+K` opens search. All shortcuts documented in `ShortcutOverlay` and covered by E2E tests.
+- **Asset upload**: `AssetUploader` (`data-testid="asset-dropzone"`) must be visible in both empty and non-empty asset page states — pass it as `emptyAction` on `ListPage`.
