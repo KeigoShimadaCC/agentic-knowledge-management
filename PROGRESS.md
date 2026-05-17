@@ -541,6 +541,32 @@ See [`project-phases/PHASE-13-FRONTEND-HEALTH-CHECK.md`](project-phases/PHASE-13
 
 ---
 
+## Phase 13D — Testing Follow-up & Bug Fix Sprint ✅ Complete
+
+**Last updated:** 2026-05-17
+
+**Goal:** Fix two bugs discovered during Phase 13 testing and expand E2E coverage with 6 additional tests for previously untested flows.
+
+See [`project-phases/PHASE-13D.md`](project-phases/PHASE-13D.md) for the full spec.
+
+### Track A — Bug Fixes
+
+- [x] **BUG-1** — `useShortcut` hook fired for every keydown (key check missing). Fixed: `if (e.key !== key) return;` in `apps/web/src/lib/hooks/useShortcut.ts`
+- [x] **BUG-2** — MCP settings delete used `window.confirm` (blocks Playwright + inaccessible). Fixed: inline `deletingId` state with Cancel / Confirm delete buttons in `apps/web/src/app/(app)/app/settings/mcp/page.tsx`
+
+### Track B — New Tests
+
+- [x] `15-inbox.spec.ts` — Triage modal shows AI summary after mocked `POST /api/v1/ai/triage`
+- [x] `22-asset-upload.spec.ts` — Clicking asset card opens the preview overlay
+- [x] `11-career-project.spec.ts` — Copy Markdown on bullet set shows "Copied" toast
+- [x] `16-multi-pane.spec.ts` — Workspace save flow: name modal, fill, Save, modal closes
+- [x] `21-shortcut-overlay.spec.ts` — Non-matching Meta key (Meta+A) does not toggle sidebar
+- [x] `17-mcp-settings.spec.ts` — Delete with inline confirm: Cancel + Confirm shown, row removed
+
+**Final test totals:** 82 E2E tests across 22 spec files (76 active + 6 skipped). All quality gates pass: `pnpm typecheck` ✅ · `pnpm lint` ✅ · `ruff check` ✅.
+
+---
+
 ## Summary
 
 | Phase | Name | Status | Progress |
@@ -571,8 +597,9 @@ See [`project-phases/PHASE-13-FRONTEND-HEALTH-CHECK.md`](project-phases/PHASE-13
 | 12A | MCP Connections Registry | ✅ Complete | 9 / 9 subtasks |
 | 12B | On-Demand Ingest Bridge | ✅ Complete | — |
 | **13** | **Frontend Health Check & Debug** | ✅ Complete | 21 / 21 subtasks (3 tracks) |
+| **13D** | **Testing Follow-up & Bug Fix Sprint** | ✅ Complete | 2 bugs fixed + 6 new tests |
 
-**Active:** All phases complete. Final test totals: ~362 (frontend 60 · API/unit 232 · worker 29 · MCP 56 · E2E 76). Phase 13 added 8 new spec files (specs 15–22) and fixed 10+ frontend bugs.
+**Active:** All phases complete. Final test totals: ~368 (frontend 60 · API/unit 232 · worker 29 · MCP 56 · E2E 82). Phase 13D fixed `useShortcut` hook key-filter bug and `window.confirm` in MCP delete; added 6 new E2E tests covering triage AI mock, asset preview, resume copy, workspace save, shortcut negative, and MCP delete inline-confirm.
 
 **Key cross-cutting concepts to track:**
 - Inbox/Triage (Phase 5): AI-classified staging area for unprocessed items
