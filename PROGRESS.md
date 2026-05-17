@@ -1,6 +1,6 @@
 # KnowledgeOS — Progress Tracker
 
-> Last updated: 2026-05-17 (Phase PHONE-01C iOS scaffold complete)
+> Last updated: 2026-05-17 (Phase PHONE-02B simulator QA complete)
 
 ---
 
@@ -790,3 +790,26 @@ See [`project-phases/PHASE-13D.md`](project-phases/PHASE-13D.md) for the full sp
 - [x] `xcodebuild -project KnowledgeOS.xcodeproj -scheme KnowledgeOS -destination 'platform=iOS Simulator,name=iPhone 16' clean build test` passed after creating the missing local `iPhone 16` simulator instance
 
 **Notes:** No backend, infra, or script files touched in this phase. Mobile bearer auth and bootstrap API live in PHONE-01A; later phases own Keychain token storage, a typed API client beyond health check, and login UI.
+
+---
+
+## Phase PHONE-02B — Simulator Automation & QA ✅ Complete
+
+**Goal:** Give AI coders eyes/hands inside the iOS Simulator — MCP setup docs, reusable QA prompts, `kos.*` accessibility-ID contract, and boot/screenshot helper scripts.
+
+**Branch:** `phase-phone-02b-simulator-qa` · **Worktree:** `../kos-phone-02b` · **Scope:** `docs/MOBILE_QA.md`, `scripts/mobile_simulator_*.sh`, `.tmp/mobile-qa/`, `apps/ios/KnowledgeOS/Core/UI/AccessibilityID.swift`, minimal Connect/Home AX migration (no Wave 3 feature UI)
+
+- [x] Phase doc reviewed; worktree created from `origin/main`
+- [x] [`docs/MOBILE_QA.md`](docs/MOBILE_QA.md) — ios-simulator-mcp (>=1.3.3), mobile-mcp, tool allowlist, AX convention, five agent QA prompts, screenshot rules
+- [x] [`AccessibilityID.swift`](apps/ios/KnowledgeOS/Core/UI/AccessibilityID.swift) — `Kos` namespace with Connect/Home/Login/Search/Capture/Upload/AI/Settings constants; Connect + Home views migrated; `BootSmokeTests` uses matching `kos.*` strings
+- [x] [`scripts/mobile_simulator_boot.sh`](scripts/mobile_simulator_boot.sh) and [`scripts/mobile_simulator_screenshot.sh`](scripts/mobile_simulator_screenshot.sh) — idempotent boot/build/install/launch + PNG capture
+- [x] `.tmp/mobile-qa/.gitkeep` + `.gitignore` for screenshot artifacts
+- [x] Validation: boot script, screenshot script, `xcodebuild test` (unit + UI smoke) passed on iPhone 16 Simulator
+
+**Validation performed:**
+
+```bash
+bash scripts/mobile_simulator_boot.sh          # OK — UDID resolved, app built and launched
+bash scripts/mobile_simulator_screenshot.sh    # OK — .tmp/mobile-qa/<timestamp>.png
+cd apps/ios && xcodegen generate && xcodebuild ... test  # TEST SUCCEEDED
+```
