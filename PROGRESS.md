@@ -890,3 +890,37 @@ xcodebuild ... -only-testing:KnowledgeOSUITests/BootSmokeTests test  # ⇒ passe
 - [x] Source ingestion status view polls `GET /api/v1/sources/{id}` every 2s for up to 60s, then exposes manual refresh
 - [x] Capture tests added for Tiptap wrapping, required note body validation, retry queue behavior, and ready-source refresh state
 - [x] Validation: `xcodegen generate` passed; `xcodebuild ... test` passed (28 unit tests + 2 UI tests)
+
+---
+
+## Phase PHONE-03C — Mobile AI ✅ Complete
+
+**Goal:** Expose mobile AI actions: grounded KB Q&A, object summarize, suggest links, citations, and AI-disabled handling. Branch is rebased onto `phase-phone-03a-read-search` so it inherits the 02A/03A foundation (API client, AuthStore, detail views, AIActionsBar stub).
+
+**Branch:** `phase-phone-03c-mobile-ai` · **Worktree:** `../kos-phone-03c` · **Scope:** `apps/ios/KnowledgeOS/Features/AI/**`, `Features/Root/AITab.swift` body, replacement body of `Features/AI/AIActionsBar.swift`; reuses existing `AIDTO`, `APIError.aiDisabled`, and `aiAnswer`/`aiSummarize`/`aiSuggestLinks` endpoints already shipped by 03A's foundation.
+
+- [x] Kickoff: phase doc reviewed; isolated worktree rebased onto 03A.
+- [x] `Features/AI/AIAPI.swift` — thin `AIAPI` wrapper over `APIClient` for `/api/v1/ai/answer`, `/summarize`, `/suggest-links`.
+- [x] `Features/AI/AskKBView.swift` + `AskKBViewModel.swift` — Ask KnowledgeOS screen. Multi-line text field (`kos.ai.askInput`), send button (`kos.ai.askSend`), non-streamed answer rendering, citations with kind badges and tap-to-open via shared `ObjectRoute`/`ObjectDetailView`, web citations as `Link` to URL.
+- [x] `Features/Root/AITab.swift` — body replaced; navigation stack hosts `AskKBView` with `ObjectRoute` destination.
+- [x] `Features/AI/AIActionsBar.swift` — real body. Renders **Summarize** (pages and sources) and **Suggest Links** (any object) buttons. Greyed + popover-hint when AI disabled. Sheets host `SummarizeSheet` and `SuggestLinksSheet`. Never auto-fires.
+- [x] `Features/AI/SummarizeSheet.swift` and `SuggestLinksSheet.swift` — sheet presentations that call the AI API on `task` and render result / cached / error / suggestions list with tappable rows.
+- [x] `Features/AI/CitationRow.swift` and `AIDisabledBanner.swift` — reusable cells/banners.
+- [x] AI-disabled handling: reads `AuthStore.capabilities.aiEnabled`; `AskKBView` shows `AIDisabledBanner`; `AIActionsBar` greys buttons + shows popover; any `APIError.aiDisabled` returned mid-flight (503 + `code: "ai_disabled"`) flips the view-model state.
+- [x] Tests: `KnowledgeOSTests/AIFeatureTests.swift` (8 tests) — DTO decoding (Summarize, SuggestLinks), `APIError.aiDisabled` mapping (503-only contract), `AskKBViewModel` happy path + AI-disabled flow + blank-query guard + `canSubmit` invariants. Fixtures `ai_summarize.json`, `ai_suggest_links.json`, `error_ai_disabled.json` added.
+
+**Validation performed:**
+
+```bash
+cd apps/ios && xcodegen generate                                         # ⇒ passed
+xcodebuild -project KnowledgeOS.xcodeproj -scheme KnowledgeOS \
+  -destination 'platform=iOS Simulator,name=iPhone 16' build              # ⇒ BUILD SUCCEEDED
+xcodebuild ... -only-testing:KnowledgeOSTests test                        # ⇒ 33/33 unit tests pass (9 new AI tests + 1 live-backend smoke)
+# Manual launch on iPhone 16 simulator → app boots to Connect screen cleanly.
+```
+
+**Live-backend smoke test:** `KnowledgeOSTests/LiveBackendSmokeTests.swift` exercises the full mobile flow (login → bootstrap → hybrid search → read detail → AI answer) through `APIClient` + the feature view-models without using XCUITest. Auto-skips when `127.0.0.1:8001/api/v1/health` is unreachable so CI without docker stays green; set `KOS_LIVE_SMOKE=1` to force-run. Replaces the XCUITest-based `LoginEndToEndSmokeTests` flow as the live integration gate (the XCUITest path remains in `KnowledgeOSUITests/` for future iOS releases that fix the tab-bar hit-point geometry).
+
+**Backend dependency satisfied:** the `Citation` Pydantic validation bug in `services/api/app/services/ai_service.py::answer_question` is fixed in branch `fix-ai-citation-snippet` (commit `73122f7`). With that fix and `OPENAI_API_KEY` set in `infra/.env`, `/api/v1/ai/answer` returns a grounded answer + ≥1 citation against the demo seed (verified by the new smoke test in 3.3s).
+
+**Blocks unblocked:** none (03C is a leaf in Wave 3).
