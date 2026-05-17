@@ -1,6 +1,6 @@
 # KnowledgeOS — Progress Tracker
 
-> Last updated: 2026-05-17 (Phase 15 AI Feature Testing complete — 20 new real-AI E2E specs passing)
+> Last updated: 2026-05-17 (Phase PHONE-00 mobile contract docs landed)
 
 ---
 
@@ -717,3 +717,19 @@ See [`project-phases/PHASE-13D.md`](project-phases/PHASE-13D.md) for the full sp
 - [x] **SAI03 strict-mode selectors** (P1): Fixed inbox row locator and triage modal summary selector
 
 *Quality gates:* `ruff check services/api` ✅ · 20/20 new AI E2E specs ✅ · 129/129 full regression ✅ · 6 pre-existing skips unchanged ✅
+
+---
+
+## Phase PHONE-00 — Mobile Architecture & Contract ✅ Complete
+
+**Goal:** Produce the canonical mobile spec docs before any iOS implementation.
+
+**Branch:** `phase-phone-00-mobile-contract` · **Worktree:** `../kos-phone-00` · **Scope:** docs-only (no `services/`, `apps/`, `infra/`, `scripts/`, or `tests/` touched)
+
+- [x] [`docs/MOBILE_APP.md`](docs/MOBILE_APP.md) — product spec: MVP user stories (connect, login, search, read, capture text, capture photo, KB Q&A), explicit non-goals, screen map (Connect/Login/Home/Search/ObjectDetail/PageDetail/SourceDetail/ChatDetail/ProjectDetail/Capture/AI/Settings), and a full list of backend endpoints intentionally NOT exposed on mobile MVP (chat import, bulk triage, destructive ops, lower-level search, career generators, web-editor AI helpers, edges/workspaces/MCP-connections/tutorial)
+- [x] [`docs/MOBILE_API_CONTRACT.md`](docs/MOBILE_API_CONTRACT.md) — bearer auth contract for `POST /auth/mobile-login`, `POST /auth/mobile-logout`, `GET /mobile/bootstrap` (proposed — Phase 01A implements); verified read-side endpoint table (health, auth/me, objects, pages, assets, sources, chats, projects, search/hybrid, ai/*); error envelope with `code` values; pagination conventions; mobile-specific hard rules (no token logging, no `MCP_INTERNAL_TOKEN` reuse, `/search/hybrid` only)
+- [x] [`docs/MOBILE_NETWORKING.md`](docs/MOBILE_NETWORKING.md) — Simulator/LAN/Tailscale profile table; current loopback-only Compose state; `infra/docker-compose.mobile.yml` design (API-only `0.0.0.0:8001:8000`, never postgres/redis/qdrant/web); ATS strategy (narrow `NSExceptionDomains`, no `NSAllowsArbitraryLoads`); Tailscale notes; reachability checks (`scripts/mobile_network_check.sh` design for Phase 01B)
+- [x] Every endpoint named in `MOBILE_API_CONTRACT.md` (outside the "Proposed (Phase 01A)" section) cross-checked against `services/api/app/api/v1/` — zero hallucinated routes
+- [x] PROGRESS.md updated (this entry)
+
+**Blocks unblocked:** PHASE-PHONE-01A (backend auth), PHASE-PHONE-01B (Mac↔iPhone networking), PHASE-PHONE-01C (iOS scaffold)
