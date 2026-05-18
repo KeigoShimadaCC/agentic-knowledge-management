@@ -1,10 +1,10 @@
 # KnowledgeOS — Progress Tracker
 
-> Last updated: 2026-05-19 (PHASE-16 settings on main; PHONE-08 cross-platform parity complete; PHONE-06 real-device smoke still pending)
+> Last updated: 2026-05-19 (PHASE-16 settings complete; PHONE-08 cross-platform parity complete; PHONE-06 real-device smoke still pending)
 
 ---
 
-## PHASE-16 — Settings, AI Configuration, and Prompt Management 🚧 In Progress
+## PHASE-16 — Settings, AI Configuration, and Prompt Management ✅ Complete
 
 **Goal:** Add backend-backed Settings for AI provider keys, per-feature model choices, prompt overrides, MCP diagnostics, and allowlisted `.env` export while preserving env/default behavior when no runtime setting exists. See [`project-phases/PHASE-16-SETTINGS.md`](project-phases/PHASE-16-SETTINGS.md).
 
@@ -15,16 +15,14 @@
 - [x] **16E — iOS Settings parity** — Added Settings DTOs/API/view-model and extended `SettingsTab` with provider status, key entry warning, editable feature rows, prompt editor/reset, MCP summary/list/test/toggle, background AI controls, and diagnostics.
 - [x] **16F — Docs/verification/handoff** — Updated API/security/architecture docs and infra env/docker wiring.
 
-**Verification notes:**
-- `../../.venv/bin/ruff format services/api/app services/worker/kos_worker tests/api/test_settings.py tests/api/conftest.py` ✅
-- `../../.venv/bin/ruff check services/api/app services/worker/kos_worker tests/api/test_settings.py tests/api/conftest.py` ✅
-- `PYTHONPYCACHEPREFIX=/private/tmp/pycache-phase16 python3 -m py_compile ...` ✅
-- `PYTHONPATH=services/api:services/worker ../../.venv/bin/python -c "import app.main; import app.api.v1.settings; import kos_worker.ai_jobs; import kos_worker.tasks; print('imports-ok')"` ✅
-- `PYTHONPATH=services/api ../../.venv/bin/pytest tests/unit/test_chat_providers.py -q` ✅ 15 passed
-- `PYTHONPATH=services/api ../../.venv/bin/pytest tests/api/test_settings.py tests/api/test_ai_provider_switch.py -q` blocked: sandbox denied loopback connection to Postgres on `127.0.0.1:5433`, and escalation was rejected by the approval reviewer.
-- `pnpm typecheck` blocked: fresh worktree has no `node_modules`; no package install was possible in the restricted environment.
-- `xcodegen generate --spec apps/ios/project.yml` ✅
-- `xcodebuild -project apps/ios/KnowledgeOS.xcodeproj -scheme KnowledgeOS -destination 'generic/platform=iOS Simulator' -derivedDataPath .derivedData/phase16 build` blocked at asset catalog compilation because CoreSimulator runtimes/services are unavailable in the sandbox.
+**Verification notes (2026-05-19 gap closure):**
+- `cd tests && PYTHONPATH=../services/api uv run pytest api/test_settings.py -v` ✅ 12 passed (includes env export, encryption at rest, clear secrets, `ai_feature_disabled`, prompt override resolution)
+- `make test-api` ✅ (full API + unit suite with Docker Postgres on `127.0.0.1:5433`)
+- `pnpm typecheck` ✅
+- `make test-unit` ✅ 62 passed (includes `SettingsPage` Vitest with MSW)
+- `pnpm --dir tests/e2e test specs/34-settings-hub.spec.ts` ✅ 4 passed (settings hub tabs, prompt save/reset, feature model save, MCP link)
+- Route crawl includes `/app/settings` and `/app/settings/mcp` ✅
+- iOS: DTO fixture test in `KnowledgeOSTests/DTOTests.swift`; simulator build/test remains a manual gate when CoreSimulator is available (no CI iOS job)
 
 ---
 
@@ -609,6 +607,7 @@ See [`project-phases/PHASE-13D.md`](project-phases/PHASE-13D.md) for the full sp
 - [x] `16-multi-pane.spec.ts` — Workspace save flow: name modal, fill, Save, modal closes
 - [x] `21-shortcut-overlay.spec.ts` — Non-matching Meta key (Meta+A) does not toggle sidebar
 - [x] `17-mcp-settings.spec.ts` — Delete with inline confirm: Cancel + Confirm shown, row removed
+- [x] `34-settings-hub.spec.ts` — Settings hub tabs, prompt override save/reset, feature model save, MCP link
 
 **Final test totals:** 82 E2E tests across 22 spec files (76 active + 6 skipped). All quality gates pass: `pnpm typecheck` ✅ · `pnpm lint` ✅ · `ruff check` ✅.
 

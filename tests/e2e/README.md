@@ -36,7 +36,8 @@ Reports are written under `tests/e2e/playwright-report/`. Failure traces, screen
 | `14-feature-smoke.spec.ts` | 8 | Slash menu, bubble menu, AI panel tabs, multi-pane, shortcut overlay, bulk action bar, search filters, sidebar collapse |
 | `15-inbox.spec.ts` | 3 | Inbox list renders, per-item triage modal, bulk select action bar |
 | `16-multi-pane.spec.ts` | 3 | Open page in side pane, close pane, save workspace button |
-| `17-mcp-settings.spec.ts` | 4 | Settings page renders, Add modal opens + has fields, Test button for existing connection |
+| `17-mcp-settings.spec.ts` | 4 | MCP settings page renders, Add modal opens + has fields, Test button for existing connection |
+| `34-settings-hub.spec.ts` | 4 | Settings hub tabs, prompt override save/reset, feature model save, MCP connections link |
 | `18-career-ai.spec.ts` | 3 | Interview stories tab, generate preview (mocked), save story (mocked) |
 | `19-editor-ux.spec.ts` | 5 | Toolbar Bold/Italic/H1, slash menu (V2), bubble menu (V2) |
 | `20-ai-panel-advanced.spec.ts` | 7 | Extract Claims, Extract Tasks, Suggest Links, Ask KB input, Enrich with Docs input, mocked claims, web search toggle |

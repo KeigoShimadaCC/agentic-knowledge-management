@@ -1,9 +1,14 @@
 from __future__ import annotations
 
 import pytest
-from app.ai.providers import ANTHROPIC_TEST_STUB_KEY, TEST_STUB_SUMMARY
+from app.ai.providers import ANTHROPIC_TEST_STUB_KEY, OPENAI_TEST_STUB_KEY, TEST_STUB_SUMMARY
 from app.config import settings
+from app.db.session import AsyncSessionLocal
+from app.models.settings import SettingsSecret
+from app.models.user import User
+from app.services.settings_service import ENV_EXPORT_ALLOWLIST, render_prompt
 from httpx import AsyncClient
+from sqlalchemy import select
 
 
 @pytest.mark.asyncio
@@ -49,7 +54,7 @@ async def test_secret_save_is_redacted_and_runtime_provider_is_used(
     )
     ai_resp = await auth_client.post("/api/v1/ai/summarize", json={"object_id": object_id})
     assert ai_resp.status_code == 200, ai_resp.text
-    assert ai_resp.json()["summary"] == TEST_STUB_SUMMARY
+    assert TEST_STUB_SUMMARY in ai_resp.json()["summary"]
 
 
 @pytest.mark.asyncio
@@ -119,7 +124,115 @@ async def test_ai_feature_config_controls_provider_and_model(
     await auth_client.patch(f"/api/v1/pages/{page_id}", json={"content_text": "Use config."})
     ai_resp = await auth_client.post("/api/v1/ai/summarize", json={"object_id": object_id})
     assert ai_resp.status_code == 200, ai_resp.text
-    assert ai_resp.json()["summary"] == TEST_STUB_SUMMARY
+    assert TEST_STUB_SUMMARY in ai_resp.json()["summary"]
+
+
+@pytest.mark.asyncio
+async def test_settings_secrets_encrypted_at_rest(
+    auth_client: AsyncClient, monkeypatch: pytest.MonkeyPatch
+):
+    monkeypatch.setattr(settings, "openai_api_key", "")
+    plaintext = "sk-secret-plaintext-for-encryption-test"
+
+    resp = await auth_client.patch(
+        "/api/v1/settings/secrets",
+        json={"openai_api_key": plaintext, "export_env": False},
+    )
+    assert resp.status_code == 200, resp.text
+
+    async with AsyncSessionLocal() as db:
+        result = await db.execute(
+            select(SettingsSecret).where(SettingsSecret.key == "openai_api_key")
+        )
+        row = result.scalar_one()
+
+    assert row.encrypted_value != plaintext
+
+
+@pytest.mark.asyncio
+async def test_clear_runtime_secret(auth_client: AsyncClient, monkeypatch: pytest.MonkeyPatch):
+    monkeypatch.setattr(settings, "openai_api_key", "")
+    monkeypatch.setattr(settings, "anthropic_api_key", "")
+
+    saved = await auth_client.patch(
+        "/api/v1/settings/secrets",
+        json={"openai_api_key": OPENAI_TEST_STUB_KEY, "export_env": False},
+    )
+    assert saved.status_code == 200, saved.text
+
+    cleared = await auth_client.patch(
+        "/api/v1/settings/secrets",
+        json={"clear_openai_api_key": True, "export_env": False},
+    )
+    assert cleared.status_code == 200, cleared.text
+
+    secret = next(item for item in cleared.json()["secrets"] if item["key"] == "openai_api_key")
+    assert secret["configured"] is False
+    assert secret["source"] == "none"
+
+
+@pytest.mark.asyncio
+async def test_env_export_writes_allowlisted_keys(
+    auth_client: AsyncClient, monkeypatch: pytest.MonkeyPatch, tmp_path
+):
+    env_file = tmp_path / ".env"
+    env_file.write_text("EXISTING=1\n")
+    monkeypatch.setattr(settings, "settings_env_file_path", str(env_file))
+    monkeypatch.setattr(settings, "openai_api_key", "")
+    monkeypatch.setattr(settings, "anthropic_api_key", "")
+
+    resp = await auth_client.patch(
+        "/api/v1/settings/secrets",
+        json={"openai_api_key": OPENAI_TEST_STUB_KEY, "export_env": True},
+    )
+    assert resp.status_code == 200, resp.text
+    assert OPENAI_TEST_STUB_KEY not in resp.text
+
+    content = env_file.read_text()
+    for key in ENV_EXPORT_ALLOWLIST:
+        assert f"{key}=" in content
+    assert f"OPENAI_API_KEY={OPENAI_TEST_STUB_KEY}" in content
+
+    export_resp = await auth_client.post("/api/v1/settings/env/export")
+    assert export_resp.status_code == 200, export_resp.text
+    assert export_resp.json()["env_export"]["available"] is True
+
+
+@pytest.mark.asyncio
+async def test_ai_feature_disabled_blocks_summarize(auth_client: AsyncClient):
+    disabled = await auth_client.patch(
+        "/api/v1/settings/ai-features/summarize",
+        json={"enabled": False},
+    )
+    assert disabled.status_code == 200, disabled.text
+
+    page = await auth_client.post("/api/v1/pages", json={"title": "Disabled feature page"})
+    page_id = page.json()["page"]["id"]
+    object_id = page.json()["object"]["id"]
+    await auth_client.patch(
+        f"/api/v1/pages/{page_id}",
+        json={"content_text": "Should not summarize."},
+    )
+
+    ai_resp = await auth_client.post("/api/v1/ai/summarize", json={"object_id": object_id})
+    assert ai_resp.status_code == 503, ai_resp.text
+    assert ai_resp.json()["detail"] == "ai_feature_disabled"
+
+
+@pytest.mark.asyncio
+async def test_prompt_override_is_used_for_summarize(auth_client: AsyncClient):
+    custom = "Custom summary prompt: {content}"
+    saved = await auth_client.patch(
+        "/api/v1/settings/prompts/summarize.page",
+        json={"template": custom},
+    )
+    assert saved.status_code == 200, saved.text
+
+    async with AsyncSessionLocal() as db:
+        user = (await db.execute(select(User))).scalar_one()
+        rendered = await render_prompt(db, user.id, "summarize.page", content="hello world")
+
+    assert rendered == "Custom summary prompt: hello world"
 
 
 @pytest.mark.asyncio

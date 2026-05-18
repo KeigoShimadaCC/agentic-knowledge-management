@@ -1,5 +1,7 @@
 import { http, HttpResponse } from "msw";
 
+import { sampleSettingsResponse } from "./fixtures/settings";
+
 export const API_BASE = "http://localhost:8000";
 
 const defaultSearchResult = {
@@ -57,4 +59,5 @@ export const handlers = [
       embeddings_used: true,
     });
   }),
+  http.get(`${API_BASE}/api/v1/settings`, () => HttpResponse.json(sampleSettingsResponse)),
 ];

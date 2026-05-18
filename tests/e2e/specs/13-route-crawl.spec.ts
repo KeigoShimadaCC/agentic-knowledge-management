@@ -54,6 +54,7 @@ test("crawls app and auth routes without critical console errors", async ({ page
     { path: "/app/projects" },
     { path: "/app/inbox" },
     { path: "/app/trash" },
+    { path: "/app/settings" },
     { path: "/app/settings/mcp" },
     { path: "/login", expectedPath: /\/app$/ },
     { path: "/register", expectedPath: /\/app$/ },
