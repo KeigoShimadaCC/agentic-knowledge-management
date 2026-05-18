@@ -1,6 +1,6 @@
 # KnowledgeOS — Progress Tracker
 
-> Last updated: 2026-05-18 (PHONE-05 finalized; PHONE-06 device install docs/config ready with real-device smoke pending)
+> Last updated: 2026-05-18 (PHONE-07 mobile hardening in progress; PHONE-06 real-device smoke still pending)
 
 ---
 
@@ -707,12 +707,12 @@ See [`project-phases/PHASE-13D.md`](project-phases/PHASE-13D.md) for the full sp
 
 **Goal:** Produce the canonical mobile spec docs before any iOS implementation.
 
-**Branch:** `phase-phone-00-mobile-contract` · **Worktree:** `../kos-phone-00` · **Scope:** docs-only (no `services/`, `apps/`, `infra/`, `scripts/`, or `tests/` touched)
+**Branch:** `phase-phone-00-mobile-contract` · **Worktree:** `worktrees/kos-phone-00` · **Scope:** docs-only (no `services/`, `apps/`, `infra/`, `scripts/`, or `tests/` touched)
 
 - [x] [`docs/MOBILE_APP.md`](docs/MOBILE_APP.md) — product spec: MVP user stories (connect, login, search, read, capture text, capture photo, KB Q&A), explicit non-goals, screen map (Connect/Login/Home/Search/ObjectDetail/PageDetail/SourceDetail/ChatDetail/ProjectDetail/Capture/AI/Settings), and a full list of backend endpoints intentionally NOT exposed on mobile MVP (chat import, bulk triage, destructive ops, lower-level search, career generators, web-editor AI helpers, edges/workspaces/MCP-connections/tutorial)
-- [x] [`docs/MOBILE_API_CONTRACT.md`](docs/MOBILE_API_CONTRACT.md) — bearer auth contract for `POST /auth/mobile-login`, `POST /auth/mobile-logout`, `GET /mobile/bootstrap` (proposed — Phase 01A implements); verified read-side endpoint table (health, auth/me, objects, pages, assets, sources, chats, projects, search/hybrid, ai/*); error envelope with `code` values; pagination conventions; mobile-specific hard rules (no token logging, no `MCP_INTERNAL_TOKEN` reuse, `/search/hybrid` only)
+- [x] [`docs/MOBILE_API_CONTRACT.md`](docs/MOBILE_API_CONTRACT.md) — bearer auth contract for `POST /auth/mobile-login`, `POST /auth/mobile-logout`, `GET /mobile/bootstrap` (implemented in Phase 01A); verified read-side endpoint table (health, auth/me, objects, pages, assets, sources, chats, projects, search/hybrid, ai/*); error envelope with `code` values; pagination conventions; mobile-specific hard rules (no token logging, no `MCP_INTERNAL_TOKEN` reuse, `/search/hybrid` only)
 - [x] [`docs/MOBILE_NETWORKING.md`](docs/MOBILE_NETWORKING.md) — Simulator/LAN/Tailscale profile table; current loopback-only Compose state; `infra/docker-compose.mobile.yml` design (API-only `0.0.0.0:8001:8000`, never postgres/redis/qdrant/web); ATS strategy (narrow `NSExceptionDomains`, no `NSAllowsArbitraryLoads`); Tailscale notes; reachability checks (`scripts/mobile_network_check.sh` design for Phase 01B)
-- [x] Every endpoint named in `MOBILE_API_CONTRACT.md` (outside the "Proposed (Phase 01A)" section) cross-checked against `services/api/app/api/v1/` — zero hallucinated routes
+- [x] Every endpoint named in `MOBILE_API_CONTRACT.md` cross-checked against `services/api/app/api/v1/` — zero hallucinated routes
 - [x] PROGRESS.md updated (this entry)
 
 **Blocks unblocked:** PHASE-PHONE-01A (backend auth), PHASE-PHONE-01B (Mac↔iPhone networking), PHASE-PHONE-01C (iOS scaffold)
@@ -723,9 +723,9 @@ See [`project-phases/PHASE-13D.md`](project-phases/PHASE-13D.md) for the full sp
 
 **Goal:** Add mobile bearer-token auth while fixing the existing web cookie session resolver.
 
-**Branch:** `phase-phone-01a-backend-auth` · **Worktree:** `../kos-phone-01a` · **Scope:** backend auth/API, API auth tests, and API/security docs only.
+**Branch:** `phase-phone-01a-backend-auth` · **Worktree:** `worktrees/kos-phone-01a` · **Scope:** backend auth/API, API auth tests, and API/security docs only.
 
-- [x] Kickoff: phase doc and iPhone app concept reviewed; implementation isolated in `../kos-phone-01a`.
+- [x] Kickoff: phase doc and iPhone app concept reviewed; implementation isolated in `worktrees/kos-phone-01a`.
 - [x] Add mobile session metadata migration and model fields.
 - [x] Replace stub `get_current_user()` with real session resolution for bearer tokens, cookies, and existing MCP internal-token auth.
 - [x] Add mobile login/logout/bootstrap endpoints.
@@ -745,7 +745,7 @@ See [`project-phases/PHASE-13D.md`](project-phases/PHASE-13D.md) for the full sp
 
 **Goal:** Make the FastAPI backend reachable from the iOS Simulator (loopback, default) and a physical iPhone on the same Wi-Fi (LAN override) without exposing postgres / redis / qdrant / worker / web.
 
-**Branch:** `phase-phone-01b-networking` · **Worktree:** `../kos-phone-01b` · **Scope:** `infra/`, `scripts/`, `docs/MOBILE_NETWORKING.md`, `infra/.env.example` (no `services/`, `apps/`, or `tests/` touched)
+**Branch:** `phase-phone-01b-networking` · **Worktree:** `worktrees/kos-phone-01b` · **Scope:** `infra/`, `scripts/`, `docs/MOBILE_NETWORKING.md`, `infra/.env.example` (no `services/`, `apps/`, or `tests/` touched)
 
 - [x] [`infra/docker-compose.mobile.yml`](infra/docker-compose.mobile.yml) — LAN override binds api to `0.0.0.0:8001:8000` via Compose `!override` directive (avoids the `address already in use` collision a naive merge would cause); only `api` is touched, postgres / redis / qdrant / worker / web stay loopback
 - [x] [`scripts/mobile_network_check.sh`](scripts/mobile_network_check.sh) — reachability check (`curl /api/v1/health`), LAN URL suggestion (`ipconfig getifaddr en0/en1`), Tailscale URL suggestion (`tailscale status --json | jq .Self.DNSName`, retries once on cold-start partial state), and a safety audit that FAILs the script (non-zero exit) if postgres `:5433`, redis `:6379`, or qdrant `:6333`/`:6334` is bound beyond loopback; section 5 detects active profile (simulator-only vs mobile profile ACTIVE) from `lsof` on `:8001`
@@ -762,7 +762,7 @@ See [`project-phases/PHASE-13D.md`](project-phases/PHASE-13D.md) for the full sp
 
 **Goal:** Create a buildable SwiftUI iOS project at `apps/ios/` using XcodeGen. The first screen configures a KnowledgeOS API base URL and runs a raw `URLSession` health check against `/api/v1/health`.
 
-**Branch:** `phase-phone-01c-ios-scaffold` · **Worktree:** `worktrees/kos-phone-01c` (repo-internal replacement for the phase doc's `../kos-phone-01c` path) · **Scope:** `apps/ios/**`, `apps/ios/.gitignore`, `apps/ios/README.md`, and `PROGRESS.md`
+**Branch:** `phase-phone-01c-ios-scaffold` · **Worktree:** `worktrees/kos-phone-01c` · **Scope:** `apps/ios/**`, `apps/ios/.gitignore`, `apps/ios/README.md`, and `PROGRESS.md`
 
 - [x] Phase doc and mobile concept reviewed
 - [x] Isolated worktree created from `origin/main`
@@ -780,7 +780,7 @@ See [`project-phases/PHASE-13D.md`](project-phases/PHASE-13D.md) for the full sp
 
 **Goal:** Typed `APIClient`, Keychain-backed bearer token storage, login/logout/bootstrap, full DTO set, TabView nav skeleton, and unit tests.
 
-**Branch:** `phase-phone-02a-ios-api-client` · **Worktree:** `../kos-phone-02a` · **Scope:** `apps/ios/KnowledgeOS/Core/**`, `apps/ios/KnowledgeOSTests/**`, minimal `Features/Auth` + `Features/Root`, `PROGRESS.md`
+**Branch:** `phase-phone-02a-ios-api-client` · **Worktree:** `worktrees/kos-phone-02a` · **Scope:** `apps/ios/KnowledgeOS/Core/**`, `apps/ios/KnowledgeOSTests/**`, minimal `Features/Auth` + `Features/Root`, `PROGRESS.md`
 
 - [x] `APIClient` + `APIError` + bearer injection + redacted logging (path/method/status only)
 - [x] `KeychainStore` (`os.knowledgeos.bearer`) + `AuthStore` + `LoginViewModel`
@@ -791,7 +791,7 @@ See [`project-phases/PHASE-13D.md`](project-phases/PHASE-13D.md) for the full sp
 - [x] Base URL change clears Keychain session via `AppState.onBaseURLWillChange`
 - [x] 401 from any request triggers idempotent local logout
 
-**Validation:** `xcodegen generate` ✅ · `xcodebuild … test` on iPhone 16 simulator → **37 tests passed** (35 unit + 2 UI) ✅ · Live API smoke: health, mobile-login, bootstrap, logout ✅ · Live UI smoke: Connect → Login → Home (username) → relaunch logout (`KOS_UI_LOGOUT`) → Sign In ✅
+**Validation:** `xcodegen generate` passed; `xcodebuild -project KnowledgeOS.xcodeproj -scheme KnowledgeOS -destination 'platform=iOS Simulator,name=iPhone 16' test` on iPhone 16 simulator → **37 tests passed** (35 unit + 2 UI); live API smoke: health, mobile-login, bootstrap, logout; live UI smoke: Connect → Login → Home (username) → relaunch logout (`KOS_UI_LOGOUT`) → Sign In.
 
 **Operator note:** Run `alembic upgrade head` (migration `0013` mobile session columns) if mobile-login returns HTTP 500.
 
@@ -803,7 +803,7 @@ See [`project-phases/PHASE-13D.md`](project-phases/PHASE-13D.md) for the full sp
 
 **Goal:** Give AI coders eyes/hands inside the iOS Simulator — MCP setup docs, reusable QA prompts, `kos.*` accessibility-ID contract, and boot/screenshot helper scripts.
 
-**Branch:** `phase-phone-02b-simulator-qa` · **Worktree:** `../kos-phone-02b` · **Scope:** `docs/MOBILE_QA.md`, `scripts/mobile_simulator_*.sh`, `.tmp/mobile-qa/`, `apps/ios/KnowledgeOS/Core/UI/AccessibilityID.swift`, minimal Connect/Home AX migration (no Wave 3 feature UI)
+**Branch:** `phase-phone-02b-simulator-qa` · **Worktree:** `worktrees/kos-phone-02b` · **Scope:** `docs/MOBILE_QA.md`, `scripts/mobile_simulator_*.sh`, `.tmp/mobile-qa/`, `apps/ios/KnowledgeOS/Core/UI/AccessibilityID.swift`, minimal Connect/Home AX migration (no Wave 3 feature UI)
 
 - [x] Phase doc reviewed; worktree created from `origin/main`
 - [x] [`docs/MOBILE_QA.md`](docs/MOBILE_QA.md) — ios-simulator-mcp (>=1.3.3), mobile-mcp, tool allowlist, AX convention, five agent QA prompts, screenshot rules
@@ -817,7 +817,9 @@ See [`project-phases/PHASE-13D.md`](project-phases/PHASE-13D.md) for the full sp
 ```bash
 bash scripts/mobile_simulator_boot.sh          # OK — UDID resolved, app built and launched
 bash scripts/mobile_simulator_screenshot.sh    # OK — .tmp/mobile-qa/<timestamp>.png
-cd apps/ios && xcodegen generate && xcodebuild ... test  # TEST SUCCEEDED
+cd apps/ios && xcodegen generate
+cd apps/ios && xcodebuild -project KnowledgeOS.xcodeproj -scheme KnowledgeOS -destination 'platform=iOS Simulator,name=iPhone 16' test
+# TEST SUCCEEDED
 ```
 
 ---
@@ -826,7 +828,7 @@ cd apps/ios && xcodegen generate && xcodebuild ... test  # TEST SUCCEEDED
 
 **Goal:** Make the iPhone app useful for read-only KB browsing: recent objects, hybrid search, and detail views for pages, sources, chats, and projects.
 
-**Branch:** `phase-phone-03a-read-search` · **Worktree:** `worktrees/kos-phone-03a` (repo-internal replacement for the phase doc's `../kos-phone-03a` path)
+**Branch:** `phase-phone-03a-read-search` · **Worktree:** `worktrees/kos-phone-03a`
 
 - [x] Phase doc and iPhone app concept reviewed
 - [x] Isolated 03A worktree created
@@ -850,8 +852,12 @@ cd apps/ios && xcodegen generate && xcodebuild ... test  # TEST SUCCEEDED
 cd apps/ios && xcodegen generate   # ⇒ passed
 xcodebuild -project KnowledgeOS.xcodeproj -scheme KnowledgeOS \
   -destination 'platform=iOS Simulator,name=iPhone 16' build   # ⇒ BUILD SUCCEEDED
-xcodebuild ... -only-testing:KnowledgeOSTests test             # ⇒ 24/24 unit tests pass
-xcodebuild ... -only-testing:KnowledgeOSUITests/BootSmokeTests test  # ⇒ passed
+xcodebuild -project KnowledgeOS.xcodeproj -scheme KnowledgeOS \
+  -destination 'platform=iOS Simulator,name=iPhone 16' \
+  -only-testing:KnowledgeOSTests test                         # ⇒ 24/24 unit tests pass
+xcodebuild -project KnowledgeOS.xcodeproj -scheme KnowledgeOS \
+  -destination 'platform=iOS Simulator,name=iPhone 16' \
+  -only-testing:KnowledgeOSUITests/BootSmokeTests test          # ⇒ passed
 ```
 
 **Known limitation — live-backend `LoginEndToEndSmokeTests`:** on iOS 26 simulators, `XCUIApplication.tabBars.buttons[...]` and `.element(boundBy:)` report tab-bar buttons with hit point `{-1, -1}`, so XCUI cannot programmatically tap the Search/Settings tabs even though the buttons are present and the tab bar's `frame` reports a midY that does not match the rendered position. Replicates with multiple SF Symbols (`magnifyingglass`, `text.magnifyingglass`, `doc.text.magnifyingglass`) and via both label lookup and index lookup. Captured during validation against the live backend (demo seed). The functional code is correct: the tab bar, search field (`kos.search.input`), and result row (`kos.search.resultRow`) are all wired up — the issue is an iOS 26 simulator + SwiftUI `TabView` interaction that surfaces only inside XCUITest. Test left in `KnowledgeOSUITests/LoginEndToEndSmokeTests.swift` with robust coordinate-based fallbacks for when iOS 26 fixes the tab-bar geometry. Manual run against a physical device — or running the same flow via `ios-simulator` MCP outside XCUITest — works.
@@ -872,7 +878,7 @@ xcodebuild ... -only-testing:KnowledgeOSUITests/BootSmokeTests test  # ⇒ passe
 - [x] Photo/file upload implemented with `PhotosPicker`, `fileImporter`, `MultipartUpload`, default `create_source=true`, per-item progress/status rows, and retryable in-memory failed uploads
 - [x] Source ingestion status view polls `GET /api/v1/sources/{id}` every 2s for up to 60s, then exposes manual refresh
 - [x] Capture tests added for Tiptap wrapping, required note body validation, retry queue behavior, and ready-source refresh state
-- [x] Validation: `xcodegen generate` passed; `xcodebuild ... test` passed (28 unit tests + 2 UI tests)
+- [x] Validation: `xcodegen generate` passed; `xcodebuild -project KnowledgeOS.xcodeproj -scheme KnowledgeOS -destination 'platform=iOS Simulator,name=iPhone 16' test` passed (28 unit tests + 2 UI tests)
 
 ---
 
@@ -880,7 +886,7 @@ xcodebuild ... -only-testing:KnowledgeOSUITests/BootSmokeTests test  # ⇒ passe
 
 **Goal:** Expose mobile AI actions: grounded KB Q&A, object summarize, suggest links, citations, and AI-disabled handling. Branch is rebased onto `phase-phone-03a-read-search` so it inherits the 02A/03A foundation (API client, AuthStore, detail views, AIActionsBar stub).
 
-**Branch:** `phase-phone-03c-mobile-ai` · **Worktree:** `../kos-phone-03c` · **Scope:** `apps/ios/KnowledgeOS/Features/AI/**`, `Features/Root/AITab.swift` body, replacement body of `Features/AI/AIActionsBar.swift`; reuses existing `AIDTO`, `APIError.aiDisabled`, and `aiAnswer`/`aiSummarize`/`aiSuggestLinks` endpoints already shipped by 03A's foundation.
+**Branch:** `phase-phone-03c-mobile-ai` · **Worktree:** `worktrees/kos-phone-03c` · **Scope:** `apps/ios/KnowledgeOS/Features/AI/**`, `Features/Root/AITab.swift` body, replacement body of `Features/AI/AIActionsBar.swift`; reuses existing `AIDTO`, `APIError.aiDisabled`, and `aiAnswer`/`aiSummarize`/`aiSuggestLinks` endpoints already shipped by 03A's foundation.
 
 - [x] Kickoff: phase doc reviewed; isolated worktree rebased onto 03A.
 - [x] `Features/AI/AIAPI.swift` — thin `AIAPI` wrapper over `APIClient` for `/api/v1/ai/answer`, `/summarize`, `/suggest-links`.
@@ -898,7 +904,9 @@ xcodebuild ... -only-testing:KnowledgeOSUITests/BootSmokeTests test  # ⇒ passe
 cd apps/ios && xcodegen generate                                         # ⇒ passed
 xcodebuild -project KnowledgeOS.xcodeproj -scheme KnowledgeOS \
   -destination 'platform=iOS Simulator,name=iPhone 16' build              # ⇒ BUILD SUCCEEDED
-xcodebuild ... -only-testing:KnowledgeOSTests test                        # ⇒ 33/33 unit tests pass (9 new AI tests + 1 live-backend smoke)
+xcodebuild -project KnowledgeOS.xcodeproj -scheme KnowledgeOS \
+  -destination 'platform=iOS Simulator,name=iPhone 16' \
+  -only-testing:KnowledgeOSTests test                                      # ⇒ 33/33 unit tests pass (9 new AI tests + 1 live-backend smoke)
 # Manual launch on iPhone 16 simulator → app boots to Connect screen cleanly.
 ```
 
@@ -914,7 +922,7 @@ xcodebuild ... -only-testing:KnowledgeOSTests test                        # ⇒ 
 
 **Goal:** Safe lightweight edits on iPhone — object title, object tags, and plain-text page body — without recreating Tiptap. Plain text saves as valid Tiptap `doc` JSON; page body saves use optimistic locking via `expected_version` and route 409 responses through an explicit conflict-resolution sheet.
 
-**Branch:** `phase-phone-04-edit-lite` · **Worktree:** `../kos-phone-04` · **Scope:** `apps/ios/KnowledgeOS/Features/ObjectDetail/Edit*.swift`, `Features/PageDetail/Edit*.swift`, `Features/PageDetail/ConflictResolutionSheet.swift`, `Features/PageDetail/PlainTextTiptap` shared in `Core/API/TiptapPlainText.swift`, plus `Core/UI/TagChipEditor.swift`. Touches the read views only to add an Edit entry point and render the tags row.
+**Branch:** `phase-phone-04-edit-lite` · **Worktree:** `worktrees/kos-phone-04` · **Scope:** `apps/ios/KnowledgeOS/Features/ObjectDetail/Edit*.swift`, `Features/PageDetail/Edit*.swift`, `Features/PageDetail/ConflictResolutionSheet.swift`, `Features/PageDetail/PlainTextTiptap` shared in `Core/API/TiptapPlainText.swift`, plus `Core/UI/TagChipEditor.swift`. Touches the read views only to add an Edit entry point and render the tags row.
 
 - [x] Kickoff: phase doc reviewed; worktree branched from `origin/main` after 03A merged.
 - [x] `Core/API/TiptapPlainText.swift` — shared pure functions `tiptapDocument(from:)` / `extractPlainText(from:)`. `Features/Capture/CaptureAPI.swift` now delegates to it (single source of truth; existing capture test still passes).
@@ -940,9 +948,13 @@ xcodebuild ... -only-testing:KnowledgeOSTests test                        # ⇒ 
 cd apps/ios && xcodegen generate                                            # ⇒ passed
 xcodebuild -project KnowledgeOS.xcodeproj -scheme KnowledgeOS \
   -destination 'platform=iOS Simulator,name=iPhone 16' build                 # ⇒ BUILD SUCCEEDED
-xcodebuild ... -only-testing:KnowledgeOSTests test                           # ⇒ 46/46 unit tests pass
+xcodebuild -project KnowledgeOS.xcodeproj -scheme KnowledgeOS \
+  -destination 'platform=iOS Simulator,name=iPhone 16' \
+  -only-testing:KnowledgeOSTests test                                         # ⇒ 46/46 unit tests pass
                                                                              #    (38 prior + 7 new TiptapPlainText + 1 new EditLite live smoke)
-xcodebuild ... -only-testing:KnowledgeOSTests/EditLiteLiveSmokeTests test    # ⇒ EditLite live smoke: PUT 200, GET 200, PUT 409 (conflict mapped)
+xcodebuild -project KnowledgeOS.xcodeproj -scheme KnowledgeOS \
+  -destination 'platform=iOS Simulator,name=iPhone 16' \
+  -only-testing:KnowledgeOSTests/EditLiteLiveSmokeTests test                  # ⇒ EditLite live smoke: PUT 200, GET 200, PUT 409 (conflict mapped)
 ```
 
 **Scope-guard notes:**
@@ -970,7 +982,7 @@ xcodebuild ... -only-testing:KnowledgeOSTests/EditLiteLiveSmokeTests test    # �
 - [x] `Core/Queue/QueueDrainer.swift` — `drain(now:deadline:)` pulls drainable items and executes via `APIClient`; success removes, failure marks-with-backoff. Reused by foreground reachability change, `BGAppRefreshTask` (25s deadline), and `BGProcessingTask` (longer budget).
 - [x] `Features/Capture/CaptureViewModel.swift` — on retryable failure (`networkUnavailable`, `serverError`) enqueues to `QueueStore` and shows `.pending` ("Will retry automatically"); 4xx still surface as `.failed`. Quick-note path also enqueues a `PageCreateRequest`-payload pending item on 5xx/network.
 - [x] `Features/Sync/SyncBanner.swift` + `PendingUploadsView.swift` — Home renders the banner above the list when pending > 0; tap opens an inspector with per-row cancel and a "Drain now" button.
-- [x] `App/KnowledgeOSApp.swift` — `AppDependencies` opens one SQLite DB shared by cache + queue stores, constructs `CachedReadAPI` and `QueueDrainer`, registers both `BGAppRefreshTask` + `BGProcessingTask` handlers, observes `NetworkMonitor.isReachable` to trigger drains, and re-submits BGTask requests on `scenePhase == .background`. Skips BG registration under XCTest to avoid sandbox aborts.
+- [x] `App/KnowledgeOSApp.swift` — `AppDependencies` originally opened one SQLite DB shared by cache + queue stores; PHONE-07 supersedes this so cache remains in `Library/Caches` while the queue DB lives in `Application Support`. It constructs `CachedReadAPI` and `QueueDrainer`, registers both `BGAppRefreshTask` + `BGProcessingTask` handlers, observes `NetworkMonitor.isReachable` to trigger drains, and re-submits BGTask requests on `scenePhase == .background`. Skips BG registration under XCTest to avoid sandbox aborts.
 - [x] `Resources/Info.plist` — added `UIBackgroundModes` (`fetch`, `processing`) and `BGTaskSchedulerPermittedIdentifiers` for both task identifiers.
 - [x] Tests (26 new across 5 files): `CacheStoreTests` (7), `CachedReadAPITests` (5), `QueueStoreTests` (7), `QueueDrainerTests` (3), `CapturePersistenceTests` (4). Total suite now **64 tests** (was 38, plus 8 from PHONE-04 = 72 once both merged).
 
@@ -980,7 +992,9 @@ xcodebuild ... -only-testing:KnowledgeOSTests/EditLiteLiveSmokeTests test    # �
 cd apps/ios && xcodegen generate                                          # ⇒ passed
 xcodebuild -project KnowledgeOS.xcodeproj -scheme KnowledgeOS \
   -destination 'platform=iOS Simulator,name=iPhone 16' build              # ⇒ BUILD SUCCEEDED
-xcodebuild ... -only-testing:KnowledgeOSTests test                        # ⇒ 64/64 tests pass on PHONE-05 branch
+xcodebuild -project KnowledgeOS.xcodeproj -scheme KnowledgeOS \
+  -destination 'platform=iOS Simulator,name=iPhone 16' \
+  -only-testing:KnowledgeOSTests test                                      # ⇒ 64/64 tests pass on PHONE-05 branch
 ```
 
 **Known internal API change:** to support encode/decode roundtrips in cache and queue, three DTOs were widened from `Decodable`/`Encodable` to `Codable`: `PageCreateRequest`, `PaginatedResponseDTO`, `HybridSearchResponseDTO`. No external behavior change.
@@ -1011,7 +1025,7 @@ Follow-up audit against the spec turned up two gaps in the initial PHONE-05 merg
 
 **Goal:** Install the iPhone app on a physical device without App Store release, document private release/recovery, and keep local signing configuration ready for an Apple ID Personal Team.
 
-**Branch:** `phase-phone-06-device-install` · **Worktree:** `../kos-phone-06` · **Scope:** iOS signing/build configuration plus private install, release, recovery, and real-device smoke documentation. No backend, API, Swift feature, database, or Docker behavior changes.
+**Branch:** `phase-phone-06-device-install` · **Worktree:** `worktrees/kos-phone-06` · **Scope:** iOS signing/build configuration plus private install, release, recovery, and real-device smoke documentation. No backend, API, Swift feature, database, or Docker behavior changes.
 
 - [x] Phase doc and implementation plan reviewed; isolated worktree branched from `origin/main`.
 - [x] `apps/ios/project.yml` keeps `PRODUCT_BUNDLE_IDENTIFIER: com.knowledgeos.ios` and uses automatic signing settings without committing an Apple Team ID.
@@ -1061,3 +1075,36 @@ bash scripts/mobile_network_check.sh
 ```
 
 **Completion rule:** Do not mark PHONE-06 complete until the physical-device smoke succeeds.
+
+---
+
+## Phase PHONE-07 — Mobile Hardening & Contract Repair 🚧 In Progress
+
+**Goal:** Repair phone-track contract drift and harden mobile source downloads plus pending-upload durability without changing backend endpoints.
+
+**Branch:** `phase-phone-07-mobile-hardening` · **Worktree:** `worktrees/kos-phone-07` · **Scope:** iOS read/download and queue persistence, mobile/phone docs, and lightweight docs consistency tests.
+
+- [x] Fresh worktree created from `main`; phase plan reviewed as the source of intent.
+- [x] SourceDetail authenticated asset download flow: uses `source.assetId` with `/api/v1/assets/{asset_id}/download`; hides download UI when no asset exists; shares a temporary local file after the authenticated app-side fetch.
+- [x] Pending upload queue durability: cache DB remains in `Library/Caches`; queue DB now defaults to `Application Support/knowledgeos/queue.sqlite`; legacy `pending_uploads` rows are copied from the old cache DB when the new queue DB is empty.
+- [x] Mobile phase and contract docs synchronized with current truth, including PHONE-06 remaining incomplete until physical-device smoke.
+- [x] Docs consistency test added for stale phone markers and validation command drift.
+- [ ] Validation: XcodeGen and Python docs test passed; iPhone 16 simulator build/tests blocked by CoreSimulator sandbox/approval limit; mobile network check ran and failed because API was not reachable on `127.0.0.1:8001`.
+
+**Validation performed:**
+
+```bash
+cd apps/ios && xcodegen generate
+# passed
+
+cd tests && UV_CACHE_DIR=/private/tmp/kos-phone-07-uv-cache PYTHONPATH=../services/api uv run pytest unit/test_phone_phase_docs.py -q
+# 3 passed
+
+bash scripts/mobile_network_check.sh
+# FAIL: API did not respond on 127.0.0.1:8001
+# PASS: postgres/redis/qdrant stayed loopback-only
+
+cd apps/ios && xcodebuild -project KnowledgeOS.xcodeproj -scheme KnowledgeOS -destination 'platform=iOS Simulator,name=iPhone 16' build
+# blocked in sandbox: CoreSimulatorService unavailable and iPhone 16 destination not visible
+# outside-sandbox retry was rejected by the runtime usage limiter
+```

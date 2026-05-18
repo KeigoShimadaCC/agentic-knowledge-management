@@ -1,10 +1,10 @@
 # Phase PHONE-01B — Mac↔iPhone Networking
 
-**Status:** Planned
+**Status:** Complete
 **Goal:** Make the FastAPI backend reachable from iOS Simulator and physical iPhone safely. Only api gets exposed; postgres/redis/qdrant stay loopback.
 **Wave:** 1 (parallel with 01A, 01C)
 **Branch:** `phase-phone-01b-networking`
-**Worktree:** `../kos-phone-01b`
+**Worktree:** `worktrees/kos-phone-01b`
 **Depends on:** PHASE-PHONE-00
 **Blocks:** physical-device validation (Wave 6)
 

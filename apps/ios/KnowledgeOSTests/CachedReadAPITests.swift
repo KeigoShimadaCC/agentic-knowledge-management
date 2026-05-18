@@ -93,6 +93,8 @@ final class StubAPIClient: APIClientProtocol, @unchecked Sendable {
 
     private let behavior: Behavior
     var bearerToken: String? = "test-token"
+    private(set) var lastDataEndpoint: APIEndpoint?
+    private(set) var lastDataAuth: Bool?
 
     init(behavior: Behavior) { self.behavior = behavior }
 
@@ -106,6 +108,8 @@ final class StubAPIClient: APIClientProtocol, @unchecked Sendable {
     }
 
     func requestData(_ endpoint: APIEndpoint, body: (any Encodable)?, auth: Bool) async throws -> Data {
+        lastDataEndpoint = endpoint
+        lastDataAuth = auth
         switch behavior {
         case let .succeedWith(data): return data
         case let .failWith(error): throw error

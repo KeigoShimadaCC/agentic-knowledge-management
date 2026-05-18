@@ -1,10 +1,10 @@
 # Phase PHONE-03A — Read & Search MVP
 
-**Status:** Planned
+**Status:** Complete
 **Goal:** Make the app actually useful: search the KB, browse recent objects, read pages/sources/chats/projects.
 **Wave:** 3 (parallel with 03B, 03C)
 **Branch:** `phase-phone-03a-read-search`
-**Worktree:** `../kos-phone-03a`
+**Worktree:** `worktrees/kos-phone-03a`
 **Depends on:** PHASE-PHONE-02A
 **Blocks:** PHASE-PHONE-04, 05 (page detail must be stable)
 
@@ -30,7 +30,7 @@ Only `apps/ios/KnowledgeOS/Features/{Home,Search,ObjectDetail,PageDetail,SourceD
 2. **Search**: search field with debounce; hybrid search; result list with kind badges; tap → ObjectDetail dispatcher. Use `kos.search.input` ax id from 02B.
 3. **ObjectDetail**: dispatches to PageDetail / SourceDetail / ChatDetail / ProjectDetail based on `kind`.
 4. **PageDetail**: renders Tiptap JSON as read-only. MVP supports paragraph, heading 1–3, bullet/ordered lists, blockquote, code block, link. Skip tables/embeds in MVP — show "unsupported block" placeholder.
-5. **SourceDetail**: shows extracted text; thumbnail if available; download button (links to `/sources/{id}/download` via Safari).
+5. **SourceDetail**: shows extracted text and thumbnail if available. PHONE-07 repairs downloads to use authenticated in-app asset downloads via `source.asset_id` and `/assets/{id}/download`; source rows without an `asset_id` do not show a download action.
 6. **ChatDetail**: renders chat turns; preserves role/content.
 7. **ProjectDetail**: header + linked objects list.
 8. **Settings**: shows logged-in user, base URL, logout, "About" with mobile_api_version from bootstrap.
@@ -56,7 +56,8 @@ Each detail view renders an `AIActionsBar(object:)` placeholder component. 03A s
 docker compose -f infra/docker-compose.yml up -d
 cd apps/ios
 xcodebuild -project KnowledgeOS.xcodeproj -scheme KnowledgeOS \
-  -destination 'platform=iOS Simulator,name=iPhone 16' test
+  -destination 'platform=iOS Simulator,name=iPhone 16' \
+  -only-testing:KnowledgeOSTests test
 # Manual: login → search "test" → open result. Screenshot via 02B helper.
 ```
 

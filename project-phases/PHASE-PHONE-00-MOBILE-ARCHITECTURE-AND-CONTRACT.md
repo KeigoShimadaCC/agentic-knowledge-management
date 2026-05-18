@@ -1,10 +1,10 @@
 # Phase PHONE-00 — Mobile Architecture & Contract
 
-**Status:** Planned
+**Status:** Complete
 **Goal:** Produce the canonical mobile spec docs before any implementation. Solo phase. Docs-only.
 **Wave:** 0
 **Branch:** `phase-phone-00-mobile-contract`
-**Worktree:** `../kos-phone-00`
+**Worktree:** `worktrees/kos-phone-00`
 **Depends on:** none
 **Blocks:** PHASE-PHONE-01A, 01B, 01C
 

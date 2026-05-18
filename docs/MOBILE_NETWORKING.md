@@ -43,9 +43,9 @@ Loopback means none of these are reachable from the iPhone over LAN or Tailscale
 
 ---
 
-## 3. `infra/docker-compose.mobile.yml` — design
+## 3. `infra/docker-compose.mobile.yml`
 
-This override file does **not** exist yet. PHASE-PHONE-01B creates it. The design below is the contract that phase must follow.
+PHONE-01B shipped this override file. It remains the contract for exposing the API to a physical iPhone while keeping data services loopback-only.
 
 Purpose: expose **only** the API to the LAN interface, leaving all other services on loopback.
 
@@ -100,7 +100,7 @@ If any future phase needs to expose a service beyond the API to the device, that
 
 ## 5. iOS App Transport Security (ATS)
 
-iOS requires HTTPS by default. Local development against `http://...` URLs needs `NSAppTransportSecurity` exceptions in `Info.plist`. PHASE-PHONE-01C wires this in; the contract below is what that phase must implement.
+iOS requires HTTPS by default. Local development against `http://...` URLs needs `NSAppTransportSecurity` exceptions in `Info.plist`. PHONE-01C wired the current narrow exceptions into `apps/ios/project.yml`, which generates `Info.plist`.
 
 ### 5.1 Allowed strategy
 
@@ -108,7 +108,7 @@ iOS requires HTTPS by default. Local development against `http://...` URLs needs
 - Per-domain: enable `NSExceptionAllowsInsecureHTTPLoads` and (for `*.ts.net` Tailscale wildcards) `NSIncludesSubdomains`.
 - Loopback (`127.0.0.1`) on Simulator does not strictly need an exception, but listing it makes the policy auditable.
 
-Example (illustrative — implemented in `apps/ios/KnowledgeOS/Resources/Info.plist` in Phase 01C):
+Generated policy:
 
 ```xml
 <key>NSAppTransportSecurity</key>
@@ -217,10 +217,10 @@ The Connect screen calls `GET /api/v1/health` and shows the JSON status. Any non
 
 | Item | Phase |
 |---|---|
-| This document | **PHONE-00** (current) |
+| This document | PHONE-00, refreshed by PHONE-07 |
 | `infra/docker-compose.mobile.yml` | PHONE-01B |
 | `scripts/mobile_network_check.sh` | PHONE-01B |
-| `apps/ios/KnowledgeOS/Resources/Info.plist` ATS exceptions | PHONE-01C |
+| `apps/ios/project.yml` ATS exceptions | PHONE-01C |
 | Bearer auth on `/api/v1/auth/mobile-login` etc. | PHONE-01A |
 
 ---

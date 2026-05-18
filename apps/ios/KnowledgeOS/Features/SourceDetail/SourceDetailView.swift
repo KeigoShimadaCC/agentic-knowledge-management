@@ -28,12 +28,7 @@ struct SourceDetailView: View {
                             .clipShape(RoundedRectangle(cornerRadius: 8))
                     }
 
-                    if let url = viewModel.downloadURL {
-                        Link(destination: url) {
-                            Label("Download", systemImage: "arrow.down.circle")
-                        }
-                        .buttonStyle(.borderedProminent)
-                    }
+                    downloadControl(source)
 
                     Text(viewModel.text.isEmpty ? source.extractedText ?? "" : viewModel.text)
                         .font(.body)
@@ -60,5 +55,36 @@ struct SourceDetailView: View {
             }
         }
         .font(.subheadline)
+    }
+
+    @ViewBuilder
+    private func downloadControl(_ source: SourceDTO) -> some View {
+        if source.assetId == nil {
+            EmptyView()
+        } else if let url = viewModel.downloadFileURL {
+            ShareLink(item: url) {
+                Label("Share Download", systemImage: "square.and.arrow.up")
+            }
+            .buttonStyle(.borderedProminent)
+        } else {
+            VStack(alignment: .leading, spacing: 6) {
+                Button {
+                    Task { await viewModel.downloadAssetForSharing() }
+                } label: {
+                    Label(
+                        viewModel.isDownloading ? "Preparing..." : "Download",
+                        systemImage: "arrow.down.circle"
+                    )
+                }
+                .buttonStyle(.borderedProminent)
+                .disabled(viewModel.isDownloading)
+
+                if let message = viewModel.downloadErrorMessage {
+                    Text(message)
+                        .font(.footnote)
+                        .foregroundStyle(.red)
+                }
+            }
+        }
     }
 }

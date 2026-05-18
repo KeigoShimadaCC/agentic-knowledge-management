@@ -34,6 +34,40 @@ final class QueueStoreTests: XCTestCase {
         XCTAssertEqual(pending.first?.id, item.id)
     }
 
+    func testDefaultQueuePathUsesApplicationSupport() throws {
+        let queuePath = try SystemQueueStore.defaultPath()
+        let cachePath = try SQLiteDatabase.defaultCachePath()
+
+        XCTAssertTrue(queuePath.contains("Application Support"))
+        XCTAssertTrue(cachePath.contains("Caches"))
+        XCTAssertNotEqual(queuePath, cachePath)
+    }
+
+    func testLegacyCacheQueueRowsMigrateWithoutLoss() throws {
+        let legacyPath = FileManager.default.temporaryDirectory
+            .appendingPathComponent("kos-phone-07-legacy-\(UUID().uuidString).sqlite").path
+        let targetPath = FileManager.default.temporaryDirectory
+            .appendingPathComponent("kos-phone-07-target-\(UUID().uuidString).sqlite").path
+        defer {
+            try? FileManager.default.removeItem(atPath: legacyPath)
+            try? FileManager.default.removeItem(atPath: targetPath)
+        }
+
+        let item = Self.makeItem()
+        let legacy = try SystemQueueStore(db: SQLiteDatabase(path: legacyPath))
+        try legacy.enqueue(item)
+
+        let targetDB = try SQLiteDatabase(path: targetPath)
+        _ = try SystemQueueStore(db: targetDB)
+        try SystemQueueStore.migrateLegacyPendingUploads(from: legacyPath, into: targetDB)
+
+        let migrated = try SystemQueueStore(db: SQLiteDatabase(path: targetPath)).allPending()
+        XCTAssertEqual(migrated.count, 1)
+        XCTAssertEqual(migrated.first?.id, item.id)
+        XCTAssertEqual(migrated.first?.payload, item.payload)
+        XCTAssertEqual(migrated.first?.kind, item.kind)
+    }
+
     func testMarkFailedAdvancesBackoff() throws {
         let store = try SystemQueueStore(db: SQLiteDatabase(path: tempPath))
         let item = Self.makeItem()

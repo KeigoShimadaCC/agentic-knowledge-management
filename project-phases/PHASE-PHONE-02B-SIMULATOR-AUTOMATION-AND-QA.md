@@ -1,10 +1,10 @@
 # Phase PHONE-02B — Simulator Automation & QA
 
-**Status:** Planned
+**Status:** Complete
 **Goal:** Give AI coders eyes/hands inside the iOS Simulator. Document `ios-simulator-mcp` and `mobile-mcp` setup. Add reusable QA prompts and accessibility identifiers contract.
 **Wave:** 2 (parallel with 02A)
 **Branch:** `phase-phone-02b-simulator-qa`
-**Worktree:** `../kos-phone-02b`
+**Worktree:** `worktrees/kos-phone-02b`
 **Depends on:** PHASE-PHONE-01C (scaffold must build)
 **Blocks:** none (informs Wave 3 coders)
 

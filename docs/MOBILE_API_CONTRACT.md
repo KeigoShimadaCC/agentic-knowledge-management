@@ -1,6 +1,6 @@
 # Mobile API Contract
 
-> Endpoint contract the iPhone client consumes. Companion docs: [`MOBILE_APP.md`](./MOBILE_APP.md), [`MOBILE_NETWORKING.md`](./MOBILE_NETWORKING.md). All "Verified" endpoints below were cross-checked against `services/api/app/api/v1/` on the `phase-phone-00-mobile-contract` branch — no hallucinated routes.
+> Endpoint contract the iPhone client consumes. Companion docs: [`MOBILE_APP.md`](./MOBILE_APP.md), [`MOBILE_NETWORKING.md`](./MOBILE_NETWORKING.md). The mobile auth/read/capture/AI endpoints listed here are implemented on `main`; PHONE-07 keeps this contract aligned with the shipped Swift client.
 
 ---
 
@@ -33,9 +33,9 @@ Authorization: Bearer <opaque_mobile_token>
 
 Tokens are opaque, high-entropy strings issued exactly once at login.
 
-### 2.2 Proposed mobile auth endpoints — **NOT YET IMPLEMENTED**
+### 2.2 Mobile auth endpoints
 
-These three endpoints are designed here but **do not exist in code today**. PHASE-PHONE-01A will implement them. iOS work depending on them must wait for that phase.
+These endpoints are implemented by PHONE-01A and consumed by the native iOS session layer.
 
 #### `POST /api/v1/auth/mobile-login` (Phase 01A)
 
@@ -148,13 +148,15 @@ Every endpoint in this section exists in `services/api/app/api/v1/` and uses `ge
 |---|---|---|
 | POST | `/api/v1/assets/upload` | Multipart upload. With `?create_source=true`, also creates a `source` object and a `derives_from` edge (asset → source). |
 | GET | `/api/v1/assets/{id}` | Asset metadata (sha256, mime, size, original filename). |
-| GET | `/api/v1/assets/{id}/download` | Binary stream. Honor server `Content-Type`/`Content-Disposition`. |
+| GET | `/api/v1/assets/{id}/download` | Authenticated binary stream. SourceDetail uses `source.asset_id` to call this endpoint in-app, then shares the temporary local file. It must not open an unauthenticated `/sources/{id}/download` URL in Safari. |
 | POST | `/api/v1/sources` | Create a source by URL (web, youtube, etc.). Body: `{source_type, url}` or `{source_type, asset_id}`. |
 | GET | `/api/v1/sources` | List paginated sources for Home/recent. |
 | GET | `/api/v1/sources/{id}` | Source detail including `ingestion_status` + `preview_data`. |
 | PATCH | `/api/v1/sources/{id}` | Title/tag edits (Phase 04). |
 | GET | `/api/v1/sources/{id}/text` | Streamed extracted text. Use for SourceDetail body. |
 | GET | `/api/v1/sources/{id}/thumbnail` | Thumbnail binary. |
+
+Source rows with `asset_id = null` are URL-backed or text-backed and do not expose a download action in the iOS UI.
 
 ### 3.6 Chats (read-only on mobile MVP)
 
@@ -305,3 +307,4 @@ These exist in the API today but are **not** consumed by mobile MVP. Listed here
 | Date | Phase | Change |
 |---|---|---|
 | 2026-05-17 | PHONE-00 | Initial contract. Mobile-login/logout/bootstrap proposed; read-side endpoint surface verified against `services/api/app/api/v1/`. |
+| 2026-05-18 | PHONE-07 | Marked mobile auth as implemented, clarified authenticated asset download behavior, and documented that sources without `asset_id` hide download UI. |
