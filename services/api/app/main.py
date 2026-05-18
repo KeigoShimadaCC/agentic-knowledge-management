@@ -21,6 +21,13 @@ async def lifespan(app: FastAPI):
     ensure_library_structure()
     await qc.create_collection_if_not_exists()
 
+    if settings.mcp_internal_token and not settings.mcp_internal_user_id:
+        log.warning(
+            "MCP_INTERNAL_TOKEN is configured without MCP_INTERNAL_USER_ID; "
+            "the token will resolve to the first non-deleted user. Set "
+            "MCP_INTERNAL_USER_ID for multi-user safety."
+        )
+
     async with AsyncSessionLocal() as db:
         try:
             await demo_seed_service.migrate_legacy_demo_email(db)

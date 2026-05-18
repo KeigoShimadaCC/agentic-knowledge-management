@@ -49,6 +49,14 @@ class Settings(BaseSettings):
             "Empty = disabled."
         ),
     )
+    mcp_internal_user_id: str = Field(
+        default="",
+        description=(
+            "Scope MCP_INTERNAL_TOKEN to a specific user UUID. "
+            "Empty = legacy single-user fallback (token resolves to the first "
+            "non-deleted user); set this for multi-user safety."
+        ),
+    )
     mcp_rate_limit_per_minute: int = Field(
         default=60,
         description="Max MCP write calls per minute per agent identity (sliding window).",

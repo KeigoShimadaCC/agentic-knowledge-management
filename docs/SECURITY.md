@@ -109,16 +109,20 @@ FastAPI accepts an `X-KOS-Internal-Token` header as an alternative to the sessio
 1. `MCP_INTERNAL_TOKEN` is set in `infra/.env` (gitignored, never committed).
 2. FastAPI `get_current_user` in `core/deps.py` checks mobile bearer auth first, then this internal header, then the web cookie.
 3. Match is verified with `secrets.compare_digest` (timing-safe).
-4. On match: loads the first non-deleted user (single-user local appliance).
+4. On match: resolves to a specific user identity (see scoping below).
 5. If token config is empty: header is silently ignored; no authentication bypass.
+
+**User scoping (PHASE-FIX-04):**
+
+- Set `MCP_INTERNAL_USER_ID` to the UUID of the dedicated service user. The token then resolves to exactly that user.
+- If `MCP_INTERNAL_USER_ID` is empty: the token falls back to the **first non-deleted user** (legacy single-user behavior). The app logs a startup warning in this state.
+- The fallback is safe only on single-user instances. Add `MCP_INTERNAL_USER_ID` before creating a second account or exposing the API to any non-trusted environment.
 
 **Security properties:**
 - Token is never logged, returned in API responses, or exposed through MCP tools.
 - Empty token = feature disabled (safe default — no header value can match an empty secret).
 - Timing-safe comparison prevents oracle attacks.
 - User ownership filtering is preserved: all objects queries still filter by `user_id`.
-
-**Limitation:** Multi-user instances are not supported through MCP in Phase 7A. The token grants access as the first active user. Phase 7B will address per-user MCP auth if needed.
 
 ## MCP Server Safety (Phases 7A + 7B)
 
