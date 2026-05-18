@@ -491,23 +491,6 @@ See [`project-phases/PHASE-12-MCP-CONNECTIONS.md`](project-phases/PHASE-12-MCP-C
 
 ---
 
-## Phase 11A — Interactive Guided Tutorial 🚧 In Progress
-
-**Branch:** `phase-11a-tutorial` (worktree: `/Users/keigoshimada/Documents/agentic-knowledge-management-phase-11a`)
-
-**Goal:** Add a spotlight-driven guided tour launched by a "Start Tour" button in the sidebar. Users click through 10 steps, each highlighting a UI element with a dark overlay + popup card. Fixed sample data is seeded via a backend endpoint. Tour can be stopped at any time.
-
-See [`project-phases/PHASE-11A-TUTORIAL.md`](project-phases/PHASE-11A-TUTORIAL.md) for the full spec.
-
-- [ ] **Backend** — `tutorial_seed_service.py` (3 pages, 1 project, 2 edges tagged `tutorial_v1`) + `POST /api/v1/tutorial/seed` + `DELETE /api/v1/tutorial/reset`
-- [ ] **Frontend context** — `TutorialProvider` + `useTutorial()` hook (active, stepIndex, start/next/prev/stop)
-- [ ] **Spotlight overlay** — `TutorialOverlay` (portal + 4-panel spotlight + ResizeObserver) + `TutorialPopup` card
-- [ ] **Step config** — `tutorial-steps.ts` with 10 typed steps
-- [ ] **Wire-up** — Sidebar "Start Tour" button + `data-tutorial` attributes on existing components
-- [ ] **Quality gates** — `pnpm typecheck`, `pnpm lint`, `ruff check/format`
-
----
-
 ## Phase 13 — Frontend Health Check & Debug Sprint ✅ Complete
 
 **Last updated:** 2026-05-17
