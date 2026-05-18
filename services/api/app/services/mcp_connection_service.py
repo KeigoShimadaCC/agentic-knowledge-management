@@ -7,6 +7,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
+from app.core.url_safety import UnsafeUrlError, validate_safe_http_url
 from app.mcp_client.crypto import encrypt_env_vars
 from app.models.mcp_connection import McpConnection
 from app.schemas.mcp_connection import McpConnectionCreate, McpConnectionUpdate
@@ -39,11 +40,25 @@ async def get_or_404(
     return conn
 
 
+def _validate_url_or_422(url: str | None) -> None:
+    if url is None:
+        return
+    try:
+        validate_safe_http_url(url)
+    except UnsafeUrlError as exc:
+        raise HTTPException(status_code=422, detail=f"unsafe MCP URL: {exc}") from exc
+
+
 def _validate_create(data: McpConnectionCreate) -> None:
     if data.transport == "stdio" and data.command is None:
         raise HTTPException(status_code=400, detail="command required for stdio transport")
-    if data.transport == "sse" and data.url is None:
-        raise HTTPException(status_code=400, detail="url required for sse transport")
+    if data.transport in ("sse", "http") and data.url is None:
+        raise HTTPException(
+            status_code=400,
+            detail=f"url required for {data.transport.value} transport",
+        )
+    if data.transport in ("sse", "http"):
+        _validate_url_or_422(data.url)
     if data.env_vars and not settings.mcp_env_encryption_key:
         raise HTTPException(status_code=400, detail="MCP_ENV_ENCRYPTION_KEY not configured")
 
@@ -98,7 +113,10 @@ async def update_connection(
     if "args" in updates:
         conn.args = updates["args"] or []
     if "url" in updates:
-        conn.url = updates["url"]
+        new_url = updates["url"]
+        if new_url is not None and conn.transport in ("sse", "http"):
+            _validate_url_or_422(new_url)
+        conn.url = new_url
     if "env_vars" in updates:
         conn.env_vars = _encrypt_env_vars_or_400(updates["env_vars"] or {})
     if "enabled" in updates:

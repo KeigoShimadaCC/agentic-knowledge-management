@@ -45,7 +45,7 @@ Request:
 {
   "email": "you@example.com",
   "password": "correct horse battery staple",
-  "device_name": "Keigo's iPhone"
+  "device_name": "Example iPhone"
 }
 ```
 

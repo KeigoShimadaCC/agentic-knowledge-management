@@ -1,3 +1,4 @@
+import logging
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, HTTPException, Request
@@ -7,6 +8,20 @@ from fastapi.responses import JSONResponse
 from app.api.v1.router import api_router
 from app.config import settings
 from app.core.library import ensure_library_structure
+
+
+def warn_if_unscoped_mcp_token(log: logging.Logger) -> None:
+    """Emit a startup warning when MCP_INTERNAL_TOKEN is set without a scoped user.
+
+    Extracted from the lifespan handler so tests can exercise it directly without
+    rerunning the full app startup.
+    """
+    if settings.mcp_internal_token and not settings.mcp_internal_user_id:
+        log.warning(
+            "MCP_INTERNAL_TOKEN is configured without MCP_INTERNAL_USER_ID; "
+            "the token will resolve to the first non-deleted user. Set "
+            "MCP_INTERNAL_USER_ID for multi-user safety."
+        )
 
 
 @asynccontextmanager
@@ -20,6 +35,8 @@ async def lifespan(app: FastAPI):
     log = logging.getLogger(__name__)
     ensure_library_structure()
     await qc.create_collection_if_not_exists()
+
+    warn_if_unscoped_mcp_token(log)
 
     async with AsyncSessionLocal() as db:
         try:
@@ -44,6 +61,11 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title="KnowledgeOS API", version="0.1.0", lifespan=lifespan)
+
+if settings.kos_profile == "mobile":
+    from app.middleware.lan_guard import install_lan_guard
+
+    install_lan_guard(app, trusted_proxy_count=settings.trusted_proxy_count)
 
 app.add_middleware(
     CORSMiddleware,

@@ -7,8 +7,8 @@ This document is the actionable plan for Phase 2: Sources and Rich Media Ingesti
 
 **Orchestration model**: Claude Code plans and orchestrates; Codex agents write all code.
 **Commit cadence**: After every subtask. Small reviewable commits.
-**Repo**: `https://github.com/KeigoShimadaCC/agentic-knowledge-management` (branch: main)
-**Working directory**: `/Users/keigoshimada/Documents/agentic-knowledge-management`
+**Repo**: `https://github.com/OWNER/agentic-knowledge-management` (branch: main)
+**Working directory**: `$HOME/Documents/agentic-knowledge-management`
 
 ---
 

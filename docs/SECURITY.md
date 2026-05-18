@@ -14,6 +14,18 @@
 
 - Env `ALLOW_OPEN_REGISTRATION` (default `true`): when `false`, `POST /auth/register` returns **403** for a closed appliance.
 - Duplicate registration attempts return a generic **400** (`Unable to complete registration`) to avoid email enumeration via status codes.
+- The mobile profile (`infra/docker-compose.mobile.yml`) overrides this to `false` by default, so a guest on the same Wi-Fi cannot create an account.
+
+## Mobile (LAN) profile (PHASE-FIX-04 / S5)
+
+When the API is brought up via `infra/docker-compose.mobile.yml` to allow on-LAN iPhone access, two extra layers of hardening apply:
+
+1. **Open registration is disabled by default.** The compose file sets `ALLOW_OPEN_REGISTRATION=false`; create accounts on the desktop before switching to mobile mode.
+2. **LAN-allowlist middleware (`KOS_PROFILE=mobile`).** Every request whose source IP is not RFC1918 private, loopback, or link-local is rejected with **403** before any route handler runs (`app/middleware/lan_guard.py`).
+
+`X-Forwarded-For` is **ignored** unless `TRUSTED_PROXY_COUNT > 0`; otherwise the source IP is read from the actual TCP peer (`request.client.host`). Set `TRUSTED_PROXY_COUNT` to the number of reverse proxies you have placed in front of the API, and only after you trust those proxies to strip client-supplied headers.
+
+The iOS ATS exceptions in `apps/ios/.../Info.plist` (cleartext to `127.0.0.1`, `localhost`, `local.`, `ts.net.`) are needed for the on-LAN flow and remain unchanged.
 
 ## Web ingestion and SSRF
 
@@ -109,16 +121,20 @@ FastAPI accepts an `X-KOS-Internal-Token` header as an alternative to the sessio
 1. `MCP_INTERNAL_TOKEN` is set in `infra/.env` (gitignored, never committed).
 2. FastAPI `get_current_user` in `core/deps.py` checks mobile bearer auth first, then this internal header, then the web cookie.
 3. Match is verified with `secrets.compare_digest` (timing-safe).
-4. On match: loads the first non-deleted user (single-user local appliance).
+4. On match: resolves to a specific user identity (see scoping below).
 5. If token config is empty: header is silently ignored; no authentication bypass.
+
+**User scoping (PHASE-FIX-04):**
+
+- Set `MCP_INTERNAL_USER_ID` to the UUID of the dedicated service user. The token then resolves to exactly that user.
+- If `MCP_INTERNAL_USER_ID` is empty: the token falls back to the **first non-deleted user** (legacy single-user behavior). The app logs a startup warning in this state.
+- The fallback is safe only on single-user instances. Add `MCP_INTERNAL_USER_ID` before creating a second account or exposing the API to any non-trusted environment.
 
 **Security properties:**
 - Token is never logged, returned in API responses, or exposed through MCP tools.
 - Empty token = feature disabled (safe default — no header value can match an empty secret).
 - Timing-safe comparison prevents oracle attacks.
 - User ownership filtering is preserved: all objects queries still filter by `user_id`.
-
-**Limitation:** Multi-user instances are not supported through MCP in Phase 7A. The token grants access as the first active user. Phase 7B will address per-user MCP auth if needed.
 
 ## MCP Server Safety (Phases 7A + 7B)
 

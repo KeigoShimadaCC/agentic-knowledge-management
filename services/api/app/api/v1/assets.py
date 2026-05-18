@@ -6,6 +6,7 @@ from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.config import settings
 from app.core.deps import get_current_user
 from app.core.storage import get_absolute_path, store_file
 from app.db.session import get_db
@@ -85,7 +86,29 @@ async def upload_asset(
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> AssetUploadResponse | AssetSourceUploadResponse:
-    content = await file.read()
+    max_bytes = settings.asset_upload_max_bytes
+    declared = getattr(file, "size", None)
+    if declared is not None and declared > max_bytes:
+        raise HTTPException(
+            status_code=413,
+            detail=f"asset exceeds maximum size of {max_bytes} bytes",
+        )
+
+    chunks: list[bytes] = []
+    total = 0
+    while True:
+        chunk = await file.read(64 * 1024)
+        if not chunk:
+            break
+        total += len(chunk)
+        if total > max_bytes:
+            raise HTTPException(
+                status_code=413,
+                detail=f"asset exceeds maximum size of {max_bytes} bytes",
+            )
+        chunks.append(chunk)
+    content = b"".join(chunks)
+
     sha256 = hashlib.sha256(content).hexdigest()
 
     existing = await asset_service.find_by_sha256(db, sha256, user.id)

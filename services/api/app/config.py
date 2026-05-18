@@ -31,6 +31,10 @@ class Settings(BaseSettings):
         default=25 * 1024 * 1024,
         description="Maximum accepted chat import payload size in bytes.",
     )
+    asset_upload_max_bytes: int = Field(
+        default=100 * 1024 * 1024,
+        description="Maximum accepted asset upload payload size in bytes.",
+    )
     seed_demo_examples: bool = Field(
         default=False,
         description="On API startup, seed [Demo] pages/source/chat/edges for the demo user.",
@@ -47,6 +51,14 @@ class Settings(BaseSettings):
         description=(
             "Shared token for local MCP service auth via X-KOS-Internal-Token header. "
             "Empty = disabled."
+        ),
+    )
+    mcp_internal_user_id: str = Field(
+        default="",
+        description=(
+            "Scope MCP_INTERNAL_TOKEN to a specific user UUID. "
+            "Empty = legacy single-user fallback (token resolves to the first "
+            "non-deleted user); set this for multi-user safety."
         ),
     )
     mcp_rate_limit_per_minute: int = Field(
@@ -80,6 +92,22 @@ class Settings(BaseSettings):
     )
     mcp_web_search_threshold: float = 0.45
     mcp_web_search_connection_name: str = ""
+
+    kos_profile: str = Field(
+        default="desktop",
+        description=(
+            "Deployment profile. 'desktop' (default) = loopback only; 'mobile' = bind "
+            "0.0.0.0 for on-LAN iPhone access, also enables the LAN-allowlist middleware."
+        ),
+    )
+    trusted_proxy_count: int = Field(
+        default=0,
+        description=(
+            "Number of trusted reverse proxies in front of the API. When >0, the "
+            "LAN-allowlist middleware uses X-Forwarded-For (counting back from the "
+            "rightmost entry); when 0, X-Forwarded-For is ignored (safe default)."
+        ),
+    )
 
     model_config = {"env_file": ".env", "env_file_encoding": "utf-8"}
 

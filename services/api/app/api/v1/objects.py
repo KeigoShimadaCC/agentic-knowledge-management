@@ -207,7 +207,7 @@ async def restore_object(
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> ObjectOut:
-    obj = await object_service.get_object_or_404(db, object_id, user.id)
+    obj = await object_service.get_object_or_404_including_deleted(db, object_id, user.id)
     obj = await object_service.restore_object(db, obj)
     await db.commit()
     await db.refresh(obj)
@@ -281,8 +281,9 @@ async def restore_revision_endpoint(
     if not revision:
         raise HTTPException(status_code=404, detail="Revision not found")
 
-    # Confirm user owns the object
-    await object_service.get_object_or_404(db, object_id, user.id)
+    # Confirm user owns the object (revision restore is a recovery flow, so
+    # we accept soft-deleted objects here).
+    await object_service.get_object_or_404_including_deleted(db, object_id, user.id)
 
     agent_id = agent_id_from_request(request)
 

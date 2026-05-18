@@ -7,7 +7,7 @@
         "id": "a",
         "message": {
           "id": "msg-a",
-          "author": { "role": "user", "name": "Keigo" },
+          "author": { "role": "user", "name": "Demo User" },
           "create_time": 1778700000,
           "content": { "content_type": "text", "parts": ["Find notes about phase six alpha import."] }
         }

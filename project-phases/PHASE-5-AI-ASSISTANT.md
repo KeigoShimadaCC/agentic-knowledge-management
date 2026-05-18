@@ -11,8 +11,8 @@ Phases 1–4 are complete and pushed to main.
 - No `ai/` module, no AI endpoints, no `object_revisions` table
 
 **Orchestration model**: Claude Code plans and orchestrates; Codex agents write all code.
-**Repo**: `https://github.com/KeigoShimadaCC/agentic-knowledge-management` (branch: main)
-**Working directory**: `/Users/keigoshimada/Documents/agentic-knowledge-management`
+**Repo**: `https://github.com/OWNER/agentic-knowledge-management` (branch: main)
+**Working directory**: `$HOME/Documents/agentic-knowledge-management`
 
 ---
 

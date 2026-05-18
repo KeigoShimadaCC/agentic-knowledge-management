@@ -16,6 +16,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.config import settings
 from app.core.deps import get_current_user
 from app.core.redaction import redact_env_vars
+from app.core.url_safety import validate_safe_http_url
 from app.db.session import get_db
 from app.mcp_client.client import McpClientSession, McpConnectionError
 from app.mcp_client.crypto import decrypt_env_vars
@@ -193,6 +194,7 @@ async def _run_stdio_test(conn: McpConnection, db: AsyncSession) -> McpConnectio
 
 async def _run_sse_test(conn: McpConnection, db: AsyncSession) -> McpConnectionTestResult:
     try:
+        validate_safe_http_url(conn.url)
         if conn.transport == McpConnectionTransport.http.value:
             ctx = streamablehttp_client(url=conn.url)
             async with ctx as (read, write, _):
