@@ -1,5 +1,7 @@
 """LAN-allowlist middleware unit tests (PHASE-FIX-04 / S5)."""
 
+from pathlib import Path
+
 import pytest
 from fastapi import FastAPI
 from httpx import ASGITransport, AsyncClient
@@ -73,4 +75,42 @@ async def test_xff_rejected_when_rightmost_is_public():
     transport = ASGITransport(app=app, client=("10.0.0.1", 12345))
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
         resp = await ac.get("/probe", headers={"X-Forwarded-For": "8.8.8.8"})
+    assert resp.status_code == 403
+
+
+def test_mobile_compose_keeps_both_safety_env_vars():
+    """The mobile compose layer must keep KOS_PROFILE + ALLOW_OPEN_REGISTRATION in lockstep.
+
+    Both layers (S5 layer 1: open-reg off; layer 2: LAN guard) are required for the
+    mobile profile's threat model. A future edit that drops either should fail this
+    test before merge.
+    """
+    path = (
+        Path(__file__).resolve().parents[2] / "infra" / "docker-compose.mobile.yml"
+    )
+    content = path.read_text()
+    assert "KOS_PROFILE: mobile" in content, "mobile profile must activate LAN guard"
+    assert 'ALLOW_OPEN_REGISTRATION: "false"' in content, (
+        "mobile profile must disable open registration"
+    )
+
+
+@pytest.mark.asyncio
+async def test_register_returns_403_when_open_registration_disabled(
+    client: AsyncClient, monkeypatch: pytest.MonkeyPatch
+):
+    """Combined layer-1 mobile-profile assertion: with ALLOW_OPEN_REGISTRATION=false,
+    POST /auth/register is refused even from an authenticated-looking client.
+    """
+    from app.config import settings
+
+    monkeypatch.setattr(settings, "allow_open_registration", False)
+    resp = await client.post(
+        "/api/v1/auth/register",
+        json={
+            "email": "guest@example.com",
+            "password": "password123",
+            "display_name": "Guest",
+        },
+    )
     assert resp.status_code == 403
