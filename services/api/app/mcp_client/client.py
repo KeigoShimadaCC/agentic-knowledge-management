@@ -9,6 +9,7 @@ from mcp import ClientSession
 from mcp.client.sse import sse_client
 from mcp.client.streamable_http import streamablehttp_client
 
+from app.core.url_safety import UnsafeUrlError, validate_safe_http_url
 from app.mcp_client.crypto import decrypt_env_vars
 
 
@@ -34,6 +35,10 @@ class McpClientSession:
 
     async def __aenter__(self):
         if self._conn.transport in ("sse", "http"):
+            try:
+                validate_safe_http_url(self._conn.url)
+            except UnsafeUrlError as exc:
+                raise McpConnectionError(f"unsafe MCP URL: {exc}") from exc
             self._stack = AsyncExitStack()
             try:
                 if self._conn.transport == "http":

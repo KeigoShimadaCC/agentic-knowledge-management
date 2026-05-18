@@ -100,12 +100,67 @@ async def test_create_sse_connection_returns_201(auth_client: AsyncClient):
         json={
             "name": "SSE MCP",
             "transport": "sse",
-            "url": "http://localhost:9000/mcp",
+            "url": "https://1.1.1.1:9000/mcp",
         },
     )
 
     assert resp.status_code == 201, resp.text
     assert resp.json()["transport"] == "sse"
+
+
+async def test_create_sse_connection_rejects_localhost_url(auth_client: AsyncClient):
+    resp = await auth_client.post(
+        f"{BASE_URL}/",
+        json={
+            "name": "Loopback SSE",
+            "transport": "sse",
+            "url": "http://127.0.0.1:9000/mcp",
+        },
+    )
+    assert resp.status_code == 422
+    assert "unsafe MCP URL" in resp.text
+
+
+async def test_create_http_connection_rejects_metadata_url(auth_client: AsyncClient):
+    resp = await auth_client.post(
+        f"{BASE_URL}/",
+        json={
+            "name": "Metadata HTTP",
+            "transport": "http",
+            "url": "http://169.254.169.254/latest/meta-data/",
+        },
+    )
+    assert resp.status_code == 422
+    assert "unsafe MCP URL" in resp.text
+
+
+async def test_create_http_connection_requires_url(auth_client: AsyncClient):
+    resp = await auth_client.post(
+        f"{BASE_URL}/",
+        json={"name": "Missing HTTP URL", "transport": "http"},
+    )
+    assert resp.status_code == 400
+    assert "url required" in resp.text
+
+
+async def test_patch_connection_rejects_unsafe_url(auth_client: AsyncClient):
+    create_resp = await auth_client.post(
+        f"{BASE_URL}/",
+        json={
+            "name": "Patchable",
+            "transport": "sse",
+            "url": "https://1.1.1.1:9000/mcp",
+        },
+    )
+    assert create_resp.status_code == 201, create_resp.text
+    created = create_resp.json()
+
+    patch_resp = await auth_client.patch(
+        f"{BASE_URL}/{created['id']}",
+        json={"url": "http://localhost:8080/mcp"},
+    )
+    assert patch_resp.status_code == 422
+    assert "unsafe MCP URL" in patch_resp.text
 
 
 async def test_create_stdio_missing_command_returns_400(auth_client: AsyncClient):
