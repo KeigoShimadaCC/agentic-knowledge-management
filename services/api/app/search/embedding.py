@@ -55,10 +55,27 @@ class EmbeddingDisabledError(Exception):
     pass
 
 
+def embeddings_available() -> bool:
+    """Whether embedding calls can run (key configured and runtime deps present)."""
+    key = settings.openai_api_key
+    if not key:
+        return False
+    if key in {"test-mock", "sk-test-placeholder"}:
+        return True
+    try:
+        import openai  # noqa: F401
+    except ImportError:
+        return False
+    return True
+
+
 def get_embedding_provider() -> EmbeddingProvider:
     key = settings.openai_api_key
     if not key:
         return DisabledEmbeddingProvider()
     if key in {"test-mock", "sk-test-placeholder"}:
         return MockEmbeddingProvider()
-    return OpenAIEmbeddingProvider()
+    try:
+        return OpenAIEmbeddingProvider()
+    except ImportError:
+        return DisabledEmbeddingProvider()

@@ -59,7 +59,9 @@ def test_phone_08_parity_plan_exists_and_records_hard_gate() -> None:
     phase = read(ROOT / "project-phases" / "PHASE-PHONE-08-CROSS-PLATFORM-PARITY.md")
     progress = read(ROOT / "PROGRESS.md")
 
-    assert "**Status:** Draft" in phase
+    # Phase 08 was marked Complete in commit 04468bc; either Draft or Complete is a
+    # valid recorded status. The test asserts the status line exists, not its value.
+    assert "**Status:** Draft" in phase or "**Status:** Complete" in phase
     assert "**Worktree:** `worktrees/kos-phone-08`" in phase
     assert "Mac surface, meaning the existing Next.js web app in `apps/web`" in phase
     assert "docs/CROSS_PLATFORM_PARITY.md" in phase

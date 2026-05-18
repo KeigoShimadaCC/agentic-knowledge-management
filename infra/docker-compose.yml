@@ -76,6 +76,8 @@ services:
       SEED_DEMO_EXAMPLES: "true"
     volumes:
       - ../services/api:/app
+      # Keep the Linux venv from the image; do not use the host macOS .venv bind mount.
+      - kos-api-venv:/app/.venv
       - library-data:/library
       - ./.env:/host/infra/.env
     command:
@@ -156,6 +158,7 @@ volumes:
   postgres-data:
   redis-data:
   qdrant-data:
+  kos-api-venv:
   kos-web-node-modules:
   library-data:
     driver: local

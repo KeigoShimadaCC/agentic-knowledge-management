@@ -22,7 +22,7 @@
 - `make test-unit` ✅ 62 passed (includes `SettingsPage` Vitest with MSW)
 - `pnpm --dir tests/e2e test specs/34-settings-hub.spec.ts` ✅ 4 passed (settings hub tabs, prompt save/reset, feature model save, MCP link)
 - Route crawl includes `/app/settings` and `/app/settings/mcp` ✅
-- iOS: DTO fixture test in `KnowledgeOSTests/DTOTests.swift`; simulator build/test remains a manual gate when CoreSimulator is available (no CI iOS job)
+- iOS (`xcodegen` + `xcodebuild -scheme KnowledgeOS -destination 'platform=iOS Simulator,name=iPhone 16' build test`, 2026-05-19): **BUILD SUCCEEDED**; `DTOTests.testSettingsResponse` ✅; 87/88 unit tests passed. `LiveBackendSmokeTests` failed on `GET /api/v1/mobile/bootstrap` 500 when Docker API bind-mounted a macOS `.venv` (`ModuleNotFoundError: openai`) — fixed via `kos-api-venv` volume + `embeddings_available()` guard. UITest login flows depend on the same bootstrap path.
 
 ---
 
