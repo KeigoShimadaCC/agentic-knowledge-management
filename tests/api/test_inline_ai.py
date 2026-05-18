@@ -5,7 +5,6 @@ OpenAI calls are patched — no real API calls are made.
 
 from __future__ import annotations
 
-from types import SimpleNamespace
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -82,14 +81,9 @@ async def test_complete_max_tokens_over_limit(auth_client: AsyncClient):
 
 @pytest.mark.asyncio
 async def test_complete_no_api_key(auth_client: AsyncClient):
-    import app.ai.client as client_module
+    from app.ai import providers as providers_module
 
-    fake_settings = SimpleNamespace(
-        openai_api_key="",
-        openai_chat_model="gpt-4o-mini",
-        openai_max_tokens=2000,
-    )
-    with patch.object(client_module, "settings", fake_settings):
+    with patch.object(providers_module.settings, "openai_api_key", ""):
         resp = await auth_client.post(
             "/api/v1/ai/complete",
             json={"context_before": "Some text to complete."},
@@ -126,14 +120,9 @@ async def test_transform_empty_text(auth_client: AsyncClient):
 
 @pytest.mark.asyncio
 async def test_transform_no_api_key(auth_client: AsyncClient):
-    import app.ai.client as client_module
+    from app.ai import providers as providers_module
 
-    fake_settings = SimpleNamespace(
-        openai_api_key="",
-        openai_chat_model="gpt-4o-mini",
-        openai_max_tokens=2000,
-    )
-    with patch.object(client_module, "settings", fake_settings):
+    with patch.object(providers_module.settings, "openai_api_key", ""):
         resp = await auth_client.post(
             "/api/v1/ai/transform",
             json={"text": "Some text.", "instruction": "improve"},

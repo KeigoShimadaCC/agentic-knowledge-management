@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import json
-from types import SimpleNamespace
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -217,16 +216,11 @@ async def test_generate_resume_bullets_project_soft_deleted(auth_client: AsyncCl
 
 @pytest.mark.asyncio
 async def test_generate_resume_bullets_ai_disabled_no_agent_run(auth_client: AsyncClient):
-    import app.ai.client as client_module
+    from app.ai import providers as providers_module
 
     project = await _make_project(auth_client)
     before = await _agent_run_count()
-    fake_settings = SimpleNamespace(
-        openai_api_key="",
-        openai_chat_model="gpt-4o-mini",
-        openai_max_tokens=2000,
-    )
-    with patch.object(client_module, "settings", fake_settings):
+    with patch.object(providers_module.settings, "openai_api_key", ""):
         resp = await auth_client.post(
             "/api/v1/ai/generate-resume-bullets",
             json={"project_id": project["id"], "count": 1},
@@ -310,15 +304,10 @@ async def test_generate_interview_story_max_words_100(auth_client: AsyncClient):
 
 @pytest.mark.asyncio
 async def test_generate_interview_story_ai_disabled(auth_client: AsyncClient):
-    import app.ai.client as client_module
+    from app.ai import providers as providers_module
 
     project = await _make_project(auth_client)
-    fake_settings = SimpleNamespace(
-        openai_api_key="",
-        openai_chat_model="gpt-4o-mini",
-        openai_max_tokens=2000,
-    )
-    with patch.object(client_module, "settings", fake_settings):
+    with patch.object(providers_module.settings, "openai_api_key", ""):
         resp = await auth_client.post(
             "/api/v1/ai/generate-interview-story",
             json={"project_id": project["id"]},
