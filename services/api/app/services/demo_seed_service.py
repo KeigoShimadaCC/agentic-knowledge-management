@@ -114,6 +114,20 @@ async def _get_or_create_demo_user(db: AsyncSession) -> User:
     return user
 
 
+async def ensure_local_user(db: AsyncSession) -> User:
+    """Make sure at least one non-deleted user exists for the single-user desktop profile.
+
+    If any user already exists, return the first one (don't shadow the user's identity).
+    Otherwise create the demo user so the no-auth fallback in core/deps.py has someone
+    to return. Called from the lifespan on startup when KOS_PROFILE != "mobile".
+    """
+    result = await db.execute(select(User).where(User.deleted_at.is_(None)).limit(1))
+    existing = result.scalar_one_or_none()
+    if existing:
+        return existing
+    return await _get_or_create_demo_user(db)
+
+
 async def seed_demo_examples(db: AsyncSession) -> list[uuid.UUID]:
     """Seed demo content if enabled and not already present. Returns object IDs to reindex."""
     if not settings.seed_demo_examples:

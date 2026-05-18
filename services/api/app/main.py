@@ -46,6 +46,15 @@ async def lifespan(app: FastAPI):
             log.exception("Legacy demo email migration failed")
             await db.rollback()
 
+    if settings.kos_profile != "mobile":
+        async with AsyncSessionLocal() as db:
+            try:
+                await demo_seed_service.ensure_local_user(db)
+                await db.commit()
+            except Exception:
+                log.exception("Local single-user provisioning failed")
+                await db.rollback()
+
     if settings.seed_demo_examples:
         async with AsyncSessionLocal() as db:
             try:
