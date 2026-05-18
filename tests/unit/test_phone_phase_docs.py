@@ -53,3 +53,18 @@ def test_phone_07_contract_doc_exists_and_uses_current_worktree() -> None:
     assert "**Worktree:** `worktrees/kos-phone-07`" in phase
     assert "/api/v1/assets/{asset_id}/download" in phase
     assert "Application Support" in phase
+
+
+def test_phone_08_parity_plan_exists_and_records_hard_gate() -> None:
+    phase = read(ROOT / "project-phases" / "PHASE-PHONE-08-CROSS-PLATFORM-PARITY.md")
+    progress = read(ROOT / "PROGRESS.md")
+
+    assert "**Status:** Draft" in phase
+    assert "**Worktree:** `worktrees/kos-phone-08`" in phase
+    assert "Mac surface, meaning the existing Next.js web app in `apps/web`" in phase
+    assert "docs/CROSS_PLATFORM_PARITY.md" in phase
+    assert "critical-gap-fixed-in-phone-08" in phase
+    assert "Use `ios-simulator` MCP after boot." in phase
+    assert "iPhone 16 simulator build, test, MCP UI describe, and screenshot acceptance all pass." in phase
+    assert "PHASE-PHONE-08-CROSS-PLATFORM-PARITY.md" in progress
+
