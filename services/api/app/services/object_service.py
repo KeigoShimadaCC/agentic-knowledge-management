@@ -28,6 +28,27 @@ async def create_object(db: AsyncSession, user_id: uuid.UUID, data: ObjectCreate
 async def get_object_or_404(
     db: AsyncSession, object_id: uuid.UUID, user_id: uuid.UUID
 ) -> KosObject:
+    """Fetch a live (non-soft-deleted) object owned by user, or 404."""
+    result = await db.execute(
+        select(KosObject).where(
+            KosObject.id == object_id,
+            KosObject.user_id == user_id,
+            KosObject.deleted_at.is_(None),
+        )
+    )
+    obj = result.scalar_one_or_none()
+    if not obj:
+        raise HTTPException(status_code=404, detail="Object not found")
+    return obj
+
+
+async def get_object_or_404_including_deleted(
+    db: AsyncSession, object_id: uuid.UUID, user_id: uuid.UUID
+) -> KosObject:
+    """Fetch any object (live or soft-deleted) owned by user, or 404.
+
+    For restore-from-trash and revision-restore flows only.
+    """
     result = await db.execute(
         select(KosObject).where(KosObject.id == object_id, KosObject.user_id == user_id)
     )
