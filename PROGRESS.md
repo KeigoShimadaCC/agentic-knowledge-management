@@ -947,8 +947,9 @@ xcodebuild ... -only-testing:KnowledgeOSTests test                        # ⇒ 
 - [x] `Features/PageDetail/PageDetailViewModel.swift` — added `apply(updated:)`, `discardAndRefresh(pageID:)`, `overwriteWith(draftText:pageID:)` and `conflict: PageConflict?`.
 - [x] `Features/PageDetail/PageDetailView.swift` — Edit-body toolbar item; body editor and conflict sheets presented. Shared `DetailHeader` now renders an `ObjectDetail.tagsRow` chip strip so tag edits are visible after Save.
 - [x] Tests: `KnowledgeOSTests/TiptapPlainTextTests.swift` (7 tests: empty, whitespace-only, single line, multi-paragraph with blanks, round-trip, missing content key, nested text-node flattening).
-- [x] `KnowledgeOSUITests/EditMetadataSmokeTests.swift` — XCUITest that opens the first Home object, taps Edit, appends a timestamped suffix, saves, pops home, and asserts the updated title persists. Requires a running backend with the demo seed (same prereq as `LoginEndToEndSmokeTests`).
-- [x] `scripts/mobile_qa_edit_title.sh` — simulator-MCP companion script that captures the 6-step edit flow under `.tmp/mobile-qa/edit-title/<timestamp>/`.
+- [x] `KnowledgeOSTests/EditLiteLiveSmokeTests.swift` — **live integration gate**, follows the 03C `LiveBackendSmokeTests` pattern (skips when backend unreachable). Drives the full PHONE-04 contract through `APIClient` + `EditAPI`: creates a fresh page, PATCHes title+tags, re-fetches and asserts persistence, PUTs the body with `expected_version`, asserts the version bumps and the Tiptap round-trips, then re-submits with a stale version and asserts the response surfaces as `APIError.conflict`. Exercises the live 200, 200, and 409 paths end-to-end.
+- [x] `KnowledgeOSUITests/EditMetadataSmokeTests.swift` — XCUITest version of the spec's Task 6 flow. Documented limitation: iOS 26 simulator + SwiftUI List + NavigationLink reports cells as not-hittable for `.tap()`, and synthetic coordinate taps don't reliably trigger NavigationLink value-based navigation — the test currently times out waiting for the detail screen after the cell tap. Same iOS-26 hit-test issue noted in 03C for `LoginEndToEndSmokeTests`. **`EditLiteLiveSmokeTests` is the working integration gate**; the XCUITest is kept as documentation of the intended UI flow for future iOS releases that fix the simulator hit-testing.
+- [x] `scripts/mobile_qa_edit_title.sh` — simulator-MCP companion script that captures the 6-step edit flow under `.tmp/mobile-qa/edit-title/<timestamp>/` for manual visual QA.
 
 **Validation performed:**
 
@@ -956,8 +957,9 @@ xcodebuild ... -only-testing:KnowledgeOSTests test                        # ⇒ 
 cd apps/ios && xcodegen generate                                            # ⇒ passed
 xcodebuild -project KnowledgeOS.xcodeproj -scheme KnowledgeOS \
   -destination 'platform=iOS Simulator,name=iPhone 16' build                 # ⇒ BUILD SUCCEEDED
-xcodebuild ... -only-testing:KnowledgeOSTests test                           # ⇒ 45/45 unit tests pass
-                                                                             #    (38 prior + 7 new TiptapPlainText tests)
+xcodebuild ... -only-testing:KnowledgeOSTests test                           # ⇒ 46/46 unit tests pass
+                                                                             #    (38 prior + 7 new TiptapPlainText + 1 new EditLite live smoke)
+xcodebuild ... -only-testing:KnowledgeOSTests/EditLiteLiveSmokeTests test    # ⇒ EditLite live smoke: PUT 200, GET 200, PUT 409 (conflict mapped)
 ```
 
 **Scope-guard notes:**

@@ -2,7 +2,7 @@ import XCTest
 
 /// Live-backend smoke: requires `docker compose up`, migration 0013+, demo seed.
 /// Opens the first recent object on Home, taps Edit, appends a suffix to the title,
-/// saves, reopens, and asserts the new title is visible in the nav bar.
+/// saves, reopens the object, and asserts the new title is visible in the nav bar.
 final class EditMetadataSmokeTests: XCTestCase {
     override func setUpWithError() throws {
         continueAfterFailure = false
@@ -38,38 +38,54 @@ final class EditMetadataSmokeTests: XCTestCase {
 
         if app.keyboards.firstMatch.exists { app.swipeDown() }
 
-        // Open the first object from Home. recentList holds NavigationLinks.
+        // Open the first object from Home. iOS 26 simulator reports List cells as
+        // not-hittable for direct .tap(); fall back to a coordinate tap on the
+        // cell's frame midpoint (same workaround LoginEndToEndSmokeTests uses for
+        // the tab bar).
         let recentList = app.collectionViews.matching(identifier: "kos.home.recentList").firstMatch
         let firstCell = recentList.cells.firstMatch
         XCTAssertTrue(firstCell.waitForExistence(timeout: 20), "Home should have at least one object")
-        let originalLabel = firstCell.label
-        firstCell.tap()
+        tapByCoordinate(in: app, frame: firstCell.frame)
 
-        // Tap nav-bar Edit.
+        // Wait for object detail and grab the original nav-bar title.
         let editButton = app.navigationBars.buttons["kos.objectDetail.editButton"]
         XCTAssertTrue(editButton.waitForExistence(timeout: 10))
+        let originalNavBar = app.navigationBars.element(boundBy: 0)
+        let originalTitle = originalNavBar.identifier
+
         editButton.tap()
 
-        // Append a unique suffix to the title.
+        // Append a unique suffix to the title. typeText() appends at the cursor,
+        // which lands at the end of the field on focus.
         let titleField = app.textFields["kos.editMetadata.titleField"]
         XCTAssertTrue(titleField.waitForExistence(timeout: 5))
         let suffix = " · edited \(Int(Date().timeIntervalSince1970))"
         titleField.tap()
         titleField.typeText(suffix)
+        let expectedTitle = originalTitle + suffix
 
         app.buttons["kos.editMetadata.saveButton"].tap()
 
-        // Sheet dismisses on save. Pop to Home, then re-open to verify persistence.
-        let backToHome = app.navigationBars.buttons.firstMatch
-        XCTAssertTrue(backToHome.waitForExistence(timeout: 10))
-        backToHome.tap()
-
-        let reopened = recentList.cells.firstMatch
-        XCTAssertTrue(reopened.waitForExistence(timeout: 10))
-        // The updated row label includes the new title.
+        // 1) In-place check: after save the sheet dismisses and the nav bar shows
+        //    the new title without any reload (viewModel.apply(updated:) → @Observable rerender).
         XCTAssertTrue(
-            reopened.label.contains(suffix.trimmingCharacters(in: .whitespaces)),
-            "Expected updated title in row label; got \(reopened.label) (original: \(originalLabel))"
+            app.navigationBars[expectedTitle].waitForExistence(timeout: 10),
+            "Expected nav bar title to update in-place to '\(expectedTitle)'"
+        )
+
+        // 2) Persistence check: pop back to Home, re-open the same object,
+        //    confirm the title still matches after a fresh GET /objects/{id}.
+        let backButton = app.navigationBars.buttons.element(boundBy: 0)
+        XCTAssertTrue(backButton.exists)
+        backButton.tap()
+
+        let reopenedCell = recentList.cells.firstMatch
+        XCTAssertTrue(reopenedCell.waitForExistence(timeout: 10))
+        tapByCoordinate(in: app, frame: reopenedCell.frame)
+
+        XCTAssertTrue(
+            app.navigationBars[expectedTitle].waitForExistence(timeout: 10),
+            "Expected reopened object to still show '\(expectedTitle)' (was '\(originalTitle)')"
         )
     }
 }
@@ -84,4 +100,10 @@ private extension XCUIElement {
         }
         typeText(text)
     }
+}
+
+private func tapByCoordinate(in app: XCUIApplication, frame: CGRect) {
+    app.coordinate(withNormalizedOffset: .zero)
+        .withOffset(CGVector(dx: frame.midX, dy: frame.midY))
+        .tap()
 }

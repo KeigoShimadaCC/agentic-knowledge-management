@@ -28,15 +28,14 @@ struct PageDetailView: View {
             .padding()
         }
         .toolbar {
-            if viewModel.page != nil {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button {
-                        isEditingBody = true
-                    } label: {
-                        Label("Edit body", systemImage: "square.and.pencil")
-                    }
-                    .accessibilityIdentifier(Kos.PageDetail.editButton)
+            ToolbarItem(placement: .topBarTrailing) {
+                Button {
+                    isEditingBody = true
+                } label: {
+                    Label("Edit body", systemImage: "square.and.pencil")
                 }
+                .disabled(viewModel.page == nil)
+                .accessibilityIdentifier(Kos.PageDetail.editButton)
             }
         }
         .sheet(isPresented: $isEditingBody) {

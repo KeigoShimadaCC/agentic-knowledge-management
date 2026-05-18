@@ -34,14 +34,12 @@ struct ObjectDetailView: View {
         .navigationTitle(viewModel.object?.title ?? "Object")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
-            if let object = viewModel.object {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button("Edit") {
-                        isEditingMetadata = true
-                    }
-                    .accessibilityIdentifier(Kos.ObjectDetail.editButton)
-                    .accessibilityLabel("Edit \(object.title)")
+            ToolbarItem(placement: .topBarTrailing) {
+                Button("Edit") {
+                    isEditingMetadata = true
                 }
+                .disabled(viewModel.object == nil)
+                .accessibilityIdentifier(Kos.ObjectDetail.editButton)
             }
         }
         .sheet(isPresented: $isEditingMetadata) {
