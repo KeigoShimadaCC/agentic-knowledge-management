@@ -458,7 +458,7 @@ async def triage_object(
 
 def _extract_context7_library_id(raw: dict) -> str | None:
     """Extract the first Context7-compatible library ID from a resolve-library-id response."""
-    for part in (raw.get("content") or []):
+    for part in raw.get("content") or []:
         text = part.get("text", "") if isinstance(part, dict) else str(part)
         m = re.search(r"Context7-compatible library ID:\s*(\S+)", text)
         if m:

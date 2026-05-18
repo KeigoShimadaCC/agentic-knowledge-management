@@ -333,14 +333,19 @@ async def test_jp_mixed_search_does_not_crash(
 
 # ── Workspace-scoped search tests ─────────────────────────────────────────
 
+
 @pytest.mark.asyncio
 async def test_keyword_search_with_object_ids_filter(auth_client: AsyncClient) -> None:
     """keyword search returns only results matching object_ids when provided."""
     page_a = await _create_searchable_page(
-        auth_client, title="Alpha unique keyword xq9z", content_text="Alpha unique keyword xq9z body text"
+        auth_client,
+        title="Alpha unique keyword xq9z",
+        content_text="Alpha unique keyword xq9z body text",
     )
     page_b = await _create_searchable_page(
-        auth_client, title="Beta unique keyword xq9z", content_text="Beta unique keyword xq9z body text"
+        auth_client,
+        title="Beta unique keyword xq9z",
+        content_text="Beta unique keyword xq9z body text",
     )
 
     # Search without filter — both should appear
@@ -372,10 +377,14 @@ async def test_hybrid_search_with_object_ids_filter(
     monkeypatch.setattr("app.config.settings.openai_api_key", None)
 
     page_a = await _create_searchable_page(
-        auth_client, title="Gamma unique keyword yh7w", content_text="Gamma unique keyword yh7w body text"
+        auth_client,
+        title="Gamma unique keyword yh7w",
+        content_text="Gamma unique keyword yh7w body text",
     )
     page_b = await _create_searchable_page(
-        auth_client, title="Delta unique keyword yh7w", content_text="Delta unique keyword yh7w body text"
+        auth_client,
+        title="Delta unique keyword yh7w",
+        content_text="Delta unique keyword yh7w body text",
     )
 
     # Search without filter
@@ -403,7 +412,8 @@ async def test_hybrid_search_with_object_ids_filter(
 async def test_keyword_search_object_ids_empty_list_returns_no_results(
     auth_client: AsyncClient,
 ) -> None:
-    """keyword search with object_ids=[] (empty via no params) returns normal results, not filtered-empty."""
+    """keyword search with object_ids=[] (empty via no params) returns normal results,
+    not filtered-empty."""
     # object_ids query param with a random UUID that doesn't exist should return empty
     random_id = str(uuid.uuid4())
     resp = await auth_client.get(

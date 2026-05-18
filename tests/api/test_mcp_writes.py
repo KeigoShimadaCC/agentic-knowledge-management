@@ -54,6 +54,7 @@ def override_redis():
 async def _get_db_session():
     """Return a fresh session for direct DB assertions."""
     from app.db.session import AsyncSessionLocal
+
     async with AsyncSessionLocal() as s:
         yield s
 

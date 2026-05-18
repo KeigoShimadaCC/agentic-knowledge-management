@@ -89,9 +89,7 @@ async def test_restore_revision_rejects_wrong_object_id(auth_client: AsyncClient
     object_id = page["object"]["id"]
 
     fake_rev_id = "00000000-0000-0000-0000-000000000001"
-    resp = await auth_client.post(
-        f"/api/v1/objects/{object_id}/revisions/{fake_rev_id}/restore"
-    )
+    resp = await auth_client.post(f"/api/v1/objects/{object_id}/revisions/{fake_rev_id}/restore")
     assert resp.status_code == 404
 
 

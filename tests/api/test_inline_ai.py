@@ -39,7 +39,10 @@ def mock_openai():
 async def test_complete_continue(auth_client: AsyncClient, mock_openai: MagicMock):
     resp = await auth_client.post(
         "/api/v1/ai/complete",
-        json={"context_before": "The main limitation of this approach is", "instruction": "continue"},
+        json={
+            "context_before": "The main limitation of this approach is",
+            "instruction": "continue",
+        },
     )
     assert resp.status_code == 200
     data = resp.json()
