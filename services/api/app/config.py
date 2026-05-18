@@ -31,6 +31,10 @@ class Settings(BaseSettings):
         default=25 * 1024 * 1024,
         description="Maximum accepted chat import payload size in bytes.",
     )
+    asset_upload_max_bytes: int = Field(
+        default=100 * 1024 * 1024,
+        description="Maximum accepted asset upload payload size in bytes.",
+    )
     seed_demo_examples: bool = Field(
         default=False,
         description="On API startup, seed [Demo] pages/source/chat/edges for the demo user.",
