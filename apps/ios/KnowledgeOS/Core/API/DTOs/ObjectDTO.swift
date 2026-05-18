@@ -6,6 +6,14 @@ struct ObjectUpdateRequest: Encodable {
     let tags: [String]?
 }
 
+struct EdgeCreateRequest: Encodable {
+    let sourceId: UUID
+    let targetId: UUID
+    let kind: String
+    let weight: Double
+    let metadata: [String: AnyCodable]
+}
+
 struct ObjectDTO: Codable, Equatable, Identifiable {
     let id: UUID
     let userId: UUID
@@ -52,6 +60,18 @@ struct EdgeDTO: Codable, Equatable, Identifiable {
     let source: ObjectSummaryDTO
     let target: ObjectSummaryDTO
     let direction: String?
+}
+
+struct EdgeMutationDTO: Codable, Equatable, Identifiable {
+    let id: UUID
+    let userId: UUID
+    let sourceId: UUID
+    let targetId: UUID
+    let kind: String
+    let weight: Double
+    let metadata: [String: AnyCodable]
+    let createdAt: Date
+    let deletedAt: Date?
 }
 
 struct RelatedObjectDTO: Codable, Equatable, Identifiable {

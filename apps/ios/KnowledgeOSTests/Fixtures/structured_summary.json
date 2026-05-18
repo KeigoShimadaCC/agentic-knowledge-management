@@ -1,0 +1,64 @@
+{
+  "structured_summary": {
+    "title": "PHONE-08 parity review",
+    "summary": "The chat captures cross-platform parity risks and the agreed review-only iPhone summary behavior.",
+    "date_range": {
+      "start": "2026-05-18",
+      "end": "2026-05-18"
+    },
+    "topics": ["phone parity", "structured summaries"],
+    "key_decisions": [
+      {
+        "decision": "Keep iPhone summary handling review-only in PHONE-08.",
+        "rationale": "Applying summaries creates new objects and links that need a dedicated phone UX.",
+        "turn_refs": [1, 3],
+        "confidence": "high"
+      }
+    ],
+    "open_questions": [
+      {
+        "question": "Should apply flow move to a later phase?",
+        "status": "open",
+        "turn_refs": [4],
+        "confidence": "medium"
+      }
+    ],
+    "action_items": [
+      {
+        "task": "Add typed iOS DTO coverage for structured summary previews.",
+        "owner": "PHONE-08",
+        "due_at": null,
+        "turn_refs": [5],
+        "confidence": "high"
+      }
+    ],
+    "claims": [
+      {
+        "claim": "The backend exposes structured summary preview endpoints.",
+        "type": "fact",
+        "turn_refs": [2],
+        "confidence": "high"
+      }
+    ],
+    "concepts": [
+      {
+        "name": "Cross-platform parity",
+        "type": "topic",
+        "turn_refs": [0],
+        "confidence": "high"
+      }
+    ],
+    "suggested_links": [
+      {
+        "target_object_id": "33333333-3333-3333-3333-333333333333",
+        "target_title": "PHONE-08 matrix",
+        "edge_kind": "related_to",
+        "rationale": "The summary references parity matrix work.",
+        "confidence": "medium"
+      }
+    ],
+    "warnings": ["Review-only on iPhone; no apply action is exposed."]
+  },
+  "agent_run_id": "44444444-4444-4444-4444-444444444444",
+  "status": "previewed"
+}

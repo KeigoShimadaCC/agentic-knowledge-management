@@ -22,6 +22,30 @@ struct SettingsTab: View {
                 if let capabilities = authStore.capabilities {
                     Section("Server") {
                         LabeledContent("Base URL", value: appState.baseURLString)
+                        NavigationLink {
+                            WorkspaceListView()
+                        } label: {
+                            Label("Workspaces", systemImage: "rectangle.split.3x1")
+                        }
+                        .accessibilityIdentifier(Kos.Settings.workspacesLink)
+                        NavigationLink {
+                            ChatListView()
+                        } label: {
+                            Label("Chats", systemImage: "bubble.left.and.bubble.right")
+                        }
+                        .accessibilityIdentifier(Kos.Settings.chatsLink)
+                        NavigationLink {
+                            ProjectListView()
+                        } label: {
+                            Label("Projects", systemImage: "folder")
+                        }
+                        .accessibilityIdentifier(Kos.Settings.projectsLink)
+                        NavigationLink {
+                            TrashView()
+                        } label: {
+                            Label("Trash", systemImage: "trash")
+                        }
+                        .accessibilityIdentifier(Kos.Settings.trashLink)
                     }
 
                     Section("About") {

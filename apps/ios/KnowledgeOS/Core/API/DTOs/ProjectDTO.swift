@@ -1,5 +1,18 @@
 import Foundation
 
+struct ProjectUpdateRequest: Encodable {
+    let title: String?
+    let description: String?
+    let role: String?
+    let organization: String?
+    let problem: String?
+    let actions: String?
+    let results: String?
+    let skills: [String]?
+    let status: String?
+    let tags: [String]?
+}
+
 struct ProjectDTO: Codable, Equatable, Identifiable {
     let id: UUID
     let userId: UUID

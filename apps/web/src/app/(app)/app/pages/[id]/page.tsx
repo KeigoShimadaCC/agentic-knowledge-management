@@ -1,12 +1,15 @@
 import { notFound } from "next/navigation";
-import { getServerApiUrl } from "@/lib/serverApiUrl";
+import { getServerApiHeaders, getServerApiUrl } from "@/lib/serverApiUrl";
 import { PageView } from "@/components/pages/PageView";
 import type { PageOut } from "@/types";
 
 async function fetchPage(id: string): Promise<PageOut | null> {
   const apiUrl = getServerApiUrl();
   try {
-    const res = await fetch(`${apiUrl}/api/v1/pages/${id}`, { cache: "no-store" });
+    const res = await fetch(`${apiUrl}/api/v1/pages/${id}`, {
+      cache: "no-store",
+      headers: getServerApiHeaders(),
+    });
     if (!res.ok) return null;
     return res.json() as Promise<PageOut>;
   } catch {
@@ -17,7 +20,10 @@ async function fetchPage(id: string): Promise<PageOut | null> {
 async function fetchObject(id: string) {
   const apiUrl = getServerApiUrl();
   try {
-    const res = await fetch(`${apiUrl}/api/v1/objects/${id}`, { cache: "no-store" });
+    const res = await fetch(`${apiUrl}/api/v1/objects/${id}`, {
+      cache: "no-store",
+      headers: getServerApiHeaders(),
+    });
     if (!res.ok) return null;
     return res.json();
   } catch {

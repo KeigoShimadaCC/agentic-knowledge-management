@@ -7,8 +7,8 @@ import XCTest
 /// drives the same code paths through APIClient + the feature view-models instead.
 ///
 /// Skips automatically when the backend is unreachable so the test is safe to run in CI
-/// without docker. To force-enable, set env `KOS_LIVE_SMOKE=1`. The demo user must exist
-/// (created by `services/api/scripts/seed_demo.py`).
+/// without docker. To force-enable, set env `KOS_LIVE_SMOKE=1`. Uses the demo login user
+/// from compose (`SEED_DEMO_EXAMPLES`) but does not depend on demo search content.
 @MainActor
 final class LiveBackendSmokeTests: XCTestCase {
     private let baseURL = URL(string: "http://127.0.0.1:8001")!
@@ -51,52 +51,39 @@ final class LiveBackendSmokeTests: XCTestCase {
         )
         XCTAssertEqual(bootstrap.user.email, demoEmail)
 
-        // 3. Hybrid search returns the demo seed.
-        let search: HybridSearchResponseDTO = try await apiClient.request(
-            .hybridSearch,
-            body: HybridSearchRequest(
-                q: "demo",
-                kind: nil,
-                sourceType: nil,
-                limit: 5,
-                debug: false,
-                objectIds: nil
+        // 3. Self-seed a page, then hybrid-search for its unique marker (no demo seed dependency).
+        let marker = UUID().uuidString
+        let title = "Live smoke \(marker)"
+        let created: PageCreateResponseDTO = try await apiClient.request(
+            .createPage,
+            body: PageCreateRequest(
+                title: title,
+                contentJson: TiptapPlainText.tiptapDocument(from: "search marker \(marker)")
             ),
             auth: true
         )
-        XCTAssertGreaterThan(search.results.count, 0, "Demo seed should produce search hits for 'demo'")
+        let search = try await pollHybridSearch(
+            apiClient: apiClient,
+            query: marker,
+            expectedObjectId: created.object.id
+        )
         let firstResult = try XCTUnwrap(search.results.first)
+        XCTAssertEqual(firstResult.id, created.object.id)
 
-        // 4. Resolve the first result via ReadAPI — covers the ObjectDetail dispatcher path.
+        // 4. Resolve the result via ReadAPI — covers the ObjectDetail dispatcher path.
         let readAPI = ReadAPI(apiClient: apiClient, keychain: keychain)
-        switch firstResult.kind {
-        case "page":
-            let page = try await readAPI.page(id: firstResult.id)
-            XCTAssertEqual(page.id, firstResult.id)
-        case "source":
-            let source = try await readAPI.source(id: firstResult.id)
-            XCTAssertEqual(source.id, firstResult.id)
-        default:
-            let object = try await readAPI.object(id: firstResult.id)
-            XCTAssertEqual(object.id, firstResult.id)
-        }
+        let page = try await readAPI.page(id: firstResult.id)
+        XCTAssertEqual(page.id, created.page.id)
 
         // 5. AI answer — only when the backend has AI enabled; otherwise assert disabled mapping.
         let askVM = AskKBViewModel(api: AIAPI(apiClient: apiClient, keychain: keychain))
-        askVM.query = "what is knowledgeos"
+        askVM.query = "what is \(marker)"
         await askVM.ask()
 
         if bootstrap.capabilities.aiEnabled {
             XCTAssertNil(askVM.errorMessage, "Live AI answer should succeed when ai_enabled=true")
             let answer = try XCTUnwrap(askVM.answer)
             XCTAssertFalse(answer.answer.isEmpty, "AI answer should be non-empty")
-            // Citations may be 0 if the prompt didn't trigger a Sources block; require >=1
-            // when the demo seed is present (we already asserted that above).
-            XCTAssertGreaterThanOrEqual(
-                answer.citations.count,
-                1,
-                "Demo KB + answer prompt should produce at least one citation"
-            )
         } else {
             XCTAssertTrue(askVM.aiDisabled, "ai_enabled=false should flip AskKBViewModel.aiDisabled")
             XCTAssertEqual(askVM.errorMessage, APIError.aiDisabled.userMessage)
@@ -104,6 +91,38 @@ final class LiveBackendSmokeTests: XCTestCase {
     }
 
     // MARK: - Helpers
+
+    private func pollHybridSearch(
+        apiClient: APIClient,
+        query: String,
+        expectedObjectId: UUID,
+        maxAttempts: Int = 12,
+        delaySeconds: UInt64 = 500_000_000
+    ) async throws -> HybridSearchResponseDTO {
+        var last: HybridSearchResponseDTO?
+        for _ in 0 ..< maxAttempts {
+            let response: HybridSearchResponseDTO = try await apiClient.request(
+                .hybridSearch,
+                body: HybridSearchRequest(
+                    q: query,
+                    kind: nil,
+                    sourceType: nil,
+                    limit: 5,
+                    debug: false,
+                    objectIds: nil
+                ),
+                auth: true
+            )
+            last = response
+            if response.results.contains(where: { $0.id == expectedObjectId }) {
+                return response
+            }
+            try await Task.sleep(nanoseconds: delaySeconds)
+        }
+        let count = last?.results.count ?? 0
+        XCTFail("Hybrid search never surfaced seeded page after \(maxAttempts) attempts (last hit count: \(count))")
+        return try XCTUnwrap(last)
+    }
 
     private func backendIsReachable() async -> Bool {
         if ProcessInfo.processInfo.environment["KOS_LIVE_SMOKE"] == "1" {

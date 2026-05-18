@@ -10,6 +10,7 @@ struct PageDetailView: View {
             VStack(alignment: .leading, spacing: 18) {
                 DetailHeader(object: object)
                 AIActionsBar(object: object)
+                GraphLinksSection(object: object)
 
                 if viewModel.isLoading {
                     LoadingView(message: "Loading page...")
@@ -71,7 +72,23 @@ struct DetailHeader: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            ObjectKindBadge(kind: object.kind)
+            HStack(spacing: 8) {
+                ObjectKindBadge(kind: object.kind)
+                if object.isArchived {
+                    Text("Archived")
+                        .font(.caption.weight(.semibold))
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 3)
+                        .background(Color.orange.opacity(0.18), in: Capsule())
+                }
+                if object.deletedAt != nil {
+                    Text("In Trash")
+                        .font(.caption.weight(.semibold))
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 3)
+                        .background(Color.red.opacity(0.15), in: Capsule())
+                }
+            }
             Text(object.title)
                 .font(.title2.weight(.semibold))
             if let description = object.description, !description.isEmpty {

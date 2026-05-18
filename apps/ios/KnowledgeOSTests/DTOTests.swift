@@ -49,4 +49,18 @@ final class DTOTests: XCTestCase {
         XCTAssertEqual(settings.prompts.first?.variables, ["content"])
         XCTAssertEqual(settings.mcp.enabledCount, 1)
     }
+
+    func testWorkspaceDTO() throws {
+        let workspace = try FixtureLoader.decode(WorkspaceDTO.self, named: "workspace")
+        XCTAssertEqual(workspace.layout.panes.count, 2)
+        XCTAssertTrue(workspace.isPinned)
+    }
+
+    func testStructuredSummaryPreviewDTO() throws {
+        let preview = try FixtureLoader.decode(StructuredSummaryPreviewDTO.self, named: "structured_summary")
+        XCTAssertEqual(preview.status, "previewed")
+        XCTAssertEqual(preview.structuredSummary.topics.count, 2)
+        XCTAssertEqual(preview.structuredSummary.keyDecisions.first?.confidence, "high")
+        XCTAssertEqual(preview.structuredSummary.suggestedLinks.first?.edgeKind, "related_to")
+    }
 }

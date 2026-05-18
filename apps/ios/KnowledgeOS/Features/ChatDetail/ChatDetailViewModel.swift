@@ -5,16 +5,21 @@ import Observation
 @Observable
 final class ChatDetailViewModel {
     private let api: CachedReadAPI
+    private let summaryAPI: ChatSummaryAPI
     private(set) var chat: ChatDTO?
+    private(set) var summaryPreview: StructuredSummaryPreviewDTO?
     private(set) var isLoading = false
+    private(set) var isSummaryLoading = false
     private(set) var errorMessage: String?
+    private(set) var summaryErrorMessage: String?
 
-    init(api: CachedReadAPI? = nil) {
+    init(api: CachedReadAPI? = nil, summaryAPI: ChatSummaryAPI = ChatSummaryAPI()) {
         if let api {
             self.api = api
         } else {
             self.api = CachedReadAPI(cache: (try? SystemCacheStore()) ?? InMemoryCacheStore())
         }
+        self.summaryAPI = summaryAPI
     }
 
     func load(id: UUID) async {
@@ -33,6 +38,30 @@ final class ChatDetailViewModel {
             case let .failure(error):
                 if !sawAnything { errorMessage = error.userMessage }
             }
+        }
+    }
+
+    func loadSummary(id: UUID) async {
+        isSummaryLoading = true
+        summaryErrorMessage = nil
+        defer { isSummaryLoading = false }
+
+        do {
+            summaryPreview = try await summaryAPI.load(chatId: id)
+        } catch {
+            summaryErrorMessage = readErrorMessage(error)
+        }
+    }
+
+    func generateSummary(id: UUID) async {
+        isSummaryLoading = true
+        summaryErrorMessage = nil
+        defer { isSummaryLoading = false }
+
+        do {
+            summaryPreview = try await summaryAPI.generate(chatId: id)
+        } catch {
+            summaryErrorMessage = readErrorMessage(error)
         }
     }
 }

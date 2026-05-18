@@ -98,6 +98,25 @@ final class APIClientTests: XCTestCase {
         XCTAssertNotNil(upload.body.range(of: Data("--\(upload.boundary)--".utf8)))
     }
 
+    func testPhone08ParityEndpointsUseExpectedPaths() {
+        let id = UUID(uuidString: "22222222-2222-2222-2222-222222222222")!
+
+        XCTAssertEqual(APIEndpoint.trashObjects().relativePath, "/api/v1/objects/trash?page=1&limit=25")
+        XCTAssertEqual(APIEndpoint.archiveObject(id: id).path, "/api/v1/objects/\(id.uuidString)/archive")
+        XCTAssertEqual(APIEndpoint.restoreObject(id: id).path, "/api/v1/objects/\(id.uuidString)/restore")
+        XCTAssertEqual(APIEndpoint.workspaces().relativePath, "/api/v1/workspaces?limit=50&offset=0&pinned_only=false")
+        XCTAssertEqual(APIEndpoint.workspace(id: id).path, "/api/v1/workspaces/\(id.uuidString)")
+        XCTAssertEqual(APIEndpoint.objectEdges(id: id).path, "/api/v1/objects/\(id.uuidString)/edges")
+        XCTAssertEqual(APIEndpoint.objectBacklinks(id: id).path, "/api/v1/objects/\(id.uuidString)/backlinks")
+        XCTAssertEqual(APIEndpoint.createEdge.path, "/api/v1/edges")
+        XCTAssertEqual(APIEndpoint.projects().relativePath, "/api/v1/projects?limit=50&offset=0")
+        XCTAssertEqual(APIEndpoint.updateProject(id: id).path, "/api/v1/projects/\(id.uuidString)")
+        XCTAssertEqual(APIEndpoint.chatStructuredSummary(id: id).path, "/api/v1/chats/\(id.uuidString)/structured-summary")
+        XCTAssertEqual(APIEndpoint.generateChatStructuredSummary(id: id).path, "/api/v1/chats/\(id.uuidString)/structured-summary")
+        XCTAssertEqual(APIEndpoint.generateChatStructuredSummary(id: id).method, .post)
+        XCTAssertEqual(APIEndpoint.objects(kind: "chat").relativePath, "/api/v1/objects?page=1&limit=25&kind=chat")
+    }
+
     private func makeMockSession() -> URLSession {
         let config = URLSessionConfiguration.ephemeral
         config.protocolClasses = [MockURLProtocol.self]

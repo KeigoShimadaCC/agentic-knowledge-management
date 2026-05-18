@@ -1,5 +1,12 @@
 import Foundation
 
+struct WorkspaceUpdateRequest: Encodable {
+    let name: String?
+    let description: String?
+    let layout: WorkspaceLayoutDTO?
+    let isPinned: Bool?
+}
+
 struct WorkspacePaneDTO: Codable, Equatable {
     let id: String
     let objectId: UUID?

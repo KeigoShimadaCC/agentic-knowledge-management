@@ -10,6 +10,7 @@ struct SourceDetailView: View {
             VStack(alignment: .leading, spacing: 18) {
                 DetailHeader(object: object)
                 AIActionsBar(object: object)
+                GraphLinksSection(object: object)
 
                 if viewModel.isLoading {
                     LoadingView(message: "Loading source...")

@@ -14,6 +14,10 @@ enum KeychainError: Error, Equatable {
 
 private let tokenAccount = "bearer"
 private let tokenService = "os.knowledgeos.bearer"
+#if targetEnvironment(simulator)
+// Simulator Keychain is flaky for MCP/manual QA; device builds never use this fallback.
+private let simulatorTokenFallbackKey = "kos.simulator.bearerToken"
+#endif
 
 struct SystemKeychainStore: KeychainStore {
     func readToken() throws -> String? {
@@ -24,10 +28,18 @@ struct SystemKeychainStore: KeychainStore {
         var item: CFTypeRef?
         let status = SecItemCopyMatching(query as CFDictionary, &item)
         if status == errSecItemNotFound {
+            #if targetEnvironment(simulator)
+            return UserDefaults.standard.string(forKey: simulatorTokenFallbackKey)
+            #else
             return nil
+            #endif
         }
         guard status == errSecSuccess else {
+            #if targetEnvironment(simulator)
+            return UserDefaults.standard.string(forKey: simulatorTokenFallbackKey)
+            #else
             throw KeychainError.unexpectedStatus(status)
+            #endif
         }
         guard let data = item as? Data, let token = String(data: data, encoding: .utf8) else {
             throw KeychainError.invalidData
@@ -41,6 +53,13 @@ struct SystemKeychainStore: KeychainStore {
         query[kSecValueData as String] = Data(token.utf8)
         query[kSecAttrAccessible as String] = kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly
         let status = SecItemAdd(query as CFDictionary, nil)
+        #if targetEnvironment(simulator)
+        if status != errSecSuccess {
+            UserDefaults.standard.set(token, forKey: simulatorTokenFallbackKey)
+            return
+        }
+        UserDefaults.standard.removeObject(forKey: simulatorTokenFallbackKey)
+        #endif
         guard status == errSecSuccess else {
             throw KeychainError.unexpectedStatus(status)
         }
@@ -48,6 +67,12 @@ struct SystemKeychainStore: KeychainStore {
 
     func deleteToken() throws {
         let status = SecItemDelete(baseQuery() as CFDictionary)
+        #if targetEnvironment(simulator)
+        UserDefaults.standard.removeObject(forKey: simulatorTokenFallbackKey)
+        if status != errSecSuccess && status != errSecItemNotFound {
+            return
+        }
+        #endif
         guard status == errSecSuccess || status == errSecItemNotFound else {
             throw KeychainError.unexpectedStatus(status)
         }

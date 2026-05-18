@@ -39,12 +39,49 @@ struct APIEndpoint {
         return APIEndpoint(path: "/api/v1/objects", method: .get, queryItems: items)
     }
 
+    static func trashObjects(page: Int = 1, limit: Int = 25) -> APIEndpoint {
+        APIEndpoint(
+            path: "/api/v1/objects/trash",
+            method: .get,
+            queryItems: [
+                URLQueryItem(name: "page", value: String(page)),
+                URLQueryItem(name: "limit", value: String(limit)),
+            ]
+        )
+    }
+
     static func object(id: UUID) -> APIEndpoint {
         APIEndpoint(path: "/api/v1/objects/\(id.uuidString)", method: .get)
     }
 
     static func updateObject(id: UUID) -> APIEndpoint {
         APIEndpoint(path: "/api/v1/objects/\(id.uuidString)", method: .patch)
+    }
+
+    static func deleteObject(id: UUID) -> APIEndpoint {
+        APIEndpoint(path: "/api/v1/objects/\(id.uuidString)", method: .delete)
+    }
+
+    static func restoreObject(id: UUID) -> APIEndpoint {
+        APIEndpoint(path: "/api/v1/objects/\(id.uuidString)/restore", method: .post)
+    }
+
+    static func archiveObject(id: UUID) -> APIEndpoint {
+        APIEndpoint(path: "/api/v1/objects/\(id.uuidString)/archive", method: .post)
+    }
+
+    static func objectEdges(id: UUID) -> APIEndpoint {
+        APIEndpoint(path: "/api/v1/objects/\(id.uuidString)/edges", method: .get)
+    }
+
+    static func objectBacklinks(id: UUID) -> APIEndpoint {
+        APIEndpoint(path: "/api/v1/objects/\(id.uuidString)/backlinks", method: .get)
+    }
+
+    static let createEdge = APIEndpoint(path: "/api/v1/edges", method: .post)
+
+    static func deleteEdge(id: UUID) -> APIEndpoint {
+        APIEndpoint(path: "/api/v1/edges/\(id.uuidString)", method: .delete)
     }
 
     static func page(id: UUID) -> APIEndpoint {
@@ -81,8 +118,49 @@ struct APIEndpoint {
         APIEndpoint(path: "/api/v1/chats/\(id.uuidString)", method: .get)
     }
 
+    static func chatStructuredSummary(id: UUID) -> APIEndpoint {
+        APIEndpoint(path: "/api/v1/chats/\(id.uuidString)/structured-summary", method: .get)
+    }
+
+    static func generateChatStructuredSummary(id: UUID) -> APIEndpoint {
+        APIEndpoint(path: "/api/v1/chats/\(id.uuidString)/structured-summary", method: .post)
+    }
+
     static func project(id: UUID) -> APIEndpoint {
         APIEndpoint(path: "/api/v1/projects/\(id.uuidString)", method: .get)
+    }
+
+    static func projects(limit: Int = 50, offset: Int = 0, status: String? = nil) -> APIEndpoint {
+        var items = [
+            URLQueryItem(name: "limit", value: String(limit)),
+            URLQueryItem(name: "offset", value: String(offset)),
+        ]
+        if let status { items.append(URLQueryItem(name: "status", value: status)) }
+        return APIEndpoint(path: "/api/v1/projects", method: .get, queryItems: items)
+    }
+
+    static func updateProject(id: UUID) -> APIEndpoint {
+        APIEndpoint(path: "/api/v1/projects/\(id.uuidString)", method: .patch)
+    }
+
+    static func workspaces(limit: Int = 50, offset: Int = 0, pinnedOnly: Bool = false) -> APIEndpoint {
+        APIEndpoint(
+            path: "/api/v1/workspaces",
+            method: .get,
+            queryItems: [
+                URLQueryItem(name: "limit", value: String(limit)),
+                URLQueryItem(name: "offset", value: String(offset)),
+                URLQueryItem(name: "pinned_only", value: pinnedOnly ? "true" : "false"),
+            ]
+        )
+    }
+
+    static func workspace(id: UUID) -> APIEndpoint {
+        APIEndpoint(path: "/api/v1/workspaces/\(id.uuidString)", method: .get)
+    }
+
+    static func updateWorkspace(id: UUID) -> APIEndpoint {
+        APIEndpoint(path: "/api/v1/workspaces/\(id.uuidString)", method: .patch)
     }
 
     static let hybridSearch = APIEndpoint(path: "/api/v1/search/hybrid", method: .post)

@@ -4,6 +4,7 @@ struct ObjectDetailView: View {
     let route: ObjectRoute
     @State private var viewModel = ObjectDetailViewModel()
     @State private var isEditingMetadata = false
+    @State private var showLifecycleConfirmation = false
 
     var body: some View {
         Group {
@@ -35,12 +36,47 @@ struct ObjectDetailView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
-                Button("Edit") {
-                    isEditingMetadata = true
+                Menu {
+                    Button {
+                        isEditingMetadata = true
+                    } label: {
+                        Label("Edit Metadata", systemImage: "pencil")
+                    }
+                    .disabled(viewModel.object == nil || viewModel.isMutating)
+
+                    Button {
+                        Task { await viewModel.archiveCurrentObject() }
+                    } label: {
+                        Label("Archive", systemImage: "archivebox")
+                    }
+                    .disabled(viewModel.object == nil || viewModel.object?.isArchived == true || viewModel.isMutating)
+
+                    Button(role: .destructive) {
+                        showLifecycleConfirmation = true
+                    } label: {
+                        Label("Move to Trash", systemImage: "trash")
+                    }
+                    .disabled(viewModel.object == nil || viewModel.object?.deletedAt != nil || viewModel.isMutating)
+                } label: {
+                    if viewModel.isMutating {
+                        ProgressView()
+                    } else {
+                        Label("Object actions", systemImage: "ellipsis.circle")
+                    }
                 }
                 .disabled(viewModel.object == nil)
                 .accessibilityIdentifier(Kos.ObjectDetail.editButton)
             }
+        }
+        .confirmationDialog(
+            "Move this object to trash?",
+            isPresented: $showLifecycleConfirmation,
+            titleVisibility: .visible
+        ) {
+            Button("Move to Trash", role: .destructive) {
+                Task { await viewModel.moveCurrentObjectToTrash() }
+            }
+            Button("Cancel", role: .cancel) {}
         }
         .sheet(isPresented: $isEditingMetadata) {
             if let object = viewModel.object {
@@ -67,6 +103,7 @@ private struct UnsupportedObjectView: View {
                 Text("Unsupported object kind.")
                     .foregroundStyle(.secondary)
                 AIActionsBar(object: object)
+                GraphLinksSection(object: object)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding()

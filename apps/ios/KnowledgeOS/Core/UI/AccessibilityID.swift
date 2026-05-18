@@ -64,6 +64,10 @@ enum Kos {
     enum Settings {
         static let screen = "kos.settings.screen"
         static let logoutButton = "kos.settings.logoutButton"
+        static let workspacesLink = "kos.settings.workspacesLink"
+        static let chatsLink = "kos.settings.chatsLink"
+        static let projectsLink = "kos.settings.projectsLink"
+        static let trashLink = "kos.settings.trashLink"
     }
 
     enum ObjectDetail {
@@ -98,5 +102,47 @@ enum Kos {
         static let screen = "kos.conflict.screen"
         static let discardButton = "kos.conflict.discardButton"
         static let keepMineButton = "kos.conflict.keepMineButton"
+    }
+
+    enum Trash {
+        static let screen = "kos.trash.screen"
+        static let list = "kos.trash.list"
+        static let restoreButton = "kos.trash.restoreButton"
+    }
+
+    enum Workspace {
+        static let listScreen = "kos.workspace.list.screen"
+        static let list = "kos.workspace.list"
+        static let detailScreen = "kos.workspace.detail.screen"
+        static let editButton = "kos.workspace.editButton"
+        static let nameField = "kos.workspace.nameField"
+        static let descriptionField = "kos.workspace.descriptionField"
+        static let pinnedToggle = "kos.workspace.pinnedToggle"
+        static let saveButton = "kos.workspace.saveButton"
+    }
+
+    enum Graph {
+        static let section = "kos.graph.section"
+        static let linkButton = "kos.graph.linkButton"
+        static let unlinkButton = "kos.graph.unlinkButton"
+        static let linkSheet = "kos.graph.linkSheet"
+        static let searchField = "kos.graph.searchField"
+        static let kindPicker = "kos.graph.kindPicker"
+        static let createButton = "kos.graph.createButton"
+    }
+
+    enum Project {
+        static let listScreen = "kos.project.list.screen"
+        static let list = "kos.project.list"
+        static let editButton = "kos.project.editButton"
+        static let titleField = "kos.project.titleField"
+        static let statusPicker = "kos.project.statusPicker"
+        static let saveButton = "kos.project.saveButton"
+    }
+
+    enum Chat {
+        static let listScreen = "kos.chat.list.screen"
+        static let list = "kos.chat.list"
+        static let row = "kos.chat.row"
     }
 }
