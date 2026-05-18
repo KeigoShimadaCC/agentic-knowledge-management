@@ -1,7 +1,6 @@
 """Case-insensitive redaction matrix (PHASE-FIX-04 / S8)."""
 
 import pytest
-
 from app.core.redaction import redact_dict, redact_mapping
 
 _REDACTED = "[REDACTED]"

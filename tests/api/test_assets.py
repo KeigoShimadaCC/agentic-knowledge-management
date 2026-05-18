@@ -40,12 +40,11 @@ async def test_413_writes_no_asset_row_and_no_library_file(
     """Belt-and-suspenders check: the 413 path must not create an Asset row,
     a KosObject row, or a file under the library root before bailing.
     """
-    from sqlalchemy import func, select
-
     from app.config import settings
     from app.core.library import get_library_root
     from app.db.session import AsyncSessionLocal
     from app.models.asset import Asset
+    from sqlalchemy import func, select
 
     monkeypatch.setattr(settings, "asset_upload_max_bytes", 1024)
 

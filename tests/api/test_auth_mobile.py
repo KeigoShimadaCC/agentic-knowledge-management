@@ -2,13 +2,12 @@ import json
 from datetime import datetime, timedelta, timezone
 
 import pytest
-from httpx import AsyncClient
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from app.core.security import hash_token
 from app.db.session import engine
 from app.models.session import Session
+from httpx import AsyncClient
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 async def _register(
@@ -192,9 +191,9 @@ async def test_other_user_access_with_bearer_returns_404(client: AsyncClient):
     client.cookies.clear()
     await _register(client, email="other@test.com", display_name="Other")
     client.cookies.clear()
-    token = (
-        await _mobile_login(client, email="other@test.com", device_name="Other Phone")
-    )["token"]
+    token = (await _mobile_login(client, email="other@test.com", device_name="Other Phone"))[
+        "token"
+    ]
 
     resp = await client.get(
         f"/api/v1/pages/{page_id}",

@@ -1,20 +1,20 @@
-import os
 import json
+import os
+
 from cryptography.fernet import Fernet
 
-if 'MCP_ENV_ENCRYPTION_KEY' not in os.environ:
-    os.environ['MCP_ENV_ENCRYPTION_KEY'] = Fernet.generate_key().decode()
+if "MCP_ENV_ENCRYPTION_KEY" not in os.environ:
+    os.environ["MCP_ENV_ENCRYPTION_KEY"] = Fernet.generate_key().decode()
 
-import pytest
-from httpx import ASGITransport, AsyncClient
 from unittest.mock import AsyncMock, MagicMock, patch
 
+import pytest
 from app.config import settings
 from app.db.session import AsyncSessionLocal
 from app.main import app
 from app.models.mcp_connection import McpConnection
+from httpx import ASGITransport, AsyncClient
 from sqlalchemy import select
-
 
 pytestmark = pytest.mark.asyncio
 
@@ -254,9 +254,7 @@ async def test_env_vars_encrypted_in_db(auth_client: AsyncClient):
     )
 
     async with AsyncSessionLocal() as db:
-        result = await db.execute(
-            select(McpConnection).where(McpConnection.id == created["id"])
-        )
+        result = await db.execute(select(McpConnection).where(McpConnection.id == created["id"]))
         conn = result.scalar_one()
 
     assert conn.env_vars["SECRET"] != "plaintext"
@@ -289,9 +287,7 @@ async def test_test_connection_timeout_returns_422(auth_client: AsyncClient):
     assert resp.status_code == 422
 
     async with AsyncSessionLocal() as db:
-        result = await db.execute(
-            select(McpConnection).where(McpConnection.id == created["id"])
-        )
+        result = await db.execute(select(McpConnection).where(McpConnection.id == created["id"]))
         conn = result.scalar_one()
 
     assert conn.last_error == "timeout after 10s"

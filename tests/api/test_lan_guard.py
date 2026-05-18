@@ -3,10 +3,9 @@
 from pathlib import Path
 
 import pytest
+from app.middleware.lan_guard import install_lan_guard
 from fastapi import FastAPI
 from httpx import ASGITransport, AsyncClient
-
-from app.middleware.lan_guard import install_lan_guard
 
 
 def _make_app(*, trusted_proxy_count: int = 0) -> FastAPI:
@@ -85,9 +84,7 @@ def test_mobile_compose_keeps_both_safety_env_vars():
     mobile profile's threat model. A future edit that drops either should fail this
     test before merge.
     """
-    path = (
-        Path(__file__).resolve().parents[2] / "infra" / "docker-compose.mobile.yml"
-    )
+    path = Path(__file__).resolve().parents[2] / "infra" / "docker-compose.mobile.yml"
     content = path.read_text()
     assert "KOS_PROFILE: mobile" in content, "mobile profile must activate LAN guard"
     assert 'ALLOW_OPEN_REGISTRATION: "false"' in content, (

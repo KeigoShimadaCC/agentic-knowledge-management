@@ -111,26 +111,20 @@ async def test_restore_object(auth_client: AsyncClient):
 
 @pytest.mark.asyncio
 async def test_get_soft_deleted_object_returns_404(auth_client: AsyncClient):
-    create = await auth_client.post(
-        "/api/v1/objects", json={"kind": "note", "title": "Hidden"}
-    )
+    create = await auth_client.post("/api/v1/objects", json={"kind": "note", "title": "Hidden"})
     obj_id = create.json()["id"]
     await auth_client.delete(f"/api/v1/objects/{obj_id}")
 
     resp = await auth_client.get(f"/api/v1/objects/{obj_id}")
     assert resp.status_code == 404
 
-    patch_resp = await auth_client.patch(
-        f"/api/v1/objects/{obj_id}", json={"title": "Reanimate"}
-    )
+    patch_resp = await auth_client.patch(f"/api/v1/objects/{obj_id}", json={"title": "Reanimate"})
     assert patch_resp.status_code == 404
 
 
 @pytest.mark.asyncio
 async def test_double_soft_delete_returns_404(auth_client: AsyncClient):
-    create = await auth_client.post(
-        "/api/v1/objects", json={"kind": "note", "title": "Twice Gone"}
-    )
+    create = await auth_client.post("/api/v1/objects", json={"kind": "note", "title": "Twice Gone"})
     obj_id = create.json()["id"]
     first = await auth_client.delete(f"/api/v1/objects/{obj_id}")
     assert first.status_code == 200
