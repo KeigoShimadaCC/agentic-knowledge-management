@@ -1,6 +1,28 @@
 # KnowledgeOS — Progress Tracker
 
-> Last updated: 2026-05-18 (PHONE-05 finalized; PHONE-06 device install docs/config ready with real-device smoke pending)
+> Last updated: 2026-05-18 (PHASE-FIX-04 shipped; PHONE-05 finalized; PHONE-06 device install docs/config ready with real-device smoke pending)
+
+---
+
+## PHASE-FIX-04 — Security Audit & Fix ✅ Complete
+
+**Goal:** Close the findings from a framework-based OWASP audit (Top 10 2025 / ASVS 5.0 / MASVS / LLM Top 10) and scrub maintainer identifiers from the now-public repo. See [`project-phases/PHASE-FIX-04-SECURITY-AUDIT-AND-FIX.md`](project-phases/PHASE-FIX-04-SECURITY-AUDIT-AND-FIX.md).
+
+**Commits:** 10 commits on `phase-fix-04-security`.
+
+- [x] **S1 — Personal-identifier scrub** — maintainer name / absolute home paths / GitHub username / Tailscale hostname / personal device name removed from 17 tracked files. Verification grep returns clean. Test fixtures renamed to `Demo User` / `Demo iPhone` (assertions updated in lockstep).
+- [x] **S2 — Next.js 14.x security patch** — `14.2.3` → `14.2.35`. Closes the critical "Authorization Bypass in Middleware" CVE and 4 of 9 high advisories. `pnpm audit --prod` went 27 (1C / 9H / 13M / 4L) → 15 (0C / 5H / 8M / 2L). Remaining advisories require Next 15+ (filed as PHASE-FIX-05).
+- [x] **S3 — SSRF on MCP HTTP/SSE URLs** — `validate_safe_http_url` now wraps MCP URL handling on create/update and again immediately before opening the network connection (defense in depth). Adjacent fix: `http` transport now requires a URL at create time. 4 new SSRF tests pass.
+- [x] **S4 — Scope MCP internal token to a user** — new `MCP_INTERNAL_USER_ID` config maps the token to a specific user; legacy first-user fallback preserved with a startup warning. Docs + `.env.example` updated.
+- [x] **S5 — Mobile profile hardening (two layers)** — `infra/docker-compose.mobile.yml` defaults `ALLOW_OPEN_REGISTRATION=false`; new `app/middleware/lan_guard.py` rejects any source IP that isn't RFC1918 / loopback / link-local when `KOS_PROFILE=mobile`. `X-Forwarded-For` ignored unless `TRUSTED_PROXY_COUNT > 0`. 6 new LAN-guard tests pass.
+- [x] **S6 — Asset upload size cap** — `asset_upload_max_bytes` (100 MB default) enforced via Content-Length pre-check + chunked read with running-size guard; aborts with 413 before writing to the library.
+- [x] **S7 — Soft-delete filter in `get_object_or_404`** — added `deleted_at IS NULL`; introduced `get_object_or_404_including_deleted` for the two recovery endpoints (`/restore` and `/revisions/{rev_id}/restore`).
+- [x] **S8 — Redaction consolidation** — `redact_dict` is now case-insensitive on both the API and MCP sides; new parity test asserts the two key/fragment sets stay identical. 19 + 13 redaction tests pass.
+- [x] **S9 — CI security-audit job + Next 15 stub** — advisory `security-audit` job added to `.github/workflows/ci.yml` (pnpm audit + pip-audit via uv export); `PHASE-FIX-05-NEXTJS-15-MIGRATION.md` filed as the future follow-up.
+
+**OWASP categories addressed:** Top 10 — A01 Broken Access Control (S4, S7), A05 Security Misconfiguration (S2, S5, S9), A07 Identification & Auth Failures (S4), A10 SSRF (S3); MASVS — MSTG-PLATFORM (S5); ASVS — V2 Authentication (S4), V5 Validation (S3, S6), V8 Data Protection (S1, S8).
+
+**Accepted-risk notes:** Stdio MCP command execution remains by design (Claude Desktop-style local user-configured commands); `kospass` / `demo-demo-demo` dev defaults left in place; iOS ATS cleartext exceptions retained for the on-LAN flow.
 
 ---
 
