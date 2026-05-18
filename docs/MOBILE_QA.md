@@ -38,6 +38,9 @@ bash scripts/mobile_simulator_boot.sh
 
 # Screenshot the booted simulator → .tmp/mobile-qa/<timestamp>.png
 bash scripts/mobile_simulator_screenshot.sh
+
+# PHONE-08 parity flows → .tmp/mobile-qa/phone-08/<timestamp>/*.png
+bash scripts/mobile_qa_phone08.sh
 ```
 
 ### Environment variables

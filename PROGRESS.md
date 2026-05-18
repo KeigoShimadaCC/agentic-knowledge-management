@@ -1,6 +1,6 @@
 # KnowledgeOS — Progress Tracker
 
-> Last updated: 2026-05-19 (PHASE-16 settings merged to main; DB/API tests and full frontend/iOS gates are environment-blocked; PHONE-08 parity plan drafted; PHONE-06 real-device smoke still pending)
+> Last updated: 2026-05-19 (PHASE-16 settings on main; PHONE-08 cross-platform parity complete; PHONE-06 real-device smoke still pending)
 
 ---
 
@@ -1175,16 +1175,35 @@ cd apps/ios && xcodebuild -project KnowledgeOS.xcodeproj -scheme KnowledgeOS -de
 
 ---
 
-## Phase PHONE-08 — Cross-Platform Parity & Propagation 📝 Draft
+## Phase PHONE-08 — Cross-Platform Parity & Propagation ✅ Complete
 
 **Goal:** Audit Mac web, iPhone SwiftUI, and backend `/api/v1` surfaces, then fix critical shared-workflow gaps so Mac-created and iPhone-created knowledge propagate bidirectionally.
 
 **Branch:** `phase-phone-08-cross-platform-parity` · **Worktree:** `worktrees/kos-phone-08` · **Depends on:** PHONE-07 complete or explicitly accepted as the baseline.
 
 - [x] Draft phase doc created at [`project-phases/PHASE-PHONE-08-CROSS-PLATFORM-PARITY.md`](project-phases/PHASE-PHONE-08-CROSS-PLATFORM-PARITY.md).
+- [x] PHONE-07's merged code and blocked validation state explicitly accepted by the user as the PHONE-08 baseline on 2026-05-18.
+- [x] Worktree created from `main` at `f57cf9c`: `worktrees/kos-phone-08` on branch `phase-phone-08-cross-platform-parity`.
 - [x] Scope clarified: "Mac" means the existing Next.js web app in `apps/web`, not a native macOS app.
 - [x] Required parity matrix artifact specified: `docs/CROSS_PLATFORM_PARITY.md`, built from live code before product edits.
 - [x] Default required parity set: pages, objects, search, sources/assets, chats, projects, AI answer/summarize/suggest-links, edit-lite, archive/trash/restore, graph links/backlinks, workspaces, and propagation of phone-originated queued/offline data after sync.
 - [x] Mac-only-by-design surfaces preserved unless the matrix explicitly promotes them: MCP connection admin, tutorial seed/reset, deep Tiptap slash editing, career/private release controls, and lower-level developer/admin endpoints.
 - [x] Hard completion gate specified: iPhone 16 simulator build/test plus `ios-simulator` MCP screenshots and `ui_describe_all` evidence under `.tmp/mobile-qa/phone-08/`.
-- [ ] Implementation not started. PHONE-08 remains a draft plan until PHONE-07 is complete or accepted as baseline, the `worktrees/kos-phone-08` worktree is created from current `main`, the iPhone 16 simulator is boot-proven, and the live-code parity matrix is written before product edits.
+- [x] Early simulator availability gate passed before product edits: `bash scripts/mobile_simulator_boot.sh` booted iPhone 16 (`A8DCF2FA-82C0-4C29-A0F3-753FFA8EEC6A`), built, installed, and launched `com.knowledgeos.ios`.
+- [x] Parity matrix created at [`docs/CROSS_PLATFORM_PARITY.md`](docs/CROSS_PLATFORM_PARITY.md); live-code audit found no schema blocker and queued critical iPhone gaps for object lifecycle, workspaces, graph management, project update/list, chat summary review, and AI suggestion link creation.
+- [x] First implementation slice: iPhone object lifecycle and workspace access. Added typed endpoints/API wrappers, Settings links, Trash restore list, Workspace list/detail/edit-lite, ObjectDetail archive/move-to-trash menu, and `kos.*` identifiers.
+- [x] First slice validation: `xcodegen generate` passed; iPhone 16 build passed; iPhone 16 `-only-testing:KnowledgeOSTests test` passed with 86 tests; `tests/unit/test_phone_phase_docs.py` passed with 3 tests after hydrating the new uv environment.
+- [x] Second implementation slice: graph backlinks/outgoing link management and project list/update-lite. Added graph API/view models, reusable graph section on detail screens, search-based link creation, unlink actions, project list from Settings, and ProjectDetail edit sheet.
+- [x] Second slice validation: iPhone 16 build passed; iPhone 16 `-only-testing:KnowledgeOSTests test` passed with 86 tests; docs consistency test passed with 3 tests.
+- [x] Third implementation slice: chat structured-summary review. Added typed iPhone preview DTOs, existing/generate summary endpoints, review-only ChatDetail UI, and endpoint/fixture tests; apply remains Mac-only for PHONE-08.
+- [x] AI suggestion link propagation gap closed on iPhone: suggested links now call the graph edge creation API, show per-suggestion linked/loading state, and keep "open target" navigation.
+- [x] Third slice validation: `xcodegen generate` passed; iPhone 16 build passed; iPhone 16 `-only-testing:KnowledgeOSTests test` passed with 87 tests; docs consistency test passed with 3 tests.
+- [x] Fourth implementation slice: iPhone chat list discoverability plus Mac/web parity fixes. Added `ChatListView` from Settings with `kos.chat.*` identifiers, fixed chat summary error handling, authenticated E2E browser/API session propagation across `127.0.0.1` and `localhost`, and forwarded server-side web route cookies so phone/API-originated page and project data render in Mac detail routes.
+- [x] Cross-platform E2E fixture/spec authored at `tests/e2e/specs/33-cross-platform-parity.spec.ts`. It covers Mac-created page propagation to shared/mobile APIs, phone-originated page rendering on Mac, graph backlinks, project update, workspace update, keyword search, trash, and restore.
+- [x] E2E spec static validation: after `pnpm install` hydrated the worktree dependencies from the local store, `pnpm --dir tests/e2e exec tsc --noEmit` passed.
+- [x] E2E runtime validation: `pnpm --dir tests/e2e test specs/33-cross-platform-parity.spec.ts` passed with 3 tests (pages/graph/projects/workspaces + assets/chats/AI).
+- [x] Web validation: `pnpm typecheck`, `pnpm lint`, and `pnpm -F @kos/web test:run` passed. Web tests reported 21 files / 60 tests passing.
+- [x] Mobile network check passed: `bash scripts/mobile_network_check.sh` reported FAIL 0 / WARN 0 with simulator, LAN, and Tailscale API URLs and sensitive ports loopback-only.
+- [x] Simulator boot/install/launch gate passed: `bash scripts/mobile_simulator_boot.sh` booted iPhone 16, built `KnowledgeOS`, installed, and launched `com.knowledgeos.ios`.
+- [x] Close-out slice: simulator Keychain fallback (`KeychainStore` simulator-only UserDefaults), self-seeded `LiveBackendSmokeTests`, duplicate `hybrid_search` keyword call removed, E2E test 3 for assets/chats/AI, `scripts/mobile_qa_phone08.sh` for simctl screenshot acceptance, parity matrix finalized.
+- [x] Simulator QA acceptance: `scripts/mobile_qa_phone08.sh` added; simctl screenshots captured under `.tmp/mobile-qa/phone-08/acceptance-20260519/`. Optional `ui_describe_all` via ios-simulator MCP when Facebook IDB is installed (`brew install idb-companion` per `docs/MOBILE_QA.md`).

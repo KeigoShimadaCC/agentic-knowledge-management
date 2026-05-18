@@ -1,7 +1,7 @@
 # Phase PHONE-08 - Cross-Platform Parity & Propagation
 
-**Status:** Draft
-**Goal:** Prove the Mac-used web app and iPhone app share the same core knowledge workflows, then fix critical gaps needed for bidirectional propagation.
+**Status:** Complete
+**Goal:** Prove the Mac-used web app and iPhone app share the same core knowledge workflows, and fix critical gaps needed for bidirectional propagation.
 **Wave:** parity
 **Branch:** `phase-phone-08-cross-platform-parity`
 **Worktree:** `worktrees/kos-phone-08`
@@ -18,6 +18,8 @@ PHONE-08 is a full parity build across:
 - The current mobile non-goals in `docs/MOBILE_APP.md`.
 
 The phase must audit first, then implement only the critical shared-workflow gaps discovered by that audit. The iPhone must continue to use the REST API only; do not add direct DB, Redis, Qdrant, Kuzu, or filesystem access.
+
+PHONE-07 baseline note: on 2026-05-18 the user explicitly accepted PHONE-07's merged code and blocked validation state as sufficient to proceed with PHONE-08.
 
 ## Starting Audit Seeds
 

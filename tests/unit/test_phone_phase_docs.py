@@ -65,6 +65,8 @@ def test_phone_08_parity_plan_exists_and_records_hard_gate() -> None:
     assert "docs/CROSS_PLATFORM_PARITY.md" in phase
     assert "critical-gap-fixed-in-phone-08" in phase
     assert "Use `ios-simulator` MCP after boot." in phase
-    assert "iPhone 16 simulator build, test, MCP UI describe, and screenshot acceptance all pass." in phase
+    assert (
+        "iPhone 16 simulator build, test, MCP UI describe, and screenshot acceptance all pass."
+        in phase
+    )
     assert "PHASE-PHONE-08-CROSS-PLATFORM-PARITY.md" in progress
-
