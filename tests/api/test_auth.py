@@ -107,10 +107,17 @@ async def test_me_with_valid_cookie_returns_user(auth_client: AsyncClient):
 
 
 @pytest.mark.asyncio
-async def test_logout_clears_session(auth_client: AsyncClient):
+async def test_logout_clears_session(auth_client: AsyncClient, monkeypatch: pytest.MonkeyPatch):
+    """Logout destroys the session row. In the desktop profile the local-user
+    fallback still answers /auth/me afterward (single-user local appliance);
+    in the mobile profile (LAN-exposed) the request must 401."""
+    from app.config import settings
+
+    # Mobile profile: no fallback, /auth/me 401s as before.
+    monkeypatch.setattr(settings, "kos_profile", "mobile")
+
     resp = await auth_client.post("/api/v1/auth/logout")
     assert resp.status_code == 200
-    # After logout, me should return 401
     resp2 = await auth_client.get("/api/v1/auth/me")
     assert resp2.status_code == 401
     assert resp2.json()["code"] == "unauthenticated"

@@ -33,6 +33,9 @@ async def test_invalid_token_falls_through_to_cookie_auth(
     from app.config import settings
 
     await _register_user(client)
+    # Pin profile to "mobile" so the desktop no-auth fallback is disabled and we can
+    # observe MCP-token rejection in isolation.
+    monkeypatch.setattr(settings, "kos_profile", "mobile")
     monkeypatch.setattr(settings, "mcp_internal_token", "correct-token")
 
     # Clear cookie so only the token is checked; wrong token → 401
@@ -83,6 +86,8 @@ async def test_scoped_user_id_rejects_invalid_uuid(
     from app.config import settings
 
     await _register_user(client)
+    # Disable the desktop no-auth fallback so the invalid scoped UUID actually 401s.
+    monkeypatch.setattr(settings, "kos_profile", "mobile")
     monkeypatch.setattr(settings, "mcp_internal_token", "scoped-token-bad")
     monkeypatch.setattr(settings, "mcp_internal_user_id", "not-a-uuid")
     client.cookies.clear()
@@ -102,7 +107,9 @@ async def test_empty_token_config_ignores_header(
 
     await _register_user(client)
     # Token is empty in config — any header value must be ignored; clear cookie so only
-    # the token path is tested
+    # the token path is tested. Pin to mobile profile so the desktop no-auth fallback
+    # doesn't mask the rejection.
+    monkeypatch.setattr(settings, "kos_profile", "mobile")
     monkeypatch.setattr(settings, "mcp_internal_token", "")
     client.cookies.clear()
 
