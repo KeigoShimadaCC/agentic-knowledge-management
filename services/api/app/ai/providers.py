@@ -152,9 +152,7 @@ class AnthropicChatProvider(ChatProvider):
         max_tokens: int,
         response_format: dict[str, Any] | None,
     ) -> ChatResult:
-        json_mode = bool(
-            response_format and response_format.get("type") == "json_object"
-        )
+        json_mode = bool(response_format and response_format.get("type") == "json_object")
         system, anth_messages = split_system_messages(messages, json_mode=json_mode)
 
         if settings.anthropic_api_key == ANTHROPIC_TEST_STUB_KEY:

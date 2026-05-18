@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import pytest
-
 from app.ai.providers import (
     ANTHROPIC_JSON_INSTRUCTION,
     AnthropicChatProvider,

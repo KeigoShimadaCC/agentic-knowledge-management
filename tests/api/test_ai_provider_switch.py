@@ -8,10 +8,9 @@ path returns 503.
 from __future__ import annotations
 
 import pytest
-from httpx import AsyncClient
-
 from app.ai.providers import ANTHROPIC_TEST_STUB_KEY, TEST_STUB_SUMMARY
 from app.config import settings
+from httpx import AsyncClient
 
 
 async def _make_page(auth_client: AsyncClient) -> dict:
