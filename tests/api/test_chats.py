@@ -1,7 +1,6 @@
 import json
 import uuid
 from pathlib import Path
-from types import SimpleNamespace
 from unittest.mock import patch
 
 import pytest
@@ -319,16 +318,11 @@ async def test_structured_summary_preview_returns_schema(
 
 @pytest.mark.asyncio
 async def test_structured_summary_ai_disabled_returns_clear_error(auth_client: AsyncClient):
-    import app.ai.client as client_module
+    from app.ai import providers as providers_module
 
     created = await _import_plain(auth_client)
 
-    fake_settings = SimpleNamespace(
-        openai_api_key="",
-        openai_chat_model="gpt-4o-mini",
-        openai_max_tokens=2000,
-    )
-    with patch.object(client_module, "settings", fake_settings):
+    with patch.object(providers_module.settings, "openai_api_key", ""):
         resp = await auth_client.post(f"/api/v1/chats/{created['id']}/structured-summary")
 
     assert resp.status_code == 503

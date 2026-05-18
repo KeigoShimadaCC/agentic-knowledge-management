@@ -2,7 +2,10 @@ import { expect, test } from "../fixtures/api";
 import { closeDatabase, getLatestAgentRun } from "../fixtures/db";
 import { createPage } from "../fixtures/pages";
 
-const STUB_SUMMARY = "Canned E2E summary.";
+// The stub provider in services/api/app/ai/providers.py returns text that
+// CONTAINS this substring for the "summarize" agent_type, so the page-level
+// text assertion below stays meaningful without bypassing the real backend.
+const STUB_SUMMARY_SUBSTRING = "Canned E2E summary.";
 
 test.afterAll(async () => {
   await closeDatabase();
@@ -20,19 +23,15 @@ test("summarizes a page via the API stub and records an agent run audit row", as
     "KnowledgeOS summarizes local knowledge safely."
   );
 
-  await page.route("**/api/v1/ai/summarize", async (route) => {
-    await route.fulfill({
-      status: 200,
-      contentType: "application/json",
-      json: { summary: STUB_SUMMARY, from_cache: false },
-    });
-  });
-
+  // No browser-level page.route stub: the providers.py OPENAI_TEST_STUB_KEY
+  // short-circuit (CI sets OPENAI_API_KEY=sk-test-stub) already returns canned
+  // text without calling OpenAI. Intercepting at the browser would skip the
+  // real backend and the agent_runs row that this test asserts on below.
   await page.goto(`/app/pages/${pageId}`);
   await page.getByRole("button", { name: "AI" }).click();
   await page.getByRole("button", { name: "Summarize" }).click();
 
-  await expect(page.getByText(STUB_SUMMARY)).toBeVisible({ timeout: 15_000 });
+  await expect(page.getByText(STUB_SUMMARY_SUBSTRING)).toBeVisible({ timeout: 15_000 });
 
   const agentRun = await getLatestAgentRun(testUser.id, "summarize");
   expect(agentRun, "summarize should create an agent_runs audit row").toMatchObject({

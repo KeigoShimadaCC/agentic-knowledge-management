@@ -41,7 +41,10 @@ async def test_anthropic_stub_returns_canned_summary(
     resp = await auth_client.post("/api/v1/ai/summarize", json={"object_id": object_id})
     assert resp.status_code == 200, resp.text
     body = resp.json()
-    assert body["summary"] == TEST_STUB_SUMMARY
+    # Stub responses are now agent_type-aware (see app/ai/providers.stub_response_text)
+    # — for "summarize" they include TEST_STUB_SUMMARY as a substring inside a longer
+    # paragraph so SAI02-style "length > 50" e2e assertions also pass.
+    assert TEST_STUB_SUMMARY in body["summary"]
     assert "agent_run_id" in body
 
 

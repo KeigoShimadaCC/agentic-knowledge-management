@@ -91,6 +91,7 @@ async def call_ai(
             temperature=resolved.temperature,
             max_tokens=resolved.max_tokens,
             response_format=response_format,
+            agent_type=agent_type,
             api_key=resolved.api_key,
         )
         await finish_agent_run(
