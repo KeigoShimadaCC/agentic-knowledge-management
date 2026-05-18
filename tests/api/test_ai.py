@@ -7,7 +7,6 @@ settings.openai_api_key is non-empty for all tests.
 
 from __future__ import annotations
 
-from types import SimpleNamespace
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -101,16 +100,11 @@ async def test_summarize_force_refresh(auth_client: AsyncClient, mock_openai: Ma
 @pytest.mark.asyncio
 async def test_summarize_no_key(auth_client: AsyncClient):
     """Verify the endpoint returns 503 when OPENAI_API_KEY is empty."""
-    import app.ai.client as client_module
+    from app.ai import providers as providers_module
 
     page_data = await _make_page(auth_client)
     object_id = page_data["object"]["id"]
-    fake_settings = SimpleNamespace(
-        openai_api_key="",
-        openai_chat_model="gpt-4o-mini",
-        openai_max_tokens=2000,
-    )
-    with patch.object(client_module, "settings", fake_settings):
+    with patch.object(providers_module.settings, "openai_api_key", ""):
         resp = await auth_client.post("/api/v1/ai/summarize", json={"object_id": object_id})
     assert resp.status_code == 503
 
@@ -352,16 +346,11 @@ async def test_extract_project_invalid_kind(
 
 @pytest.mark.asyncio
 async def test_extract_project_ai_disabled(auth_client: AsyncClient):
-    import app.services.project_service as ps
+    from app.ai import providers as providers_module
 
     page_data = await _make_page(auth_client)
     object_id = page_data["object"]["id"]
-    fake_settings = SimpleNamespace(
-        openai_api_key="",
-        openai_chat_model="gpt-4o-mini",
-        openai_max_tokens=2000,
-    )
-    with patch.object(ps, "settings", fake_settings):
+    with patch.object(providers_module.settings, "openai_api_key", ""):
         resp = await auth_client.post(
             "/api/v1/ai/extract-project",
             json={"source_id": object_id, "create": True},
