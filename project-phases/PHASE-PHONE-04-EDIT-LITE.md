@@ -4,7 +4,7 @@
 **Goal:** Safe lightweight edits on iPhone without recreating Tiptap.
 **Wave:** 4
 **Branch:** `phase-phone-04-edit-lite`
-**Worktree:** `../kos-phone-04`
+**Worktree:** `worktrees/kos-phone-04`
 **Depends on:** PHASE-PHONE-03A (PageDetail must be stable)
 **Blocks:** none
 

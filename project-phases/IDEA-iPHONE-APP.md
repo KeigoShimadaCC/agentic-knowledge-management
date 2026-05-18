@@ -3,7 +3,7 @@
 > **Use this file:** Give this entire document to any AI coder working on the KnowledgeOS iPhone app track.  
 > **Scope:** This is the canonical mobile project specification. It combines product concept, mobile architecture, API contract, networking contract, repo placement, phase plan, and parallel execution rules.  
 > **Audience:** AI coding agents such as Claude Code, Codex, Cursor agents, or similar tools.  
-> **Status:** Planning specification. Do not implement before reading the repo’s existing `CLAUDE.md`, `AGENTS.md`, `docs/AI-CODER-BRIEFING.md`, `docs/API.md`, `docs/SECURITY.md`, and `infra/docker-compose.yml`.
+> **Status:** Living mobile specification. PHONE-00 through PHONE-05 are complete on `main`; PHONE-06 remains device-smoke pending; PHONE-07 is the hardening/contract-repair phase. Do not implement new phone work before reading the repo’s existing `CLAUDE.md`, `AGENTS.md`, `docs/AI-CODER-BRIEFING.md`, `docs/API.md`, `docs/SECURITY.md`, and `infra/docker-compose.yml`.
 
 ---
 
@@ -578,17 +578,18 @@ Mobile rules:
 
 ```text
 PHASE-PHONE-00
-  ├─ PHASE-PHONE-01  backend auth/API
-  ├─ PHASE-PHONE-02  Mac/iPhone networking
-  └─ PHASE-PHONE-03  iOS scaffold
-        └─ PHASE-PHONE-04 API client
-              ├─ PHASE-PHONE-05 read/search MVP
-              ├─ PHASE-PHONE-06 capture/ingest MVP
-              ├─ PHASE-PHONE-07 edit-lite
-              └─ PHASE-PHONE-08 mobile AI
-                    └─ PHASE-PHONE-09 offline/cache
-PHASE-PHONE-10 simulator automation can begin after 03
-PHASE-PHONE-11 device install/release comes last
+  ├─ PHASE-PHONE-01A  mobile backend auth/API
+  ├─ PHASE-PHONE-01B  Mac/iPhone networking
+  └─ PHASE-PHONE-01C  iOS app scaffold
+        ├─ PHASE-PHONE-02A API client/session
+        └─ PHASE-PHONE-02B simulator automation/QA
+              ├─ PHASE-PHONE-03A read/search MVP
+              ├─ PHASE-PHONE-03B capture/ingest MVP
+              └─ PHASE-PHONE-03C mobile AI (depends on 03A surfaces)
+                    ├─ PHASE-PHONE-04 edit-lite
+                    ├─ PHASE-PHONE-05 offline/cache/queue
+                    └─ PHASE-PHONE-06 device install/private release
+PHASE-PHONE-07 hardens shipped mobile behavior and repairs contract drift.
 ```
 
 ---
@@ -627,7 +628,7 @@ docs/MOBILE_NETWORKING.md
 
 ---
 
-### PHASE-PHONE-01-MOBILE-BACKEND-AUTH-AND-API
+### PHASE-PHONE-01A-MOBILE-BACKEND-AUTH-AND-API
 
 **Goal:** make the backend safe for native mobile clients.
 
@@ -666,7 +667,7 @@ docs/SECURITY.md
 
 ---
 
-### PHASE-PHONE-02-MAC-TO-IPHONE-NETWORKING
+### PHASE-PHONE-01B-MAC-TO-IPHONE-NETWORKING
 
 **Goal:** make the Mac backend reachable by simulator and physical iPhone safely.
 
@@ -697,7 +698,7 @@ apps/ios/KnowledgeOS/Resources/Info.plist
 
 ---
 
-### PHASE-PHONE-03-IOS-APP-SCAFFOLD
+### PHASE-PHONE-01C-IOS-APP-SCAFFOLD
 
 **Goal:** create a buildable SwiftUI iOS app.
 
@@ -733,11 +734,11 @@ apps/ios/KnowledgeOSUITests/
 
 ---
 
-### PHASE-PHONE-04-IOS-API-CLIENT-AND-SESSION
+### PHASE-PHONE-02A-IOS-API-CLIENT-AND-SESSION
 
 **Goal:** implement typed API and session plumbing.
 
-**Depends on:** Phase 01 and Phase 03.
+**Depends on:** PHONE-01A and PHONE-01C.
 
 **Files likely touched:**
 
@@ -773,11 +774,11 @@ apps/ios/KnowledgeOSTests/
 
 ---
 
-### PHASE-PHONE-05-READ-AND-SEARCH-MVP
+### PHASE-PHONE-03A-READ-AND-SEARCH-MVP
 
 **Goal:** make the mobile app useful for reading and searching.
 
-**Depends on:** Phase 04.
+**Depends on:** PHONE-02A.
 
 **Files likely touched:**
 
@@ -814,11 +815,11 @@ apps/ios/KnowledgeOS/Features/Settings/
 
 ---
 
-### PHASE-PHONE-06-CAPTURE-AND-INGEST-MVP
+### PHASE-PHONE-03B-CAPTURE-AND-INGEST-MVP
 
 **Goal:** add iPhone-native capture.
 
-**Depends on:** Phase 04.
+**Depends on:** PHONE-02A.
 
 **Files likely touched:**
 
@@ -848,11 +849,11 @@ apps/ios/KnowledgeOS/Core/API/DTOs/SourceDTO.swift
 
 ---
 
-### PHASE-PHONE-07-EDIT-LITE
+### PHASE-PHONE-04-EDIT-LITE
 
 **Goal:** add safe lightweight edits.
 
-**Depends on:** Phase 05.
+**Depends on:** PHONE-03A.
 
 **Tasks:**
 
@@ -873,11 +874,11 @@ apps/ios/KnowledgeOS/Core/API/DTOs/SourceDTO.swift
 
 ---
 
-### PHASE-PHONE-08-MOBILE-AI
+### PHASE-PHONE-03C-MOBILE-AI
 
 **Goal:** expose high-value AI operations on mobile.
 
-**Depends on:** Phase 04. Coordinates with Phase 05.
+**Depends on:** PHONE-02A and PHONE-03A. Coordinates with PHONE-03A detail surfaces.
 
 **Tasks:**
 
@@ -897,11 +898,11 @@ apps/ios/KnowledgeOS/Core/API/DTOs/SourceDTO.swift
 
 ---
 
-### PHASE-PHONE-09-OFFLINE-CACHE-AND-QUEUE
+### PHASE-PHONE-05-OFFLINE-CACHE-AND-QUEUE
 
 **Goal:** make the app tolerable when backend is unreachable.
 
-**Depends on:** Phase 05 and Phase 06.
+**Depends on:** PHONE-03A and PHONE-03B.
 
 **Tasks:**
 
@@ -921,11 +922,11 @@ apps/ios/KnowledgeOS/Core/API/DTOs/SourceDTO.swift
 
 ---
 
-### PHASE-PHONE-10-SIMULATOR-AUTOMATION-AND-QA
+### PHASE-PHONE-02B-SIMULATOR-AUTOMATION-AND-QA
 
 **Goal:** give AI coders eyes and hands inside the iOS Simulator.
 
-**Can begin after:** Phase 03.
+**Can begin after:** PHONE-01C.
 
 **Tasks:**
 
@@ -945,11 +946,11 @@ apps/ios/KnowledgeOS/Core/API/DTOs/SourceDTO.swift
 
 ---
 
-### PHASE-PHONE-11-DEVICE-INSTALL-AND-PRIVATE-RELEASE
+### PHASE-PHONE-06-DEVICE-INSTALL-AND-PRIVATE-RELEASE
 
 **Goal:** run on physical iPhone without App Store release.
 
-**Depends on:** simulator MVP.
+**Depends on:** simulator MVP. This phase remains device-smoke pending until the physical iPhone flow succeeds.
 
 **Tasks:**
 
@@ -988,9 +989,9 @@ Do not let multiple coders edit the same contract files at once.
 ### Wave 1 — safe to run in parallel after Phase 00
 
 ```text
-Track A: PHASE-PHONE-01-MOBILE-BACKEND-AUTH-AND-API
-Track B: PHASE-PHONE-03-IOS-APP-SCAFFOLD
-Track C: PHASE-PHONE-02-MAC-TO-IPHONE-NETWORKING
+Track A: PHASE-PHONE-01A-MOBILE-BACKEND-AUTH-AND-API
+Track B: PHASE-PHONE-01C-IOS-APP-SCAFFOLD
+Track C: PHASE-PHONE-01B-MAC-TO-IPHONE-NETWORKING
 ```
 
 Rationale:
@@ -1004,7 +1005,7 @@ Rationale:
 ### Wave 1.5 — start after iOS scaffold builds
 
 ```text
-Track D: PHASE-PHONE-10-SIMULATOR-AUTOMATION-AND-QA
+Track D: PHASE-PHONE-02B-SIMULATOR-AUTOMATION-AND-QA
 ```
 
 This can run while API client is being built.
@@ -1014,7 +1015,7 @@ This can run while API client is being built.
 ### Wave 2 — after backend auth and iOS scaffold
 
 ```text
-Track E: PHASE-PHONE-04-IOS-API-CLIENT-AND-SESSION
+Track E: PHASE-PHONE-02A-IOS-API-CLIENT-AND-SESSION
 ```
 
 This should wait for the mobile auth contract and the SwiftUI scaffold.
@@ -1024,26 +1025,26 @@ This should wait for the mobile auth contract and the SwiftUI scaffold.
 ### Wave 3 — feature parallelization after API client
 
 ```text
-Track F: PHASE-PHONE-05-READ-AND-SEARCH-MVP
-Track G: PHASE-PHONE-06-CAPTURE-AND-INGEST-MVP
-Track H: PHASE-PHONE-08-MOBILE-AI
+Track F: PHASE-PHONE-03A-READ-AND-SEARCH-MVP
+Track G: PHASE-PHONE-03B-CAPTURE-AND-INGEST-MVP
+Track H: PHASE-PHONE-03C-MOBILE-AI
 ```
 
 Rules:
 
-- Phase 05 owns read/search UI.
-- Phase 06 owns capture/upload UI.
-- Phase 08 owns AI UI and AI DTOs.
-- Shared DTO/API client changes should be coordinated through Phase 04 patterns.
+- PHONE-03A owns read/search UI.
+- PHONE-03B owns capture/upload UI.
+- PHONE-03C owns AI UI and AI DTOs.
+- Shared DTO/API client changes should follow PHONE-02A patterns.
 
 ---
 
 ### Wave 4 — intentionally wait
 
 ```text
-PHASE-PHONE-07-EDIT-LITE
-PHASE-PHONE-09-OFFLINE-CACHE-AND-QUEUE
-PHASE-PHONE-11-DEVICE-INSTALL-AND-PRIVATE-RELEASE
+PHASE-PHONE-04-EDIT-LITE
+PHASE-PHONE-05-OFFLINE-CACHE-AND-QUEUE
+PHASE-PHONE-06-DEVICE-INSTALL-AND-PRIVATE-RELEASE
 ```
 
 Reasons:
@@ -1322,17 +1323,18 @@ agentic-knowledge-management/
     MOBILE_QA.md
   project-phases/
     PHASE-PHONE-00-MOBILE-ARCHITECTURE-AND-CONTRACT.md
-    PHASE-PHONE-01-MOBILE-BACKEND-AUTH-AND-API.md
-    PHASE-PHONE-02-MAC-TO-IPHONE-NETWORKING.md
-    PHASE-PHONE-03-IOS-APP-SCAFFOLD.md
-    PHASE-PHONE-04-IOS-API-CLIENT-AND-SESSION.md
-    PHASE-PHONE-05-READ-AND-SEARCH-MVP.md
-    PHASE-PHONE-06-CAPTURE-AND-INGEST-MVP.md
-    PHASE-PHONE-07-EDIT-LITE.md
-    PHASE-PHONE-08-MOBILE-AI.md
-    PHASE-PHONE-09-OFFLINE-CACHE-AND-QUEUE.md
-    PHASE-PHONE-10-SIMULATOR-AUTOMATION-AND-QA.md
-    PHASE-PHONE-11-DEVICE-INSTALL-AND-PRIVATE-RELEASE.md
+    PHASE-PHONE-01A-MOBILE-BACKEND-AUTH-AND-API.md
+    PHASE-PHONE-01B-MAC-TO-IPHONE-NETWORKING.md
+    PHASE-PHONE-01C-IOS-APP-SCAFFOLD.md
+    PHASE-PHONE-02A-IOS-API-CLIENT-AND-SESSION.md
+    PHASE-PHONE-02B-SIMULATOR-AUTOMATION-AND-QA.md
+    PHASE-PHONE-03A-READ-AND-SEARCH-MVP.md
+    PHASE-PHONE-03B-CAPTURE-AND-INGEST-MVP.md
+    PHASE-PHONE-03C-MOBILE-AI.md
+    PHASE-PHONE-04-EDIT-LITE.md
+    PHASE-PHONE-05-OFFLINE-CACHE-AND-QUEUE.md
+    PHASE-PHONE-06-DEVICE-INSTALL-AND-PRIVATE-RELEASE.md
+    PHASE-PHONE-07-MOBILE-HARDENING-AND-CONTRACT-REPAIR.md
 ```
 
 The iPhone app should feel like a lightweight native remote control and capture surface for the local KnowledgeOS appliance:

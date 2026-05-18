@@ -54,8 +54,9 @@ struct ReadAPI: Sendable {
         return try await apiClient.requestData(sourceThumbnailEndpoint(id: id), body: nil as String?, auth: true)
     }
 
-    func sourceDownloadURL(id: UUID) -> URL? {
-        URL(string: sourceDownloadEndpoint(id: id).relativePath, relativeTo: ServerConfig.shared.baseURL)
+    func assetDownload(id: UUID) async throws -> Data {
+        try prepare()
+        return try await apiClient.requestData(.assetDownload(id: id), body: nil as String?, auth: true)
     }
 
     func chat(id: UUID) async throws -> ChatDTO {
@@ -92,10 +93,6 @@ struct ReadAPI: Sendable {
 
     private func sourceThumbnailEndpoint(id: UUID) -> APIEndpoint {
         APIEndpoint(path: "/api/v1/sources/\(id.uuidString)/thumbnail", method: .get)
-    }
-
-    private func sourceDownloadEndpoint(id: UUID) -> APIEndpoint {
-        APIEndpoint(path: "/api/v1/sources/\(id.uuidString)/download", method: .get)
     }
 
     private func relatedObjectsEndpoint(id: UUID, limit: Int = 20) -> APIEndpoint {

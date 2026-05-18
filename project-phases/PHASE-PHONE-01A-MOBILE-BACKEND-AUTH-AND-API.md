@@ -1,10 +1,10 @@
 # Phase PHONE-01A — Mobile Backend Auth & API
 
-**Status:** Planned
+**Status:** Complete
 **Goal:** Add bearer-token auth for native clients AND fix the stub `get_current_user()` so the existing cookie path actually validates sessions.
 **Wave:** 1 (parallel with 01B, 01C)
 **Branch:** `phase-phone-01a-backend-auth`
-**Worktree:** `../kos-phone-01a`
+**Worktree:** `worktrees/kos-phone-01a`
 **Depends on:** PHASE-PHONE-00
 **Blocks:** PHASE-PHONE-02A
 

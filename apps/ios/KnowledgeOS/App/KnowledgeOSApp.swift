@@ -20,11 +20,10 @@ final class AppDependencies {
         apiClient = APIClient(networkMonitor: networkMonitor)
         authStore = AuthStore(apiClient: apiClient)
 
-        // Single shared SQLite DB for both cache and queue. Either may fail to open
-        // (e.g., disk full); fall back to in-memory stores so the app still launches.
-        if let db = try? SQLiteDatabase(),
-           let cache = try? SystemCacheStore(db: db),
-           let queue = try? SystemQueueStore(db: db) {
+        // Cache remains purgeable under Library/Caches. Pending uploads use the
+        // SystemQueueStore default under Application Support so iOS does not evict them.
+        if let cache = try? SystemCacheStore(db: SQLiteDatabase()),
+           let queue = try? SystemQueueStore() {
             cacheStore = cache
             queueStore = queue
         } else {

@@ -1,11 +1,11 @@
 # Phase PHONE-06 — Device Install & Private Release
 
-**Status:** Planned
+**Status:** Device Smoke Pending
 **Goal:** Run on physical iPhone without App Store. Document recovery.
 **Wave:** 6
 **Branch:** `phase-phone-06-device-install`
-**Worktree:** `../kos-phone-06`
-**Depends on:** simulator MVP (03A–03C) green
+**Worktree:** `worktrees/kos-phone-06`
+**Depends on:** simulator MVP (03A–03C) green; physical-device validation still requires operator access to the target iPhone.
 **Blocks:** none
 
 ## Scope
@@ -14,13 +14,13 @@ Only signing/bundle config + `apps/ios/README.md` and `docs/MOBILE_APP.md` updat
 
 ## Tasks
 
-1. Configure bundle identifier (`com.<owner>.knowledgeos`) in `project.yml`.
-2. Configure signing team for personal Apple ID development signing.
+1. Keep bundle identifier `com.knowledgeos.ios` in `project.yml`.
+2. Use automatic signing without committing a personal Team ID; select the Apple ID Personal Team locally in Xcode.
 3. Document direct install via Xcode "Run on Device".
 4. Document network profile selection for device (LAN vs Tailscale).
 5. Document recovery: how to reinstall after the 7-day personal-team cert expires.
 6. Optional TestFlight section — recommend deferring unless multi-tester needed.
-7. Final smoke: login → search → open → capture → ask AI on a real iPhone hitting the Mac backend over LAN or Tailscale.
+7. Final smoke: login → search → open → capture → ask AI on a real iPhone hitting the Mac backend over LAN or Tailscale. Simulator-only checks do not complete this phase.
 
 ## Definition of done
 
@@ -29,6 +29,17 @@ Only signing/bundle config + `apps/ios/README.md` and `docs/MOBILE_APP.md` updat
 - Private release checklist exists in `apps/ios/README.md`.
 - Recovery checklist exists.
 - `PROGRESS.md` updated.
+
+## Validation
+
+```bash
+cd apps/ios && xcodegen generate
+cd apps/ios && xcodebuild -project KnowledgeOS.xcodeproj -scheme KnowledgeOS -destination 'platform=iOS Simulator,name=iPhone 16' build
+cd apps/ios && xcodebuild -project KnowledgeOS.xcodeproj -scheme KnowledgeOS -destination 'platform=iOS Simulator,name=iPhone 16' -only-testing:KnowledgeOSTests test
+bash scripts/mobile_network_check.sh
+```
+
+**Completion rule:** Keep PHONE-06 incomplete until the real physical-device smoke succeeds.
 
 ## Out of scope
 

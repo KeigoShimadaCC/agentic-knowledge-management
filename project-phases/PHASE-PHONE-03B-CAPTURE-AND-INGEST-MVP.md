@@ -1,10 +1,10 @@
 # Phase PHONE-03B — Capture & Ingest MVP
 
-**Status:** Planned
+**Status:** Complete
 **Goal:** Exploit what the iPhone is good at — quick capture of text and photos into the KB.
 **Wave:** 3 (parallel with 03A, 03C)
 **Branch:** `phase-phone-03b-capture-ingest`
-**Worktree:** `../kos-phone-03b`
+**Worktree:** `worktrees/kos-phone-03b`
 **Depends on:** PHASE-PHONE-02A
 **Blocks:** PHASE-PHONE-05 (offline queue extends this)
 
@@ -20,7 +20,7 @@ Only `apps/ios/KnowledgeOS/Features/Capture/**` and the **body** of `Features/Ro
 
 ## Tasks
 
-1. **Capture entry point** on Home (floating button or tab). Accessibility id `kos.capture.entry`.
+1. **Capture entry point** in the Capture tab body owned by this phase. Home remains owned by PHONE-03A; shared navigation stays in `MainTabView.swift`. Accessibility id `kos.capture.entry`.
 2. **Quick text note** screen: title + body text fields. `POST /api/v1/pages` with Tiptap JSON wrapping the plain text in paragraphs. Show success toast + link to new page.
 3. **Clipboard import**: button to paste clipboard contents into the note body.
 4. **Photo/file upload**: `PhotosPicker` (iOS 17+) for images; `fileImporter` for documents. Upload via `MultipartUpload`. Default `create_source=true`. Show progress per file.
@@ -41,7 +41,9 @@ Only `apps/ios/KnowledgeOS/Features/Capture/**` and the **body** of `Features/Ro
 ```bash
 docker compose -f infra/docker-compose.yml up -d
 cd apps/ios
-xcodebuild ... test    # capture-related unit tests
+xcodebuild -project KnowledgeOS.xcodeproj -scheme KnowledgeOS \
+  -destination 'platform=iOS Simulator,name=iPhone 16' \
+  -only-testing:KnowledgeOSTests test
 # Manual: simulator drag a JPEG to Files; capture flow; assert ingestion succeeds.
 ```
 
