@@ -1,6 +1,5 @@
 from pathlib import Path
 
-
 ROOT = Path(__file__).resolve().parents[2]
 
 PHONE_DOCS = [
@@ -40,7 +39,9 @@ def test_phone_06_remains_device_smoke_pending() -> None:
     progress = read(ROOT / "PROGRESS.md")
     phase = read(ROOT / "project-phases" / "PHASE-PHONE-06-DEVICE-INSTALL-AND-PRIVATE-RELEASE.md")
 
-    assert "## Phase PHONE-06 — Device Install & Private Release 🚧 Device Smoke Pending" in progress
+    assert (
+        "## Phase PHONE-06 — Device Install & Private Release 🚧 Device Smoke Pending" in progress
+    )
     assert "- [ ] Real-device smoke is still required" in progress
     assert "**Status:** Device Smoke Pending" in phase
     assert "Keep PHONE-06 incomplete until the real physical-device smoke succeeds." in phase

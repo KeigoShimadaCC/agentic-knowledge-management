@@ -27,7 +27,10 @@ def _resume_json(count: int = 3) -> str:
         {
             "bullets": [
                 {
-                    "text": f"Built reliable project workflow {i} that reduced review time by 40 percent.",
+                    "text": (
+                        f"Built reliable project workflow {i} that reduced "
+                        f"review time by 40 percent."
+                    ),
                     "evidence_object_ids": [],
                     "confidence": "medium",
                     "metrics_cited": ["review_time"],
@@ -43,8 +46,14 @@ def _story_json() -> str:
         {
             "situation": "The team needed a clearer way to capture career project evidence.",
             "task": "I had to turn scattered work notes into structured project memory.",
-            "action": "I designed backend endpoints, linked evidence records, and kept the workflow auditable.",
-            "result": "The system produced reusable project summaries for resume and interview preparation.",
+            "action": (
+                "I designed backend endpoints, linked evidence records, "
+                "and kept the workflow auditable."
+            ),
+            "result": (
+                "The system produced reusable project summaries for "
+                "resume and interview preparation."
+            ),
             "evidence_object_ids": [],
         }
     )
@@ -126,9 +135,7 @@ async def test_generate_resume_bullets_happy_path_with_evidence(auth_client: Asy
     project = await _make_project(auth_client, extracted_from=source["object"]["id"])
     for title in ("Launch notes", "Metrics notes"):
         page = await _make_page(auth_client, title)
-        await _link_evidence(
-            auth_client, source_id=page["object"]["id"], project_id=project["id"]
-        )
+        await _link_evidence(auth_client, source_id=page["object"]["id"], project_id=project["id"])
 
     client_mock = _make_openai_mock(_resume_json(3))
     with patch("openai.AsyncOpenAI", return_value=client_mock):
@@ -326,9 +333,7 @@ async def test_career_ai_evidence_cap(auth_client: AsyncClient):
     project = await _make_project(auth_client, extracted_from=original["object"]["id"])
     for i in range(15):
         page = await _make_page(auth_client, f"Evidence {i}")
-        await _link_evidence(
-            auth_client, source_id=page["object"]["id"], project_id=project["id"]
-        )
+        await _link_evidence(auth_client, source_id=page["object"]["id"], project_id=project["id"])
 
     client_mock = _make_openai_mock(_resume_json(1))
     with patch("openai.AsyncOpenAI", return_value=client_mock):

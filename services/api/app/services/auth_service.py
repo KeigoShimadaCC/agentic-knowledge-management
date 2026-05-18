@@ -104,9 +104,7 @@ async def resolve_mcp_user(db: AsyncSession, token: str | None) -> User | None:
             uid = uuid.UUID(scoped)
         except (ValueError, TypeError):
             return None
-        result = await db.execute(
-            select(User).where(User.id == uid, User.deleted_at.is_(None))
-        )
+        result = await db.execute(select(User).where(User.id == uid, User.deleted_at.is_(None)))
         return result.scalar_one_or_none()
 
     result = await db.execute(select(User).where(User.deleted_at.is_(None)).limit(1))

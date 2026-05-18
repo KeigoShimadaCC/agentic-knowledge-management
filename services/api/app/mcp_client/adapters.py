@@ -153,7 +153,11 @@ class GitHubIssueAdapter(GenericAdapter):
 
 class Context7Adapter(GenericAdapter):
     patterns = [
-        "context7*", "get_library_docs*", "resolve_library*", "resolve-library*", "query-docs*"
+        "context7*",
+        "get_library_docs*",
+        "resolve_library*",
+        "resolve-library*",
+        "query-docs*",
     ]
 
     def adapt(self, result: dict[str, Any], target_kind: str) -> list[PageInput | SourceInput]:
