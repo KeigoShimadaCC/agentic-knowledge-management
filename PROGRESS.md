@@ -1,6 +1,6 @@
 # KnowledgeOS — Progress Tracker
 
-> Last updated: 2026-05-18 (PHONE-04 edit-lite + PHONE-05 offline cache & capture queue both complete)
+> Last updated: 2026-05-18 (PHONE-06 device install docs/config ready; real-device smoke pending)
 
 ---
 
@@ -1009,3 +1009,60 @@ xcodebuild ... -only-testing:KnowledgeOSTests test                        # ⇒ 
 - Queue payload schema is forward-compatible: each row carries `(payload, metadata)` packed in one blob with a 4-byte big-endian payload length prefix, so adding new `PendingUploadKind` variants (e.g., edits in PHASE-PHONE-04) only requires extending the enum decoder.
 
 **Blocks unblocked:** none (PHONE-05 is a Wave-5 leaf in the mobile track).
+
+---
+
+## Phase PHONE-06 — Device Install & Private Release 🚧 Device Smoke Pending
+
+**Goal:** Install the iPhone app on a physical device without App Store release, document private release/recovery, and keep local signing configuration ready for an Apple ID Personal Team.
+
+**Branch:** `phase-phone-06-device-install` · **Worktree:** `../kos-phone-06` · **Scope:** iOS signing/build configuration plus private install, release, recovery, and real-device smoke documentation. No backend, API, Swift feature, database, or Docker behavior changes.
+
+- [x] Phase doc and implementation plan reviewed; isolated worktree branched from `origin/main`.
+- [x] `apps/ios/project.yml` keeps `PRODUCT_BUNDLE_IDENTIFIER: com.knowledgeos.ios` and uses automatic signing settings without committing an Apple Team ID.
+- [x] `apps/ios/README.md` documents XcodeGen regeneration, Xcode Signing & Capabilities Personal Team selection, direct Run-on-Device install, LAN vs Tailscale base URL choice, 7-day free personal-team reinstall recovery, and optional TestFlight deferral.
+- [x] `docs/MOBILE_APP.md` adds a concise private release section with a real-device smoke checklist.
+- [ ] Real-device smoke is still required before this phase can be marked complete: start backend with LAN or Tailscale profile, install from Xcode onto a physical iPhone, then verify login → search → open object → capture → ask AI.
+
+**Validation performed:**
+
+```bash
+rg -n "^<<<<<<<|^=======$|^>>>>>>>" PROGRESS.md apps/ios/project.yml apps/ios/README.md docs/MOBILE_APP.md
+# no matches
+
+cd apps/ios && xcodegen generate
+# passed
+
+xcodebuild -project KnowledgeOS.xcodeproj -scheme KnowledgeOS -destination 'platform=iOS Simulator,name=iPhone 16' build
+# BUILD SUCCEEDED
+
+xcodebuild -project KnowledgeOS.xcodeproj -scheme KnowledgeOS -destination 'platform=iOS Simulator,name=iPhone 16' build test
+# app build completed and 72 KnowledgeOSTests passed
+# failed in existing XCUITest layer:
+# - EditMetadataSmokeTests.testEditTitleSaveReopenAssertsNewTitle
+# - LoginEndToEndSmokeTests.testLoginSearchOpenFirstResultFlow
+
+ios-simulator MCP
+# opened Simulator; booted device was iPhone 13 mini
+# installed built KnowledgeOS.app successfully
+# launched com.knowledgeos.ios successfully
+# screenshot captured at .tmp/phone06-simulator-launch.png showing the Connect screen
+# booted the actual iPhone 16 simulator
+# installed built KnowledgeOS.app on iPhone 16 successfully
+# launched com.knowledgeos.ios on iPhone 16 successfully
+# screenshot captured at .tmp/phone06-iphone16-launch.png showing the app on iPhone 16
+# accessibility/tap actions unavailable because host is missing idb (spawn idb ENOENT)
+
+curl -i --max-time 10 http://127.0.0.1:8001/api/v1/health
+# HTTP/1.1 200 OK
+# {"status":"ok","version":"0.1.0","db":true,"redis":true}
+
+bash scripts/mobile_network_check.sh
+# FAIL: 0 WARN: 0
+# Simulator: http://127.0.0.1:8001
+# LAN:       http://172.16.80.50:8001
+# Tailscale: http://keigos-mac-mini.tail828589.ts.net:8001
+# postgres/redis/qdrant stayed loopback-only
+```
+
+**Completion rule:** Do not mark PHONE-06 complete until the physical-device smoke succeeds.

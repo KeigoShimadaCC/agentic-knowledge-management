@@ -140,3 +140,30 @@ These are bound to the Tiptap editor. Not relevant until edit-lite expands.
 ## 7. Phase ownership
 
 Phase 00 (this contract) blocks PHASE-PHONE-01A (backend auth), 01B (networking + Compose override), and 01C (iOS scaffold). Subsequent phases (02A API client, 02B simulator QA, 03A read/search, 03B capture, 03C mobile AI, 04 edit-lite, 05 offline cache, 06 device install) are sequenced in [`IDEA-iPHONE-APP.md` §9](../project-phases/IDEA-iPHONE-APP.md).
+
+---
+
+## 8. Private release and real-device smoke
+
+PHONE-06 ships by direct Xcode install, not App Store release. Keep the bundle identifier
+`com.knowledgeos.ios`, regenerate the project with XcodeGen, and select the Apple ID Personal
+Team manually in Xcode Signing & Capabilities. Do not commit an Apple Team ID.
+
+Use a physical-device base URL, not Simulator loopback:
+
+- LAN: `http://<mac-lan-ip>:8001`
+- Tailscale: `http://<mac-tailnet-name>.ts.net:8001` or the Mac's Tailscale IP
+
+Real-device smoke checklist:
+
+1. Start the backend with the LAN or Tailscale profile selected for the phone.
+2. Confirm the phone can reach `GET <baseURL>/api/v1/health`.
+3. Install and launch the app from Xcode on the physical iPhone.
+4. Log in with the mobile auth flow.
+5. Search the knowledge base and open an object detail screen.
+6. Capture a quick note or upload.
+7. Ask AI and confirm a grounded answer or the expected AI-disabled fallback.
+
+If using a free Apple ID Personal Team, plan to reinstall from Xcode about every 7 days when
+the development certificate expires. TestFlight is deferred unless distribution expands beyond
+private single-user installs.

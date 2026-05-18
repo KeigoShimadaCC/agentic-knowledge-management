@@ -27,6 +27,12 @@ targets:
       properties:
         UIApplicationSceneManifest:
           UIApplicationSupportsMultipleScenes: false
+        UIBackgroundModes:
+          - fetch
+          - processing
+        BGTaskSchedulerPermittedIdentifiers:
+          - com.knowledgeos.ios.syncqueue.refresh
+          - com.knowledgeos.ios.syncqueue.processing
         NSAppTransportSecurity:
           NSAllowsLocalNetworking: true
           NSExceptionDomains:
@@ -42,6 +48,8 @@ targets:
               NSIncludesSubdomains: true
     settings:
       base:
+        CODE_SIGN_STYLE: Automatic
+        DEVELOPMENT_TEAM: ""
         PRODUCT_BUNDLE_IDENTIFIER: com.knowledgeos.ios
 
   KnowledgeOSTests:
@@ -55,6 +63,8 @@ targets:
       - target: KnowledgeOS
     settings:
       base:
+        CODE_SIGN_STYLE: Automatic
+        DEVELOPMENT_TEAM: ""
         PRODUCT_BUNDLE_IDENTIFIER: com.knowledgeos.ios.tests
         GENERATE_INFOPLIST_FILE: YES
 
@@ -67,5 +77,7 @@ targets:
       - target: KnowledgeOS
     settings:
       base:
+        CODE_SIGN_STYLE: Automatic
+        DEVELOPMENT_TEAM: ""
         PRODUCT_BUNDLE_IDENTIFIER: com.knowledgeos.ios.uitests
         GENERATE_INFOPLIST_FILE: YES
