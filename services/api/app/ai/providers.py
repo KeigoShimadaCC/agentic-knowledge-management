@@ -93,6 +93,16 @@ _STUB_EXTRACT_PROJECT_JSON = json.dumps(
     }
 )
 
+# extract_claims / extract_tasks return a JSON list of items with a "text" field
+# (see app/services/ai_service._extract). SAI02 asserts >=2 items.
+_STUB_EXTRACT_LIST_JSON = json.dumps(
+    [
+        {"text": "Stub extracted item 1 for e2e tests.", "confidence": "high"},
+        {"text": "Stub extracted item 2 for e2e tests.", "confidence": "medium"},
+        {"text": "Stub extracted item 3 for e2e tests.", "confidence": "low"},
+    ]
+)
+
 
 def stub_response_text(agent_type: str | None) -> str:
     """Return shape-appropriate stub text for the given agent_type.
@@ -112,7 +122,10 @@ def stub_response_text(agent_type: str | None) -> str:
         return _STUB_TRIAGE_JSON
     if agent_type == "extract-project":
         return _STUB_EXTRACT_PROJECT_JSON
-    if agent_type in ("extract_claims", "extract_tasks", "suggest_links"):
+    if agent_type in ("extract_claims", "extract_tasks"):
+        return _STUB_EXTRACT_LIST_JSON
+    if agent_type == "suggest_links":
+        # Real candidates are unknown at stub time; empty list is a valid response.
         return "[]"
     return TEST_STUB_SUMMARY
 
