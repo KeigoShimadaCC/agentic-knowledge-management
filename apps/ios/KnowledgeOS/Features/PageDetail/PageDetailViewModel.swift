@@ -4,25 +4,35 @@ import Observation
 @MainActor
 @Observable
 final class PageDetailViewModel {
-    private let api: ReadAPI
+    private let api: CachedReadAPI
     private(set) var page: PageDTO?
     private(set) var isLoading = false
     private(set) var errorMessage: String?
 
-    init(api: ReadAPI = ReadAPI()) {
-        self.api = api
+    init(api: CachedReadAPI? = nil) {
+        if let api {
+            self.api = api
+        } else {
+            self.api = CachedReadAPI(cache: (try? SystemCacheStore()) ?? InMemoryCacheStore())
+        }
     }
 
     func load(id: UUID) async {
         guard page?.id != id else { return }
         isLoading = true
         errorMessage = nil
+        var sawAnything = false
         defer { isLoading = false }
 
-        do {
-            page = try await api.page(id: id)
-        } catch {
-            errorMessage = readErrorMessage(error)
+        for await result in api.page(id: id) {
+            switch result {
+            case let .success(value):
+                page = value
+                errorMessage = nil
+                sawAnything = true
+            case let .failure(error):
+                if !sawAnything { errorMessage = error.userMessage }
+            }
         }
     }
 }

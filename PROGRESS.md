@@ -1,6 +1,6 @@
 # KnowledgeOS — Progress Tracker
 
-> Last updated: 2026-05-18 (Wave 3 mobile phases merged to main — 03A read/search, 03B capture/ingest, 03C mobile AI)
+> Last updated: 2026-05-18 (PHONE-05 offline cache & capture queue complete — 64 unit tests green)
 
 ---
 
@@ -924,3 +924,44 @@ xcodebuild ... -only-testing:KnowledgeOSTests test                        # ⇒ 
 **Backend dependency satisfied:** the `Citation` Pydantic validation bug in `services/api/app/services/ai_service.py::answer_question` is fixed in branch `fix-ai-citation-snippet` (commit `73122f7`). With that fix and `OPENAI_API_KEY` set in `infra/.env`, `/api/v1/ai/answer` returns a grounded answer + ≥1 citation against the demo seed (verified by the new smoke test in 3.3s).
 
 **Blocks unblocked:** none (03C is a leaf in Wave 3).
+
+---
+
+## Phase PHONE-05 — Offline Cache & Queue ✅ Complete
+
+**Goal:** Survive a sleeping Mac. Cache recent reads with stale-while-revalidate. Queue failed captures with persistent retry and background drain.
+
+**Branch:** `phase-phone-05-offline-cache` · **Worktree:** `worktrees/kos-phone-05` · **Scope:** `apps/ios/KnowledgeOS/Core/Cache/**`, `Core/Queue/**`, `Features/Sync/**`, additive hooks in read VMs + CaptureViewModel, BGTask registration in `AppDependencies`, `Info.plist` background-mode keys.
+
+- [x] Phase doc reviewed; isolated worktree on `phase-phone-05-offline-cache` branched from main.
+- [x] `Core/Cache/SQLiteDatabase.swift` — thin sqlite3 wrapper (no third-party deps), serialized queue, lock/unlock split so `transaction { tx in ... }` bodies don't re-enter `queue.sync`.
+- [x] `Core/Cache/Migrations.swift` — schema v1 creates `cached_objects`, `cached_details`, `cached_recent_objects`, `cached_searches`, `pending_uploads`, `schema_version`. DB lives at `Library/Caches/knowledgeos/knowledgeos.sqlite` so iOS may evict under disk pressure.
+- [x] `Core/Cache/CacheStore.swift` — typed `CacheStore` protocol with `SystemCacheStore` (SQLite) + `InMemoryCacheStore` (tests). Per-kind detail tables; recent-objects keyed by page; search keyed by trimmed/lowercased query.
+- [x] `Core/Cache/CachedReadAPI.swift` — stale-while-revalidate `AsyncStream<Result<T, APIError>>` wrapper. Yields cached value first (if present), then fresh value or `.failure` on API error. With a warm cache, API errors are swallowed so the cached value continues to render.
+- [x] Read VMs (Home, Search, ObjectDetail, PageDetail, SourceDetail, ChatDetail, ProjectDetail) consume the stream with `for await result in api.X { ... }`. Each VM picks up `dependencies.cachedReadAPI` from the environment when available; falls back to a fresh `CachedReadAPI(cache: InMemoryCacheStore())` for previews/tests.
+- [x] `Core/Queue/QueueStore.swift` — `PendingUpload` model + `QueueStore` protocol with `SystemQueueStore` (SQLite) + `InMemoryQueueStore` (fallback/tests). Exponential backoff: `60s · 2^retries` capped at 1h; >10 retries parks the row 24h out. `observe()` emits the live pending count for `SyncBanner`.
+- [x] `Core/Queue/QueueDrainer.swift` — `drain(now:deadline:)` pulls drainable items and executes via `APIClient`; success removes, failure marks-with-backoff. Reused by foreground reachability change, `BGAppRefreshTask` (25s deadline), and `BGProcessingTask` (longer budget).
+- [x] `Features/Capture/CaptureViewModel.swift` — on retryable failure (`networkUnavailable`, `serverError`) enqueues to `QueueStore` and shows `.pending` ("Will retry automatically"); 4xx still surface as `.failed`. Quick-note path also enqueues a `PageCreateRequest`-payload pending item on 5xx/network.
+- [x] `Features/Sync/SyncBanner.swift` + `PendingUploadsView.swift` — Home renders the banner above the list when pending > 0; tap opens an inspector with per-row cancel and a "Drain now" button.
+- [x] `App/KnowledgeOSApp.swift` — `AppDependencies` opens one SQLite DB shared by cache + queue stores, constructs `CachedReadAPI` and `QueueDrainer`, registers both `BGAppRefreshTask` + `BGProcessingTask` handlers, observes `NetworkMonitor.isReachable` to trigger drains, and re-submits BGTask requests on `scenePhase == .background`. Skips BG registration under XCTest to avoid sandbox aborts.
+- [x] `Resources/Info.plist` — added `UIBackgroundModes` (`fetch`, `processing`) and `BGTaskSchedulerPermittedIdentifiers` for both task identifiers.
+- [x] Tests (26 new across 5 files): `CacheStoreTests` (7), `CachedReadAPITests` (5), `QueueStoreTests` (7), `QueueDrainerTests` (3), `CapturePersistenceTests` (4). Total suite now **64 tests** (was 38).
+
+**Validation performed:**
+
+```bash
+cd apps/ios && xcodegen generate                                          # ⇒ passed
+xcodebuild -project KnowledgeOS.xcodeproj -scheme KnowledgeOS \
+  -destination 'platform=iOS Simulator,name=iPhone 16' build              # ⇒ BUILD SUCCEEDED
+xcodebuild ... -only-testing:KnowledgeOSTests test                        # ⇒ 64/64 tests pass
+```
+
+**Known internal API change:** to support encode/decode roundtrips in cache and queue, three DTOs were widened from `Decodable`/`Encodable` to `Codable`: `PageCreateRequest`, `PaginatedResponseDTO`, `HybridSearchResponseDTO`. No external behavior change.
+
+**Risk decisions:**
+- Raw sqlite3 (no SPM dep) preserves the project's zero-third-party-libs convention.
+- BG registration is skipped under XCTest (`XCTestConfigurationFilePath` env present) so unit tests can launch the host app without a `BGTaskScheduler` abort.
+- Cache TTLs are tracked on each entry but not enforced at read time in MVP — SWR's "always refresh" loop achieves freshness without separate eviction. `isStale(ttl:)` is exposed for future use (e.g., to gate UI freshness indicators).
+- Queue payload schema is forward-compatible: each row carries `(payload, metadata)` packed in one blob with a 4-byte big-endian payload length prefix, so adding new `PendingUploadKind` variants (e.g., edits in PHASE-PHONE-04) only requires extending the enum decoder.
+
+**Blocks unblocked:** none (PHONE-05 is a Wave-5 leaf in the mobile track).

@@ -29,7 +29,7 @@ struct HybridSearchResultDTO: Codable, Equatable, Identifiable {
     let recencyBoost: Double
 }
 
-struct HybridSearchResponseDTO: Decodable {
+struct HybridSearchResponseDTO: Codable {
     let results: [HybridSearchResultDTO]
     let total: Int
     let query: String

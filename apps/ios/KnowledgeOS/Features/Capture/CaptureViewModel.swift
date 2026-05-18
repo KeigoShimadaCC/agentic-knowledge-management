@@ -17,6 +17,8 @@ final class CaptureViewModel {
             case uploaded(sourceID: UUID)
             case ready(sourceID: UUID)
             case failed(String)
+            /// Network/5xx failure — handed off to the persistent QueueStore for retry.
+            case pending
         }
 
         let id = UUID()
@@ -29,15 +31,21 @@ final class CaptureViewModel {
 
     private let api: any CaptureAPIProtocol
     private let serverConfig: ServerConfig
+    private let queueStore: (any QueueStore)?
     private(set) var isSavingNote = false
     private(set) var createdNote: CreatedNote?
     private(set) var noteError: String?
     private(set) var uploads: [UploadItem] = []
     var activeSourceID: UUID?
 
-    init(api: any CaptureAPIProtocol, serverConfig: ServerConfig = .shared) {
+    init(
+        api: any CaptureAPIProtocol,
+        serverConfig: ServerConfig = .shared,
+        queueStore: (any QueueStore)? = nil
+    ) {
         self.api = api
         self.serverConfig = serverConfig
+        self.queueStore = queueStore
     }
 
     func saveQuickNote(title: String, body: String) async {
@@ -59,6 +67,30 @@ final class CaptureViewModel {
                 webURL: Self.webPageURL(for: response.object.id, apiBaseURL: serverConfig.baseURL)
             )
         } catch let error as APIError {
+            if Self.isRetryable(error), let queueStore {
+                let resolvedTitle = title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+                    ? "Quick note" : title
+                let request = PageCreateRequest(
+                    title: resolvedTitle,
+                    contentJson: KnowledgeOSCaptureAPI.tiptapDocument(from: trimmedBody)
+                )
+                if let payload = try? JSONCoding.encoder.encode(request) {
+                    let now = Date()
+                    let item = PendingUpload(
+                        id: UUID(),
+                        kind: .quickNote,
+                        payload: payload,
+                        metadata: Data(),
+                        retryCount: 0,
+                        lastError: error.userMessage,
+                        createdAt: now,
+                        nextAttemptAt: now
+                    )
+                    try? queueStore.enqueue(item)
+                    noteError = "Saved offline. Will sync when the server is reachable."
+                    return
+                }
+            }
             noteError = error.userMessage
         } catch {
             noteError = error.localizedDescription
@@ -116,10 +148,33 @@ final class CaptureViewModel {
             uploads[index].progress = 1
             activeSourceID = response.source.id
         } catch let error as APIError {
-            uploads[index].state = .failed(error.userMessage)
-            uploads[index].progress = 1
+            handleUploadFailure(index: index, error: error.userMessage, retryable: Self.isRetryable(error))
         } catch {
-            uploads[index].state = .failed(error.localizedDescription)
+            handleUploadFailure(index: index, error: error.localizedDescription, retryable: true)
+        }
+    }
+
+    private func handleUploadFailure(index: Int, error: String, retryable: Bool) {
+        let item = uploads[index]
+        if retryable, let queueStore {
+            let now = Date()
+            let pending = PendingUpload(
+                id: UUID(),
+                kind: .assetUpload(filename: item.filename, mimeType: item.mimeType, createSource: true),
+                payload: item.data,
+                metadata: (try? PendingUploadKind.assetUpload(
+                    filename: item.filename, mimeType: item.mimeType, createSource: true
+                ).encodedMetadata()) ?? Data(),
+                retryCount: 0,
+                lastError: error,
+                createdAt: now,
+                nextAttemptAt: now
+            )
+            try? queueStore.enqueue(pending)
+            uploads[index].state = .pending
+            uploads[index].progress = 1
+        } else {
+            uploads[index].state = .failed(error)
             uploads[index].progress = 1
         }
     }
@@ -148,5 +203,15 @@ final class CaptureViewModel {
         components.query = nil
         components.fragment = nil
         return components.url
+    }
+
+    /// Network errors and 5xx are retryable. Validation (4xx) is not — no point queuing.
+    static func isRetryable(_ error: APIError) -> Bool {
+        switch error {
+        case .networkUnavailable, .serverError:
+            return true
+        case .notAuthenticated, .forbidden, .notFound, .validation, .aiDisabled, .decodingFailed:
+            return false
+        }
     }
 }

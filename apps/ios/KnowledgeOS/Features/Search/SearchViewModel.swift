@@ -9,11 +9,15 @@ final class SearchViewModel {
     private(set) var isLoading = false
     private(set) var errorMessage: String?
 
-    private let api: ReadAPI
+    private let api: CachedReadAPI
     private var task: Task<Void, Never>?
 
-    init(api: ReadAPI = ReadAPI()) {
-        self.api = api
+    init(api: CachedReadAPI? = nil) {
+        if let api {
+            self.api = api
+        } else {
+            self.api = CachedReadAPI(cache: (try? SystemCacheStore()) ?? InMemoryCacheStore())
+        }
     }
 
     func scheduleSearch(for value: String) {
@@ -39,13 +43,18 @@ final class SearchViewModel {
 
         isLoading = true
         errorMessage = nil
+        var sawAnything = false
         defer { isLoading = false }
 
-        do {
-            let response = try await api.search(query: trimmed)
-            results = response.results
-        } catch {
-            errorMessage = readErrorMessage(error)
+        for await result in api.search(query: trimmed) {
+            switch result {
+            case let .success(response):
+                results = response.results
+                errorMessage = nil
+                sawAnything = true
+            case let .failure(error):
+                if !sawAnything { errorMessage = error.userMessage }
+            }
         }
     }
 }
