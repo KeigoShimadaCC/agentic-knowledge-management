@@ -12,7 +12,7 @@ or agent can safely work in the repository.
 
 Published wiki URL:
 
-`https://github.com/KeigoShimadaCC/agentic-knowledge-management/wiki`
+`https://github.com/OWNER/agentic-knowledge-management/wiki`
 
 ## 1. Starting Point
 
@@ -188,7 +188,7 @@ Before committing the wiki repo:
 1. Re-clone or refresh the wiki repo:
 
    ```bash
-   git clone https://github.com/KeigoShimadaCC/agentic-knowledge-management.wiki.git /private/tmp/agentic-knowledge-management.wiki
+   git clone https://github.com/OWNER/agentic-knowledge-management.wiki.git /private/tmp/agentic-knowledge-management.wiki
    ```
 
    If the directory already exists, use `git fetch` and fast-forward it instead.

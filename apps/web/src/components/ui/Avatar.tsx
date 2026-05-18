@@ -1,4 +1,4 @@
-/** @example <Avatar name="Keigo Shimada" size="md" /> */
+/** @example <Avatar name="Demo User" size="md" /> */
 import * as React from "react";
 import { cn } from "@/lib/cn";
 

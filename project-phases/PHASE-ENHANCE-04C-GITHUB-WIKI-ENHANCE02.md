@@ -11,7 +11,7 @@ work by documenting how to operate, debug, and safely change the system.
 
 Published wiki URL:
 
-`https://github.com/KeigoShimadaCC/agentic-knowledge-management/wiki`
+`https://github.com/OWNER/agentic-knowledge-management/wiki`
 
 ## 1. Starting Point
 

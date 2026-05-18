@@ -64,7 +64,7 @@ STRUCTURED_SUMMARY = {
     "action_items": [
         {
             "task": "Add mocked AI tests",
-            "owner": "Keigo",
+            "owner": "Demo User",
             "due_at": None,
             "turn_refs": [0],
             "confidence": "high",

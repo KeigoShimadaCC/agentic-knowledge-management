@@ -97,7 +97,7 @@ No parallel worktrees are currently active. All phase branches through 9D and EN
 
 ### Coordination protocol when starting work
 
-1. `cd /Users/keigoshimada/Documents/agentic-knowledge-management && git fetch && git status`
+1. `cd $HOME/Documents/agentic-knowledge-management && git fetch && git status`
 2. `git worktree list` — confirm which paths are active.
 3. For each active worktree: `cd <worktree path> && git diff --name-only main...HEAD` — get the exact file list it currently owns.
 4. Build a personal **conflict map** of (your work × each worktree). If your work touches any file in any other worktree's diff, **stop and renegotiate scope**: either move that file to a future phase, or wait for the other worktree to merge.
@@ -602,7 +602,7 @@ Before doing anything substantive, run this orientation sequence:
 
 ```bash
 # 1. Where are we?
-cd /Users/keigoshimada/Documents/agentic-knowledge-management
+cd $HOME/Documents/agentic-knowledge-management
 git status
 git log --oneline -10
 git worktree list

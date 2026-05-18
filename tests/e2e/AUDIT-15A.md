@@ -24,7 +24,7 @@ E2E_WEB_URL=http://127.0.0.1:3000 pnpm --dir tests/e2e test specs/29-sai01-caree
 ## Runner Output
 
 ```text
-> knowledgeos-e2e@ test /Users/keigoshimada/Documents/agentic-knowledge-management/tests/e2e
+> knowledgeos-e2e@ test $HOME/Documents/agentic-knowledge-management/tests/e2e
 > playwright test specs/29-sai01-career-ai.spec.ts specs/30-sai02-page-intelligence.spec.ts specs/31-sai03-inbox-triage.spec.ts specs/32-sai04-context7-mcp.spec.ts --reporter=line
 
 Error: Timed out waiting 30000ms from config.webServer.

@@ -100,7 +100,7 @@ These are the only test hooks required; everything else uses role/text selectors
 
 Two worktrees are active. Treat them as immovable; structure this work around them.
 
-### 2.1 PHASE-7B-MCP-WRITE (`/Users/keigoshimada/Documents/agentic-knowledge-management-7b`)
+### 2.1 PHASE-7B-MCP-WRITE (`$HOME/Documents/agentic-knowledge-management-7b`)
 
 - Touches: `services/api`, `services/mcp`, `services/worker`, `tests/api`, `services/mcp/tests`, `docs/MCP_TOOLS.md`.
 - Conflict surface with this phase: **none**. Safe to develop fully in parallel.

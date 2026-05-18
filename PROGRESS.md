@@ -128,7 +128,7 @@ See [`project-phases/PHASE-8A-WORKSPACE-LITE.md`](project-phases/PHASE-8A-WORKSP
 
 **Goal:** Persist named multi-pane workspaces with validated layout JSON, user-owned CRUD endpoints, soft delete/restore, and docs. Backend-only; no frontend, MCP, worker, object-kind, or `KosObject` changes.
 
-Working branch: `phase-8b` (worktree: `/Users/keigoshimada/Documents/phase-8b`)
+Working branch: `phase-8b` (worktree: `$HOME/Documents/phase-8b`)
 
 See [`project-phases/PHASE-8B-WORKSPACES-BACKEND.md`](project-phases/PHASE-8B-WORKSPACES-BACKEND.md) for the full contract.
 
@@ -264,7 +264,7 @@ See [`project-phases/PHASE-7B-MCP-WRITE.md`](project-phases/PHASE-7B-MCP-WRITE.m
 
 ## Phase 9D — Career MCP Tools ✅ Complete
 
-**Branch:** `phase-9d-career-mcp` (worktree: `/Users/keigoshimada/Documents/akm-phase-9d`)
+**Branch:** `phase-9d-career-mcp` (worktree: `$HOME/Documents/akm-phase-9d`)
 
 - [x] **9D-1 + 9D-2 — 15 MCP tools** — 7 read (get_project, list_projects, get_resume_bullet_set, list_resume_bullet_sets, get_interview_story, list_interview_stories, get_project_evidence) + 8 write (create_project, update_project, archive_project, link_to_project, unlink_from_project, extract_project, generate_and_save_resume_bullets, generate_and_save_interview_story)
 - [x] **9D-3 — Tests** — 21 new tests in `test_project_tools.py`; 35 total in updated `test_tools.py` + `test_config.py`; 56/56 passing
@@ -276,7 +276,7 @@ See [`project-phases/PHASE-7B-MCP-WRITE.md`](project-phases/PHASE-7B-MCP-WRITE.m
 
 ## Phase 9C — Career Memory Frontend ✅ Complete
 
-**Branch:** `phase-9c-career-frontend` (worktree: `/Users/keigoshimada/Documents/akm-phase-9c`)
+**Branch:** `phase-9c-career-frontend` (worktree: `$HOME/Documents/akm-phase-9c`)
 
 - [x] **Backend artifact persistence** — migration `0009`, ORM/schema/service/API for `resume_bullet_set` and `interview_story`; audited save mutations; artifact chunking/reindex integration
 - [x] **Frontend project dashboard** — `/app/projects` list, filters, timeline sort, bulk delete, create form, extraction modal, sidebar nav
@@ -310,7 +310,7 @@ See [`project-phases/PHASE-7B-MCP-WRITE.md`](project-phases/PHASE-7B-MCP-WRITE.m
 
 **Goal:** Backend-only AI generators for evidence-linked resume bullets and STAR interview stories from existing project records. Spec: [`project-phases/PHASE-9B-CAREER-AI-GENERATORS.md`](project-phases/PHASE-9B-CAREER-AI-GENERATORS.md).
 
-**Branch:** `phase-9b` (worktree: `/Users/keigoshimada/Documents/phase-9b`)
+**Branch:** `phase-9b` (worktree: `$HOME/Documents/phase-9b`)
 
 - [x] **Subtask 0** — Audit + plan file already present; branch/worktree created; PROGRESS tracking started
 - [x] **Subtask 1** — Pydantic request/response schemas in `schemas/career_ai.py`
@@ -1056,7 +1056,7 @@ bash scripts/mobile_network_check.sh
 # FAIL: 0 WARN: 0
 # Simulator: http://127.0.0.1:8001
 # LAN:       http://172.16.80.50:8001
-# Tailscale: http://keigos-mac-mini.tail828589.ts.net:8001
+# Tailscale: http://your-host.ts.net:8001
 # postgres/redis/qdrant stayed loopback-only
 ```
 

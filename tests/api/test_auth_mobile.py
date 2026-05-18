@@ -30,7 +30,7 @@ async def _mobile_login(
     *,
     email: str = "mobile@test.com",
     password: str = "password123",
-    device_name: str | None = "Keigo's iPhone",
+    device_name: str | None = "Demo iPhone",
 ) -> dict:
     resp = await client.post(
         "/api/v1/auth/mobile-login",
@@ -57,7 +57,7 @@ async def test_mobile_login_returns_token_once_and_stores_only_hash(client: Asyn
         session = result.scalar_one()
 
     assert session.client_type == "ios"
-    assert session.device_name == "Keigo's iPhone"
+    assert session.device_name == "Demo iPhone"
     assert session.token_hash != token
 
 

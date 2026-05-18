@@ -4,7 +4,7 @@
 
 Create and publish a complete GitHub Wiki for KnowledgeOS at:
 
-`https://github.com/KeigoShimadaCC/agentic-knowledge-management/wiki`
+`https://github.com/OWNER/agentic-knowledge-management/wiki`
 
 The wiki should explain the repository to maintainers, contributors, operators, and AI coding
 agents. It must be grounded in the live repository, not a shallow README rewrite.
@@ -27,7 +27,7 @@ Do not invent features. If something is planned but not implemented, label it pl
 - Clone the wiki repo:
 
   ```bash
-  git clone https://github.com/KeigoShimadaCC/agentic-knowledge-management.wiki.git /private/tmp/agentic-knowledge-management.wiki
+  git clone https://github.com/OWNER/agentic-knowledge-management.wiki.git /private/tmp/agentic-knowledge-management.wiki
   ```
 
 - Treat the generated page set as canonical.
