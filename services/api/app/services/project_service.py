@@ -350,6 +350,7 @@ Source content (truncated to 12k chars):
             temperature=0.2,
             max_tokens=settings.openai_max_tokens,
             response_format={"type": "json_object"},
+            agent_type="extract-project",
         )
         raw_text = result.text or "{}"
         input_tokens = result.input_tokens

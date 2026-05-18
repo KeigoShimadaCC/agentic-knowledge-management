@@ -75,6 +75,7 @@ async def call_ai(
             temperature=temperature,
             max_tokens=settings.openai_max_tokens,
             response_format=response_format,
+            agent_type=agent_type,
         )
         await finish_agent_run(
             db,
