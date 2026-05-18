@@ -1,6 +1,6 @@
 # Phase PHONE-04 — Edit-Lite
 
-**Status:** Planned
+**Status:** Complete
 **Goal:** Safe lightweight edits on iPhone without recreating Tiptap.
 **Wave:** 4
 **Branch:** `phase-phone-04-edit-lite`

@@ -43,8 +43,16 @@ struct APIEndpoint {
         APIEndpoint(path: "/api/v1/objects/\(id.uuidString)", method: .get)
     }
 
+    static func updateObject(id: UUID) -> APIEndpoint {
+        APIEndpoint(path: "/api/v1/objects/\(id.uuidString)", method: .patch)
+    }
+
     static func page(id: UUID) -> APIEndpoint {
         APIEndpoint(path: "/api/v1/pages/\(id.uuidString)", method: .get)
+    }
+
+    static func updatePage(id: UUID) -> APIEndpoint {
+        APIEndpoint(path: "/api/v1/pages/\(id.uuidString)", method: .put)
     }
 
     static let createPage = APIEndpoint(path: "/api/v1/pages", method: .post)

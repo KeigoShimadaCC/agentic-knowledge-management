@@ -3,6 +3,7 @@ import SwiftUI
 struct ObjectDetailView: View {
     let route: ObjectRoute
     @State private var viewModel = ObjectDetailViewModel()
+    @State private var isEditingMetadata = false
 
     var body: some View {
         Group {
@@ -32,6 +33,22 @@ struct ObjectDetailView: View {
         }
         .navigationTitle(viewModel.object?.title ?? "Object")
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                Button("Edit") {
+                    isEditingMetadata = true
+                }
+                .disabled(viewModel.object == nil)
+                .accessibilityIdentifier(Kos.ObjectDetail.editButton)
+            }
+        }
+        .sheet(isPresented: $isEditingMetadata) {
+            if let object = viewModel.object {
+                EditMetadataSheet(object: object) { updated in
+                    viewModel.apply(updated: updated)
+                }
+            }
+        }
         .task {
             await viewModel.load(id: route.id)
         }

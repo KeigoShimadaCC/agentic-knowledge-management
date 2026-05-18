@@ -9,6 +9,7 @@ enum APIError: Error, Equatable {
     case notAuthenticated
     case forbidden
     case notFound
+    case conflict(String)
     case validation(String)
     case serverError
     case aiDisabled
@@ -23,6 +24,8 @@ enum APIError: Error, Equatable {
             return "You do not have permission to perform this action."
         case .notFound:
             return "The requested item was not found."
+        case let .conflict(detail):
+            return detail
         case let .validation(detail):
             return detail
         case .serverError:
@@ -48,6 +51,8 @@ enum APIError: Error, Equatable {
             return .forbidden
         case 404:
             return .notFound
+        case 409:
+            return .conflict(detail)
         case 400, 422:
             return .validation(detail)
         case 503 where code == "ai_disabled":

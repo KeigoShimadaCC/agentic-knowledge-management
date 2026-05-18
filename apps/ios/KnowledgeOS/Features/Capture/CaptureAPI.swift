@@ -40,26 +40,6 @@ struct KnowledgeOSCaptureAPI: CaptureAPIProtocol {
     }
 
     static func tiptapDocument(from body: String) -> [String: AnyCodable] {
-        let paragraphs = body
-            .components(separatedBy: .newlines)
-            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
-            .filter { !$0.isEmpty }
-
-        let content = (paragraphs.isEmpty ? [""] : paragraphs).map { paragraph in
-            [
-                "type": "paragraph",
-                "content": paragraph.isEmpty ? [] : [
-                    [
-                        "type": "text",
-                        "text": paragraph,
-                    ],
-                ],
-            ] as [String: Any]
-        }
-
-        return [
-            "type": AnyCodable("doc"),
-            "content": AnyCodable(content),
-        ]
+        TiptapPlainText.tiptapDocument(from: body)
     }
 }
