@@ -1,6 +1,6 @@
 import Foundation
 
-struct PageCreateRequest: Encodable {
+struct PageCreateRequest: Codable {
     let title: String
     let contentJson: [String: AnyCodable]
 }

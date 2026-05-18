@@ -2,6 +2,7 @@ import SwiftUI
 
 struct CaptureTab: View {
     @Environment(AuthStore.self) private var authStore
+    @Environment(\.appDependencies) private var dependencies
     @State private var viewModel: CaptureViewModel?
 
     var body: some View {
@@ -16,7 +17,10 @@ struct CaptureTab: View {
         .accessibilityIdentifier(Kos.Capture.entry)
         .task {
             if viewModel == nil {
-                viewModel = CaptureViewModel(api: KnowledgeOSCaptureAPI(apiClient: authStore.apiClient))
+                viewModel = CaptureViewModel(
+                    api: KnowledgeOSCaptureAPI(apiClient: authStore.apiClient),
+                    queueStore: dependencies?.queueStore
+                )
             }
         }
     }

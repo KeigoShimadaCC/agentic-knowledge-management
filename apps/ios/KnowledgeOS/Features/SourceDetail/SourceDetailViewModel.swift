@@ -5,7 +5,7 @@ import UIKit
 @MainActor
 @Observable
 final class SourceDetailViewModel {
-    private let api: ReadAPI
+    private let api: CachedReadAPI
     private(set) var source: SourceDTO?
     private(set) var text = ""
     private(set) var thumbnail: UIImage?
@@ -13,25 +13,38 @@ final class SourceDetailViewModel {
     private(set) var isLoading = false
     private(set) var errorMessage: String?
 
-    init(api: ReadAPI = ReadAPI()) {
-        self.api = api
+    init(api: CachedReadAPI? = nil) {
+        if let api {
+            self.api = api
+        } else {
+            self.api = CachedReadAPI(cache: (try? SystemCacheStore()) ?? InMemoryCacheStore())
+        }
     }
 
     func load(id: UUID) async {
         guard source?.id != id else { return }
         isLoading = true
         errorMessage = nil
+        var sawAnything = false
         defer { isLoading = false }
 
-        do {
-            source = try await api.source(id: id)
-            downloadURL = api.sourceDownloadURL(id: id)
-            text = (try? await api.sourceText(id: id)) ?? source?.extractedText ?? ""
-            if let data = try? await api.sourceThumbnail(id: id) {
-                thumbnail = UIImage(data: data)
+        downloadURL = api.sourceDownloadURL(id: id)
+
+        for await result in api.source(id: id) {
+            switch result {
+            case let .success(value):
+                source = value
+                errorMessage = nil
+                sawAnything = true
+                // Source text + thumbnail are pass-through; reload each time we get
+                // a fresh source DTO (so the side data follows the fresh state).
+                text = (try? await api.sourceText(id: id)) ?? value.extractedText ?? ""
+                if let data = try? await api.sourceThumbnail(id: id) {
+                    thumbnail = UIImage(data: data)
+                }
+            case let .failure(error):
+                if !sawAnything { errorMessage = error.userMessage }
             }
-        } catch {
-            errorMessage = readErrorMessage(error)
         }
     }
 }

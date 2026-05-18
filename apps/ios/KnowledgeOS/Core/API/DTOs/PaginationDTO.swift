@@ -1,6 +1,6 @@
 import Foundation
 
-struct PaginatedResponseDTO<T: Decodable>: Decodable {
+struct PaginatedResponseDTO<T: Codable>: Codable {
     let items: [T]
     let total: Int
     let page: Int

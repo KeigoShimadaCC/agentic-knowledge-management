@@ -213,6 +213,9 @@ private struct UploadRow: View {
         case .failed:
             Text("Failed")
                 .foregroundStyle(.red)
+        case .pending:
+            Text("Will retry automatically")
+                .foregroundStyle(.orange)
         }
     }
 }

@@ -4,15 +4,19 @@ import Observation
 @MainActor
 @Observable
 final class PageDetailViewModel {
-    private let api: ReadAPI
+    private let api: CachedReadAPI
     private let editAPI: EditAPI
     private(set) var page: PageDTO?
     private(set) var isLoading = false
     private(set) var errorMessage: String?
     var conflict: PageConflict?
 
-    init(api: ReadAPI = ReadAPI(), editAPI: EditAPI = EditAPI()) {
-        self.api = api
+    init(api: CachedReadAPI? = nil, editAPI: EditAPI = EditAPI()) {
+        if let api {
+            self.api = api
+        } else {
+            self.api = CachedReadAPI(cache: (try? SystemCacheStore()) ?? InMemoryCacheStore())
+        }
         self.editAPI = editAPI
     }
 
@@ -20,12 +24,18 @@ final class PageDetailViewModel {
         guard page?.id != id else { return }
         isLoading = true
         errorMessage = nil
+        var sawAnything = false
         defer { isLoading = false }
 
-        do {
-            page = try await api.page(id: id)
-        } catch {
-            errorMessage = readErrorMessage(error)
+        for await result in api.page(id: id) {
+            switch result {
+            case let .success(value):
+                page = value
+                errorMessage = nil
+                sawAnything = true
+            case let .failure(error):
+                if !sawAnything { errorMessage = error.userMessage }
+            }
         }
     }
 
