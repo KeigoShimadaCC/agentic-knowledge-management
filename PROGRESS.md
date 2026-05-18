@@ -1,6 +1,6 @@
 # KnowledgeOS — Progress Tracker
 
-> Last updated: 2026-05-19 (PHASE-16 settings implemented in worktree; DB/API tests and full frontend/iOS gates are environment-blocked; PHONE-06 real-device smoke still pending)
+> Last updated: 2026-05-19 (PHASE-16 settings merged to main; DB/API tests and full frontend/iOS gates are environment-blocked; PHONE-08 parity plan drafted; PHONE-06 real-device smoke still pending)
 
 ---
 
@@ -1172,3 +1172,19 @@ cd apps/ios && xcodebuild -project KnowledgeOS.xcodeproj -scheme KnowledgeOS -de
 # blocked in sandbox: CoreSimulatorService unavailable and iPhone 16 destination not visible
 # outside-sandbox retry was rejected by the runtime usage limiter
 ```
+
+---
+
+## Phase PHONE-08 — Cross-Platform Parity & Propagation 📝 Draft
+
+**Goal:** Audit Mac web, iPhone SwiftUI, and backend `/api/v1` surfaces, then fix critical shared-workflow gaps so Mac-created and iPhone-created knowledge propagate bidirectionally.
+
+**Branch:** `phase-phone-08-cross-platform-parity` · **Worktree:** `worktrees/kos-phone-08` · **Depends on:** PHONE-07 complete or explicitly accepted as the baseline.
+
+- [x] Draft phase doc created at [`project-phases/PHASE-PHONE-08-CROSS-PLATFORM-PARITY.md`](project-phases/PHASE-PHONE-08-CROSS-PLATFORM-PARITY.md).
+- [x] Scope clarified: "Mac" means the existing Next.js web app in `apps/web`, not a native macOS app.
+- [x] Required parity matrix artifact specified: `docs/CROSS_PLATFORM_PARITY.md`, built from live code before product edits.
+- [x] Default required parity set: pages, objects, search, sources/assets, chats, projects, AI answer/summarize/suggest-links, edit-lite, archive/trash/restore, graph links/backlinks, workspaces, and propagation of phone-originated queued/offline data after sync.
+- [x] Mac-only-by-design surfaces preserved unless the matrix explicitly promotes them: MCP connection admin, tutorial seed/reset, deep Tiptap slash editing, career/private release controls, and lower-level developer/admin endpoints.
+- [x] Hard completion gate specified: iPhone 16 simulator build/test plus `ios-simulator` MCP screenshots and `ui_describe_all` evidence under `.tmp/mobile-qa/phone-08/`.
+- [ ] Implementation not started. PHONE-08 remains a draft plan until PHONE-07 is complete or accepted as baseline, the `worktrees/kos-phone-08` worktree is created from current `main`, the iPhone 16 simulator is boot-proven, and the live-code parity matrix is written before product edits.
