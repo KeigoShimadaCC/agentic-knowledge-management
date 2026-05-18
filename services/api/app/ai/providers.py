@@ -8,6 +8,7 @@ runtimes) plug in without touching call sites.
 from __future__ import annotations
 
 import abc
+import json
 from dataclasses import dataclass
 from typing import Any
 
@@ -21,6 +22,99 @@ ANTHROPIC_JSON_INSTRUCTION = (
     "You MUST respond with a single valid JSON object only. "
     "Do not include prose, markdown, or code fences."
 )
+
+# Long-form stub keeps "Canned E2E summary." as a substring so existing UI text
+# assertions still pass, while staying well over 50 chars for SAI02-style
+# "length > 50" assertions in tests/e2e/specs/30-sai02-page-intelligence.spec.ts.
+_STUB_LONG_SUMMARY = (
+    f"{TEST_STUB_SUMMARY} This deterministic stub paragraph stays well over fifty "
+    "characters so end-to-end summarize and answer tests can assert on length "
+    "without ever calling a real model."
+)
+
+# JSON stubs keyed by agent_type. Shapes follow the schemas the corresponding
+# services parse (see career_ai_service and ai_service).
+_STUB_BULLETS_JSON = json.dumps(
+    {
+        "bullets": [
+            {
+                "text": (
+                    f"{TEST_STUB_SUMMARY} Stub bullet 1 covering a measurable "
+                    "outcome for e2e bullet-count assertions."
+                ),
+                "evidence_object_ids": [],
+                "confidence": "medium",
+                "metrics_cited": ["stub_metric"],
+            },
+            {
+                "text": "Stub bullet 2 documenting a deterministic e2e scenario.",
+                "evidence_object_ids": [],
+                "confidence": "medium",
+                "metrics_cited": [],
+            },
+            {
+                "text": "Stub bullet 3 — the SAI01 spec requires at least three.",
+                "evidence_object_ids": [],
+                "confidence": "low",
+                "metrics_cited": [],
+            },
+        ]
+    }
+)
+
+_STUB_INTERVIEW_STORY_JSON = json.dumps(
+    {
+        "situation": "Stub e2e situation describing the project setup.",
+        "task": "Stub e2e task describing what needed to be done.",
+        "action": "Stub e2e action describing the deterministic steps taken.",
+        "result": "Stub e2e result quantifying the deterministic outcome.",
+        "evidence_object_ids": [],
+    }
+)
+
+_STUB_TRIAGE_JSON = json.dumps(
+    {
+        "summary": (
+            f"{TEST_STUB_SUMMARY} Stub triage summary exceeding the 30-char "
+            "threshold SAI03 asserts on."
+        ),
+        "suggested_tags": ["stub", "e2e"],
+        "suggested_title": "Stub triage title",
+    }
+)
+
+_STUB_EXTRACT_PROJECT_JSON = json.dumps(
+    {
+        "title": "Stub e2e project",
+        "summary": f"{TEST_STUB_SUMMARY} Stub project summary for extract-project flows.",
+        "role": "",
+        "outcomes": [],
+        "tags": ["stub"],
+    }
+)
+
+
+def stub_response_text(agent_type: str | None) -> str:
+    """Return shape-appropriate stub text for the given agent_type.
+
+    Used by both provider stubs (OpenAI + Anthropic) when their respective test
+    keys are configured. Default falls back to the original short stub so the
+    legacy "stub key returns canned text" unit test in
+    tests/unit/test_chat_providers.py keeps passing.
+    """
+    if agent_type in ("summarize", "answer", "inline_ai_complete", "inline_ai_transform"):
+        return _STUB_LONG_SUMMARY
+    if agent_type == "generate_resume_bullets":
+        return _STUB_BULLETS_JSON
+    if agent_type == "generate_interview_story":
+        return _STUB_INTERVIEW_STORY_JSON
+    if agent_type == "triage":
+        return _STUB_TRIAGE_JSON
+    if agent_type == "extract-project":
+        return _STUB_EXTRACT_PROJECT_JSON
+    if agent_type in ("extract_claims", "extract_tasks", "suggest_links"):
+        return "[]"
+    return TEST_STUB_SUMMARY
 
 
 @dataclass
@@ -54,6 +148,7 @@ class ChatProvider(abc.ABC):
         temperature: float,
         max_tokens: int,
         response_format: dict[str, Any] | None,
+        agent_type: str | None = None,
     ) -> ChatResult: ...
 
 
@@ -76,9 +171,12 @@ class OpenAIChatProvider(ChatProvider):
         temperature: float,
         max_tokens: int,
         response_format: dict[str, Any] | None,
+        agent_type: str | None = None,
     ) -> ChatResult:
         if settings.openai_api_key == OPENAI_TEST_STUB_KEY:
-            return ChatResult(text=TEST_STUB_SUMMARY, input_tokens=10, output_tokens=8)
+            return ChatResult(
+                text=stub_response_text(agent_type), input_tokens=10, output_tokens=8
+            )
 
         import openai
 
@@ -151,12 +249,15 @@ class AnthropicChatProvider(ChatProvider):
         temperature: float,
         max_tokens: int,
         response_format: dict[str, Any] | None,
+        agent_type: str | None = None,
     ) -> ChatResult:
         json_mode = bool(response_format and response_format.get("type") == "json_object")
         system, anth_messages = split_system_messages(messages, json_mode=json_mode)
 
         if settings.anthropic_api_key == ANTHROPIC_TEST_STUB_KEY:
-            return ChatResult(text=TEST_STUB_SUMMARY, input_tokens=10, output_tokens=8)
+            return ChatResult(
+                text=stub_response_text(agent_type), input_tokens=10, output_tokens=8
+            )
 
         import anthropic
 
