@@ -4,13 +4,13 @@
 **Goal:** Typed `APIClient`, Keychain-backed bearer token storage, login/logout/bootstrap, full DTO set mirroring `docs/MOBILE_API_CONTRACT.md`.
 **Wave:** 2 (parallel with 02B)
 **Branch:** `phase-phone-02a-ios-api-client`
-**Worktree:** `../kos-phone-02a`
+**Worktree:** `worktrees/kos-phone-02a`
 **Depends on:** PHASE-PHONE-01A (auth contract), PHASE-PHONE-01C (scaffold)
 **Blocks:** PHASE-PHONE-03A, 03B, 03C
 
 ## Scope
 
-Only `apps/ios/KnowledgeOS/Core/**` and `apps/ios/KnowledgeOSTests/**`. Do **not** add feature UI yet (Wave 3 owns that). Do **not** modify `project.yml` structure beyond adding files.
+`apps/ios/KnowledgeOS/Core/**`, auth/session UI, the root tab shell placeholders under `Features/Root/**`, and `apps/ios/KnowledgeOSTests/**`. PHONE-02A intentionally shipped the login flow and placeholder tab contract so Wave 3 phases could replace tab bodies without changing `MainTabView.swift`. Do **not** add read/search/capture/AI feature bodies here. Do **not** modify `project.yml` structure beyond adding files.
 
 ## Files to create
 
@@ -99,7 +99,8 @@ docker compose -f infra/docker-compose.yml up -d
 cd apps/ios
 xcodegen generate
 xcodebuild -project KnowledgeOS.xcodeproj -scheme KnowledgeOS \
-  -destination 'platform=iOS Simulator,name=iPhone 16' test
+  -destination 'platform=iOS Simulator,name=iPhone 16' \
+  -only-testing:KnowledgeOSTests test
 
 # Manual smoke (operator)
 # 1. Boot simulator. 2. Set base URL to http://127.0.0.1:8001.

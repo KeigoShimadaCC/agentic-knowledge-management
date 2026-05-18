@@ -1,10 +1,10 @@
 # Phase PHONE-05 — Offline Cache & Queue
 
-**Status:** Planned
+**Status:** Complete
 **Goal:** Survive a sleeping Mac. Cache recent reads. Queue unsent captures.
 **Wave:** 5
 **Branch:** `phase-phone-05-offline-cache`
-**Worktree:** `../kos-phone-05`
+**Worktree:** `worktrees/kos-phone-05`
 **Depends on:** PHASE-PHONE-03A, 03B
 **Blocks:** none
 

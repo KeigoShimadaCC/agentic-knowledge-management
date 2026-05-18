@@ -1,10 +1,10 @@
 # Phase PHONE-01C — iOS App Scaffold
 
-**Status:** Planned
+**Status:** Complete
 **Goal:** Create a buildable SwiftUI iOS project at `apps/ios/` using XcodeGen. App boots, hits a configurable base URL, and shows a Connect + health-check screen.
 **Wave:** 1 (parallel with 01A, 01B)
 **Branch:** `phase-phone-01c-ios-scaffold`
-**Worktree:** `../kos-phone-01c`
+**Worktree:** `worktrees/kos-phone-01c`
 **Depends on:** PHASE-PHONE-00
 **Blocks:** PHASE-PHONE-02A, 02B
 
@@ -65,8 +65,8 @@ apps/ios/
 ## Definition of done
 
 - `xcodegen generate` produces a project that builds clean on a fresh checkout.
-- `xcodebuild ... build` succeeds on `iPhone 16` simulator.
-- `xcodebuild ... test` runs `BootSmokeTests` and passes.
+- `xcodebuild -project KnowledgeOS.xcodeproj -scheme KnowledgeOS -destination 'platform=iOS Simulator,name=iPhone 16' build` succeeds.
+- `xcodebuild -project KnowledgeOS.xcodeproj -scheme KnowledgeOS -destination 'platform=iOS Simulator,name=iPhone 16' -only-testing:KnowledgeOSTests test` runs `BootSmokeTests` and passes.
 - Connect screen accepts a URL, hits `/api/v1/health`, shows result.
 - No raw `.xcodeproj` committed.
 - `PROGRESS.md` updated.

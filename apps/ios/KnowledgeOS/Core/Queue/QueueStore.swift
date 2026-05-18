@@ -109,13 +109,16 @@ final class SystemQueueStore: QueueStore, @unchecked Sendable {
     private let lock = NSLock()
     private var observers: [UUID: AsyncStream<Int>.Continuation] = [:]
 
-    init(db: SQLiteDatabase) throws {
+    init(db: SQLiteDatabase, migrateLegacyQueue: Bool = false) throws {
         self.db = db
         try CacheMigrations.apply(to: db)
+        if migrateLegacyQueue {
+            try Self.migrateLegacyPendingUploads(from: SQLiteDatabase.defaultCachePath(), into: db)
+        }
     }
 
     convenience init() throws {
-        try self.init(db: try SQLiteDatabase())
+        try self.init(db: try SQLiteDatabase(path: Self.defaultPath()), migrateLegacyQueue: true)
     }
 
     func enqueue(_ item: PendingUpload) throws {
@@ -279,6 +282,71 @@ final class SystemQueueStore: QueueStore, @unchecked Sendable {
         for cont in snapshot { cont.yield(count) }
     }
 
+    static func defaultPath() throws -> String {
+        try SQLiteDatabase.applicationSupportPath(filename: "queue.sqlite")
+    }
+
+    static func migrateLegacyPendingUploads(from legacyPath: String, into targetDB: SQLiteDatabase) throws {
+        guard FileManager.default.fileExists(atPath: legacyPath), legacyPath != targetDB.path else {
+            return
+        }
+        let existing = try targetDB.query("SELECT COUNT(*) FROM pending_uploads") { row in Int(row.int(0)) }
+            .first ?? 0
+        guard existing == 0 else { return }
+
+        let legacyDB = try SQLiteDatabase(path: legacyPath)
+        let tableExists = try legacyDB.query(
+            "SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'pending_uploads'"
+        ) { row in row.text(0) }
+        guard tableExists.contains(where: { $0 == "pending_uploads" }) else { return }
+
+        let columns = Set(try legacyDB.query("PRAGMA table_info(pending_uploads)") { row in row.text(1) }.compactMap { $0 })
+        let hasNeedsAttention = columns.contains("needs_attention")
+
+        let rows = try legacyDB.query(
+            """
+            SELECT id, kind, payload, retry_count, last_error, created_at, next_attempt_at
+            \(hasNeedsAttention ? ", needs_attention" : ", 0")
+            FROM pending_uploads
+            """
+        ) { row in
+            LegacyPendingUploadRow(
+                id: row.text(0),
+                kind: row.text(1),
+                payload: row.blob(2),
+                retryCount: row.int(3),
+                lastError: row.text(4),
+                createdAt: row.double(5),
+                nextAttemptAt: row.double(6),
+                needsAttention: row.int(7)
+            )
+        }
+
+        guard !rows.isEmpty else { return }
+        try targetDB.transaction { tx in
+            for row in rows {
+                guard let id = row.id, let kind = row.kind, let payload = row.payload else { continue }
+                try tx.execute(
+                    """
+                    INSERT OR IGNORE INTO pending_uploads
+                        (id, kind, payload, retry_count, last_error, created_at, next_attempt_at, needs_attention)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                    """,
+                    bindings: [
+                        .text(id),
+                        .text(kind),
+                        .blob(payload),
+                        .integer(row.retryCount),
+                        row.lastError.map { .text($0) } ?? .null,
+                        .real(row.createdAt),
+                        .real(row.nextAttemptAt),
+                        .integer(row.needsAttention),
+                    ]
+                )
+            }
+        }
+    }
+
     // MARK: - encode / decode helpers
 
     /// We pack (payload, metadata) into a single sqlite blob so the schema stays
@@ -329,6 +397,17 @@ final class SystemQueueStore: QueueStore, @unchecked Sendable {
             nextAttemptAt: Date(timeIntervalSince1970: row.double(6)),
             needsAttention: row.int(7) != 0
         )
+    }
+
+    private struct LegacyPendingUploadRow {
+        let id: String?
+        let kind: String?
+        let payload: Data?
+        let retryCount: Int64
+        let lastError: String?
+        let createdAt: Double
+        let nextAttemptAt: Double
+        let needsAttention: Int64
     }
 }
 

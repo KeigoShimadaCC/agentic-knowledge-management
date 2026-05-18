@@ -49,7 +49,7 @@ final class SQLiteDatabase: @unchecked Sendable {
     /// Path under `Library/Caches/knowledgeos.sqlite` by default. Pass an explicit path
     /// (e.g. an `NSTemporaryDirectory()` file) for tests.
     init(path: String? = nil) throws {
-        let resolved = try path ?? Self.defaultPath()
+        let resolved = try path ?? Self.defaultCachePath()
         self.path = resolved
         let flags = SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_FULLMUTEX
         let rc = sqlite3_open_v2(resolved, &handle, flags, nil)
@@ -172,11 +172,24 @@ final class SQLiteDatabase: @unchecked Sendable {
         handle.flatMap { String(cString: sqlite3_errmsg($0)) } ?? "unknown"
     }
 
-    private static func defaultPath() throws -> String {
+    static func defaultCachePath() throws -> String {
         let fm = FileManager.default
         let base = try fm.url(for: .cachesDirectory, in: .userDomainMask, appropriateFor: nil, create: true)
         let dir = base.appendingPathComponent("knowledgeos", isDirectory: true)
         try fm.createDirectory(at: dir, withIntermediateDirectories: true)
         return dir.appendingPathComponent("knowledgeos.sqlite").path
+    }
+
+    static func applicationSupportPath(filename: String) throws -> String {
+        let fm = FileManager.default
+        let base = try fm.url(
+            for: .applicationSupportDirectory,
+            in: .userDomainMask,
+            appropriateFor: nil,
+            create: true
+        )
+        let dir = base.appendingPathComponent("knowledgeos", isDirectory: true)
+        try fm.createDirectory(at: dir, withIntermediateDirectories: true)
+        return dir.appendingPathComponent(filename).path
     }
 }

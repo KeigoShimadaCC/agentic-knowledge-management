@@ -90,7 +90,7 @@ struct CachedReadAPI: Sendable {
     /// Source text and thumbnails are passed through without caching in MVP.
     func sourceText(id: UUID) async throws -> String { try await read.sourceText(id: id) }
     func sourceThumbnail(id: UUID) async throws -> Data { try await read.sourceThumbnail(id: id) }
-    func sourceDownloadURL(id: UUID) -> URL? { read.sourceDownloadURL(id: id) }
+    func assetDownload(id: UUID) async throws -> Data { try await read.assetDownload(id: id) }
     func relatedObjects(id: UUID) async throws -> [RelatedObjectDTO] {
         try await read.relatedObjects(id: id)
     }

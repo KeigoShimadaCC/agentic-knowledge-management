@@ -1,11 +1,11 @@
 # Phase PHONE-03C — Mobile AI
 
-**Status:** Planned
+**Status:** Complete
 **Goal:** Expose high-leverage AI on mobile: grounded KB Q&A, summarize current object, suggest links. Respect AI-disabled state.
 **Wave:** 3 (parallel with 03A, 03B)
 **Branch:** `phase-phone-03c-mobile-ai`
-**Worktree:** `../kos-phone-03c`
-**Depends on:** PHASE-PHONE-02A. Coordinates with 03A (object detail invokes summarize/suggest-links).
+**Worktree:** `worktrees/kos-phone-03c`
+**Depends on:** PHASE-PHONE-02A and PHASE-PHONE-03A. Coordinates with 03A through the shipped `AIActionsBar` hook in object detail surfaces.
 **Blocks:** none
 
 ## Scope
@@ -54,7 +54,9 @@ if let object = currentObject {
 # With AI enabled (OPENAI_API_KEY set)
 docker compose -f infra/docker-compose.yml up -d
 cd apps/ios
-xcodebuild ... test
+xcodebuild -project KnowledgeOS.xcodeproj -scheme KnowledgeOS \
+  -destination 'platform=iOS Simulator,name=iPhone 16' \
+  -only-testing:KnowledgeOSTests test
 
 # With AI disabled (OPENAI_API_KEY unset)
 # Re-run, manually confirm "AI disabled" state in app.
