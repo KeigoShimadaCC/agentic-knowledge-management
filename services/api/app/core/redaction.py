@@ -32,10 +32,17 @@ _SENSITIVE_KEY_FRAGMENTS: frozenset[str] = frozenset(
 )
 
 
+def _is_sensitive_key(key: str) -> bool:
+    lower = str(key).lower()
+    if lower in _REDACTED_KEYS:
+        return True
+    return any(fragment in lower for fragment in _SENSITIVE_KEY_FRAGMENTS)
+
+
 def redact_dict(data: Any) -> Any:
     if isinstance(data, dict):
         return {
-            k: _REDACTED_SENTINEL if k in _REDACTED_KEYS else redact_dict(v)
+            k: _REDACTED_SENTINEL if _is_sensitive_key(k) else redact_dict(v)
             for k, v in data.items()
         }
     if isinstance(data, list):
@@ -45,11 +52,6 @@ def redact_dict(data: Any) -> Any:
 
 def redact_env_vars(env_vars: dict[str, str]) -> dict[str, str]:
     return {k: _ENV_VAR_SENTINEL for k in env_vars}
-
-
-def _is_sensitive_key(key: str) -> bool:
-    lower = key.lower()
-    return any(fragment in lower for fragment in _SENSITIVE_KEY_FRAGMENTS)
 
 
 def redact_mapping(value: dict[str, Any], *, depth: int = 8) -> dict[str, Any]:
