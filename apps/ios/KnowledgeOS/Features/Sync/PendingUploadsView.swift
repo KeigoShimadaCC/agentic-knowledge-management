@@ -7,6 +7,14 @@ struct PendingUploadsView: View {
     @State private var items: [PendingUpload] = []
     @State private var isDraining = false
 
+    private var needsAttentionItems: [PendingUpload] {
+        items.filter { $0.needsAttention }
+    }
+
+    private var retryingItems: [PendingUpload] {
+        items.filter { !$0.needsAttention }
+    }
+
     var body: some View {
         NavigationStack {
             Group {
@@ -17,8 +25,26 @@ struct PendingUploadsView: View {
                     )
                 } else {
                     List {
-                        ForEach(items, id: \.id) { item in
-                            row(for: item)
+                        if !needsAttentionItems.isEmpty {
+                            Section {
+                                ForEach(needsAttentionItems, id: \.id) { item in
+                                    needsAttentionRow(for: item)
+                                }
+                            } header: {
+                                Label("Needs attention", systemImage: "exclamationmark.triangle.fill")
+                                    .foregroundStyle(.orange)
+                                    .accessibilityIdentifier("kos.sync.needsAttentionHeader")
+                            } footer: {
+                                Text("These captures hit a permanent error (validation, conflict, or auth) and were parked. No retries happen until you act.")
+                                    .font(.caption2)
+                            }
+                        }
+                        if !retryingItems.isEmpty {
+                            Section("Retrying automatically") {
+                                ForEach(retryingItems, id: \.id) { item in
+                                    retryingRow(for: item)
+                                }
+                            }
                         }
                     }
                 }
@@ -39,7 +65,7 @@ struct PendingUploadsView: View {
                             Text("Drain now")
                         }
                     }
-                    .disabled(items.isEmpty || isDraining)
+                    .disabled(retryingItems.isEmpty || isDraining)
                     .accessibilityIdentifier("kos.sync.drainNow")
                 }
             }
@@ -48,7 +74,7 @@ struct PendingUploadsView: View {
     }
 
     @ViewBuilder
-    private func row(for item: PendingUpload) -> some View {
+    private func retryingRow(for item: PendingUpload) -> some View {
         VStack(alignment: .leading, spacing: 6) {
             HStack {
                 Text(label(for: item.kind))
@@ -80,6 +106,48 @@ struct PendingUploadsView: View {
         }
         .padding(.vertical, 4)
         .accessibilityIdentifier("kos.sync.pendingRow")
+    }
+
+    @ViewBuilder
+    private func needsAttentionRow(for item: PendingUpload) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack {
+                Text(label(for: item.kind))
+                    .font(.subheadline.weight(.semibold))
+                Spacer()
+                Text("permanent error")
+                    .font(.caption2)
+                    .foregroundStyle(.orange)
+            }
+            if let error = item.lastError, !error.isEmpty {
+                Text(error)
+                    .font(.caption)
+                    .foregroundStyle(.red)
+                    .lineLimit(3)
+            }
+            HStack(spacing: 12) {
+                Spacer()
+                Button("Try again") {
+                    Task {
+                        try? queueStore.clearNeedsAttention(id: item.id)
+                        await refresh()
+                    }
+                }
+                .font(.caption)
+                .accessibilityIdentifier("kos.sync.retryButton")
+
+                Button("Cancel", role: .destructive) {
+                    Task {
+                        try? queueStore.remove(id: item.id)
+                        await refresh()
+                    }
+                }
+                .font(.caption)
+                .accessibilityIdentifier("kos.sync.cancelButton")
+            }
+        }
+        .padding(.vertical, 4)
+        .accessibilityIdentifier("kos.sync.needsAttentionRow")
     }
 
     private func label(for kind: PendingUploadKind) -> String {

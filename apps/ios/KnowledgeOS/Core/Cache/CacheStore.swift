@@ -167,7 +167,7 @@ final class SystemCacheStore: CacheStore, @unchecked Sendable {
 
     private func readDetail<T: Decodable>(id: UUID, kind: String) -> CachedEntry<T>? {
         let rows = (try? db.query(
-            "SELECT payload_json, fetched_at FROM cached_details WHERE id = ? AND kind = ?",
+            "SELECT payload_json, fetched_at FROM cached_details WHERE object_id = ? AND kind = ?",
             bindings: [.text(id.uuidString), .text(kind)]
         ) { row -> (Data, Double)? in
             guard let data = row.blob(0) else { return nil }
@@ -182,9 +182,9 @@ final class SystemCacheStore: CacheStore, @unchecked Sendable {
         let data = try JSONCoding.encoder.encode(payload)
         try db.execute(
             """
-            INSERT INTO cached_details (id, kind, payload_json, fetched_at)
+            INSERT INTO cached_details (object_id, kind, payload_json, fetched_at)
             VALUES (?, ?, ?, ?)
-            ON CONFLICT(id, kind) DO UPDATE SET
+            ON CONFLICT(object_id, kind) DO UPDATE SET
                 payload_json = excluded.payload_json,
                 fetched_at = excluded.fetched_at;
             """,

@@ -1,6 +1,6 @@
 # KnowledgeOS — Progress Tracker
 
-> Last updated: 2026-05-18 (PHONE-06 device install docs/config ready; real-device smoke pending)
+> Last updated: 2026-05-18 (PHONE-05 finalized; PHONE-06 device install docs/config ready with real-device smoke pending)
 
 ---
 
@@ -1010,6 +1010,18 @@ xcodebuild ... -only-testing:KnowledgeOSTests test                        # ⇒ 
 
 **Blocks unblocked:** none (PHONE-05 is a Wave-5 leaf in the mobile track).
 
+### PHONE-05 finalization — conflict surfacing + spec literal alignment (2026-05-18)
+
+Follow-up audit against the spec turned up two gaps in the initial PHONE-05 merge that this addendum closes:
+
+- [x] **Task 5 spec compliance:** the original `QueueDrainer` treated every error identically — bumped `retry_count` and rescheduled with backoff — so a permanent 4xx (e.g. a 409 conflict from PHONE-04's optimistic locking) would silently retry up to 10× over ~1h, then park for 24h, instead of surfacing for manual handling like PHONE-04's `ConflictResolutionSheet` does. Fixed: `QueueDrainer.isPermanent(_:)` classifies `APIError.conflict`/`.validation`/`.forbidden`/`.notFound`/`.notAuthenticated`/`.aiDisabled` as permanent; permanent failures call new `QueueStore.markNeedsAttention(id:error:)` instead of `markFailed`. The item stays in the queue (`pendingCount()` still counts it, so the banner reflects it) but is excluded from `nextDrainable(now:)`, so no further retries fire until the user explicitly resolves it.
+- [x] **Spec column rename:** `cached_details.id` → `cached_details.object_id` to match the spec literal. Schema bumped to v2; existing v1 installs are migrated via `ALTER TABLE ... RENAME COLUMN` plus an `ADD COLUMN needs_attention INTEGER NOT NULL DEFAULT 0` on `pending_uploads`. Fresh installs land on v2 directly.
+- [x] **PendingUploadsView** split into two sections: "Needs attention" (with **Try again** and **Cancel** buttons per row) and "Retrying automatically" (with the existing **Cancel**). "Drain now" only operates on the retrying set, matching the spec's "no destructive auto-resolution".
+- [x] **Tests:** `QueueConflictSurfaceTests.swift` (6) — drain-on-conflict marks needsAttention without bumping retry_count, validation is permanent, server-5xx still transient, clearNeedsAttention re-enables drain, parked state survives DB reopen, `isPermanent` classification matrix. `CacheMigrationTests.swift` (2) — fresh DB lands on v2; a hand-built v1 schema migrates to v2 without data loss.
+- [x] Validation: `xcodebuild test` → **80/80 tests pass** (was 72; 8 new across the two files).
+
+**Final PHONE-05 status:** spec-complete, including the task-5 "no destructive auto-resolution" requirement.
+
 ---
 
 ## Phase PHONE-06 — Device Install & Private Release 🚧 Device Smoke Pending
@@ -1027,7 +1039,7 @@ xcodebuild ... -only-testing:KnowledgeOSTests test                        # ⇒ 
 **Validation performed:**
 
 ```bash
-rg -n "^<<<<<<<|^=======$|^>>>>>>>" PROGRESS.md apps/ios/project.yml apps/ios/README.md docs/MOBILE_APP.md
+conflict-marker scan over PROGRESS.md apps/ios/project.yml apps/ios/README.md docs/MOBILE_APP.md
 # no matches
 
 cd apps/ios && xcodegen generate

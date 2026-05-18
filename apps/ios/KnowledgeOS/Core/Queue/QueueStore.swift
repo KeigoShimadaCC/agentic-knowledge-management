@@ -66,6 +66,12 @@ struct PendingUpload: Sendable, Equatable {
     let lastError: String?
     let createdAt: Date
     let nextAttemptAt: Date
+    /// `true` when the queue drainer hit a permanent failure (4xx — validation,
+    /// conflict, forbidden, not-found). The item is parked and excluded from
+    /// `nextDrainable` until the user explicitly retries or cancels via
+    /// `PendingUploadsView`. Spec PHONE-05 task 5: "No destructive
+    /// auto-resolution — conflicts surface the same way as PHASE-PHONE-04."
+    var needsAttention: Bool = false
 }
 
 protocol QueueStore: Sendable {
@@ -75,6 +81,13 @@ protocol QueueStore: Sendable {
     func nextDrainable(now: Date) throws -> [PendingUpload]
     func markSucceeded(id: UUID) throws
     func markFailed(id: UUID, error: String, now: Date) throws
+    /// Park the item for manual handling — used for 4xx errors that won't
+    /// resolve on their own. The item stays in the queue, contributes to
+    /// `pendingCount()`, and is excluded from `nextDrainable(now:)`.
+    func markNeedsAttention(id: UUID, error: String) throws
+    /// Clear the needs-attention flag and reset backoff so the next drain
+    /// picks the item up immediately.
+    func clearNeedsAttention(id: UUID) throws
     func remove(id: UUID) throws
     func observe() -> AsyncStream<Int>
 }
@@ -109,14 +122,15 @@ final class SystemQueueStore: QueueStore, @unchecked Sendable {
         try db.execute(
             """
             INSERT INTO pending_uploads
-                (id, kind, payload, retry_count, last_error, created_at, next_attempt_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
+                (id, kind, payload, retry_count, last_error, created_at, next_attempt_at, needs_attention)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
             ON CONFLICT(id) DO UPDATE SET
                 kind = excluded.kind,
                 payload = excluded.payload,
                 retry_count = excluded.retry_count,
                 last_error = excluded.last_error,
-                next_attempt_at = excluded.next_attempt_at;
+                next_attempt_at = excluded.next_attempt_at,
+                needs_attention = excluded.needs_attention;
             """,
             bindings: [
                 .text(item.id.uuidString),
@@ -126,6 +140,7 @@ final class SystemQueueStore: QueueStore, @unchecked Sendable {
                 item.lastError.map { .text($0) } ?? .null,
                 .real(item.createdAt.timeIntervalSince1970),
                 .real(item.nextAttemptAt.timeIntervalSince1970),
+                .integer(item.needsAttention ? 1 : 0),
             ]
         )
         notify()
@@ -140,7 +155,11 @@ final class SystemQueueStore: QueueStore, @unchecked Sendable {
 
     func allPending() throws -> [PendingUpload] {
         try db.query(
-            "SELECT id, kind, payload, retry_count, last_error, created_at, next_attempt_at FROM pending_uploads ORDER BY created_at ASC",
+            """
+            SELECT id, kind, payload, retry_count, last_error, created_at, next_attempt_at, needs_attention
+            FROM pending_uploads
+            ORDER BY needs_attention DESC, created_at ASC
+            """,
             rowDecoder: decodeRow
         ).compactMap { $0 }
     }
@@ -148,9 +167,9 @@ final class SystemQueueStore: QueueStore, @unchecked Sendable {
     func nextDrainable(now: Date) throws -> [PendingUpload] {
         try db.query(
             """
-            SELECT id, kind, payload, retry_count, last_error, created_at, next_attempt_at
+            SELECT id, kind, payload, retry_count, last_error, created_at, next_attempt_at, needs_attention
             FROM pending_uploads
-            WHERE next_attempt_at <= ?
+            WHERE next_attempt_at <= ? AND needs_attention = 0
             ORDER BY next_attempt_at ASC
             LIMIT 25
             """,
@@ -196,6 +215,33 @@ final class SystemQueueStore: QueueStore, @unchecked Sendable {
                 ]
             )
         }
+        notify()
+    }
+
+    func markNeedsAttention(id: UUID, error: String) throws {
+        try db.execute(
+            """
+            UPDATE pending_uploads
+            SET needs_attention = 1, last_error = ?
+            WHERE id = ?
+            """,
+            bindings: [.text(error), .text(id.uuidString)]
+        )
+        notify()
+    }
+
+    func clearNeedsAttention(id: UUID) throws {
+        try db.execute(
+            """
+            UPDATE pending_uploads
+            SET needs_attention = 0, retry_count = 0, next_attempt_at = ?
+            WHERE id = ?
+            """,
+            bindings: [
+                .real(Date().timeIntervalSince1970),
+                .text(id.uuidString),
+            ]
+        )
         notify()
     }
 
@@ -280,7 +326,8 @@ final class SystemQueueStore: QueueStore, @unchecked Sendable {
             retryCount: Int(row.int(3)),
             lastError: row.text(4),
             createdAt: Date(timeIntervalSince1970: row.double(5)),
-            nextAttemptAt: Date(timeIntervalSince1970: row.double(6))
+            nextAttemptAt: Date(timeIntervalSince1970: row.double(6)),
+            needsAttention: row.int(7) != 0
         )
     }
 }
@@ -312,7 +359,7 @@ final class InMemoryQueueStore: QueueStore, @unchecked Sendable {
     func nextDrainable(now: Date) throws -> [PendingUpload] {
         lock.lock(); defer { lock.unlock() }
         return items.values
-            .filter { $0.nextAttemptAt <= now }
+            .filter { !$0.needsAttention && $0.nextAttemptAt <= now }
             .sorted { $0.nextAttemptAt < $1.nextAttemptAt }
     }
 
@@ -336,7 +383,46 @@ final class InMemoryQueueStore: QueueStore, @unchecked Sendable {
                 createdAt: existing.createdAt,
                 nextAttemptAt: nextRetries > Self.maxRetries
                     ? now.addingTimeInterval(24 * 3600)
-                    : next
+                    : next,
+                needsAttention: existing.needsAttention
+            )
+        }
+        lock.unlock()
+        notify()
+    }
+
+    func markNeedsAttention(id: UUID, error: String) throws {
+        lock.lock()
+        if let existing = items[id] {
+            items[id] = PendingUpload(
+                id: existing.id,
+                kind: existing.kind,
+                payload: existing.payload,
+                metadata: existing.metadata,
+                retryCount: existing.retryCount,
+                lastError: error,
+                createdAt: existing.createdAt,
+                nextAttemptAt: existing.nextAttemptAt,
+                needsAttention: true
+            )
+        }
+        lock.unlock()
+        notify()
+    }
+
+    func clearNeedsAttention(id: UUID) throws {
+        lock.lock()
+        if let existing = items[id] {
+            items[id] = PendingUpload(
+                id: existing.id,
+                kind: existing.kind,
+                payload: existing.payload,
+                metadata: existing.metadata,
+                retryCount: 0,
+                lastError: existing.lastError,
+                createdAt: existing.createdAt,
+                nextAttemptAt: Date(),
+                needsAttention: false
             )
         }
         lock.unlock()
