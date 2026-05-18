@@ -3,7 +3,14 @@ import Foundation
 struct DrainSummary: Equatable {
     var attempted: Int = 0
     var succeeded: Int = 0
-    var failed: Int = 0
+    /// Transient failures (network, 5xx) — backoff'd for retry.
+    var transientFailed: Int = 0
+    /// Permanent failures (4xx — validation, conflict, forbidden, not-found).
+    /// These items are parked with `needs_attention = 1` and surface in
+    /// `PendingUploadsView`. Spec PHONE-05 task 5.
+    var permanentFailed: Int = 0
+
+    var failed: Int { transientFailed + permanentFailed }
 }
 
 /// Drains pending uploads from a QueueStore using a real APIClient. Used by:
@@ -46,13 +53,33 @@ struct QueueDrainer: Sendable {
                 try await execute(item)
                 try? queue.markSucceeded(id: item.id)
                 summary.succeeded += 1
+            } catch let apiError as APIError {
+                let message = apiError.userMessage
+                if Self.isPermanent(apiError) {
+                    try? queue.markNeedsAttention(id: item.id, error: message)
+                    summary.permanentFailed += 1
+                } else {
+                    try? queue.markFailed(id: item.id, error: message, now: now)
+                    summary.transientFailed += 1
+                }
             } catch {
-                let message = (error as? APIError)?.userMessage ?? error.localizedDescription
-                try? queue.markFailed(id: item.id, error: message, now: now)
-                summary.failed += 1
+                try? queue.markFailed(id: item.id, error: error.localizedDescription, now: now)
+                summary.transientFailed += 1
             }
         }
         return summary
+    }
+
+    /// Permanent (4xx-family) errors — these will not resolve by retrying, so the
+    /// item is parked for manual handling. Spec PHONE-05 task 5: "conflicts surface
+    /// the same way as PHASE-PHONE-04."
+    static func isPermanent(_ error: APIError) -> Bool {
+        switch error {
+        case .conflict, .validation, .forbidden, .notFound, .notAuthenticated, .aiDisabled:
+            return true
+        case .networkUnavailable, .serverError, .decodingFailed:
+            return false
+        }
     }
 
     private func execute(_ item: PendingUpload) async throws {
