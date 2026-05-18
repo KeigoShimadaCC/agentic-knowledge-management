@@ -12,6 +12,7 @@ _REDACTED_KEYS: frozenset[str] = frozenset(
     {
         "api_key",
         "openai_api_key",
+        "anthropic_api_key",
         "session_secret",
         "mcp_internal_token",
         "token",
@@ -31,6 +32,7 @@ _SENSITIVE_KEY_FRAGMENTS: frozenset[str] = frozenset(
         "api_key",
         "api_keys",
         "openai_api_key",
+        "anthropic_api_key",
         "token_hash",
         "authorization",
     }

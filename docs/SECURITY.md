@@ -60,7 +60,7 @@ Full contract and endpoint tables: [`MOBILE_API_CONTRACT.md`](MOBILE_API_CONTRAC
 
 ## API Key Storage
 
-- `OPENAI_API_KEY` stored in `infra/.env` (gitignored). Used for vector embeddings (`text-embedding-3-small`) and all LLM calls. No Anthropic key is currently in use — Anthropic is a planned future option behind the `EmbeddingProvider`/`call_ai()` abstraction.
+- `OPENAI_API_KEY` and `ANTHROPIC_API_KEY` stored in `infra/.env` (gitignored). OpenAI is used for vector embeddings (`text-embedding-3-small`) regardless of chat provider. Chat / LLM calls go through `app.ai.providers` and use the provider selected by `AI_PROVIDER` (`openai` | `anthropic`). Both keys are redacted everywhere they appear in audit rows, API responses, and MCP tool outputs.
 - Never committed to the repository
 - Never exposed through MCP tools or API responses (redacted before any return value)
 
@@ -143,7 +143,7 @@ FastAPI accepts an `X-KOS-Internal-Token` header as an alternative to the sessio
 - **Tool allowlist** (`MCP_ALLOWED_TOOLS`) enforced at startup. Tools not in the list are not registered.
 - **Write tools gated** (`MCP_ALLOW_WRITE_TOOLS=false` by default) — even if listed in the allowlist, write tools are not registered unless the flag is `true`.
 - **No shell execution** — no tools that run commands or access the filesystem arbitrarily.
-- **Secret redaction** — `redact_dict()` applied to every tool response. Keys: `api_key`, `openai_api_key`, `session_secret`, `mcp_internal_token`, `token`, `token_hash`, `password`, `password_hash`, `secret`.
+- **Secret redaction** — `redact_dict()` applied to every tool response. Keys: `api_key`, `openai_api_key`, `anthropic_api_key`, `session_secret`, `mcp_internal_token`, `token`, `token_hash`, `password`, `password_hash`, `secret`.
 - **`answer_from_kb`** — wired to `POST /api/v1/ai/answer`. Returns a structured `{error: "ai_disabled"}` dict (not an exception) when the server has no `OPENAI_API_KEY` (503 from the API layer). All other `httpx` errors propagate normally.
 
 ### Write-Tool Safety Invariants (Phase 7B)

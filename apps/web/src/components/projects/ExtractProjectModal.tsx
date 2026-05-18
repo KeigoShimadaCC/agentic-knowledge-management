@@ -99,7 +99,7 @@ export function ExtractProjectModal({ isOpen, onClose }: ExtractProjectModalProp
         <div className="space-y-4 p-4">
           {aiDisabled && (
             <div className="rounded-md border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-sm text-amber-200">
-              AI is disabled. Set OPENAI_API_KEY to use this feature.
+              AI is disabled. Set OPENAI_API_KEY or ANTHROPIC_API_KEY to use this feature.
             </div>
           )}
           <label className="flex items-center gap-2 rounded-md border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-gray-300">

@@ -106,7 +106,7 @@ export function InterviewStoryPanel({ projectId, project }: InterviewStoryPanelP
     <div className="space-y-5">
       {aiDisabled && (
         <div className="rounded-md border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-sm text-amber-200">
-          AI disabled. Set OPENAI_API_KEY to use this feature.
+          AI disabled. Set OPENAI_API_KEY or ANTHROPIC_API_KEY to use this feature.
         </div>
       )}
 

@@ -151,12 +151,12 @@ Source types: PDFs, images, videos, YouTube URLs, web articles, and CSV files. C
 | Vector embedding | `OPENAI_API_KEY` | Returns 503 with `{"detail": "embeddings_disabled"}` — not a 500 |
 | Hybrid search | `OPENAI_API_KEY` | Falls back to keyword-only; adds `"embeddings_disabled": true` to response |
 | Source extraction (YouTube transcript, web scrape) | Network | Worker marks job `error`; extracted_text left blank; manual retry supported |
-| AI summarization, extraction, Q&A | `OPENAI_API_KEY` | Endpoint returns 503; no partial state written |
-| AI suggestions and link proposals | `OPENAI_API_KEY` | Same graceful error |
+| AI summarization, extraction, Q&A | `OPENAI_API_KEY` or `ANTHROPIC_API_KEY` | Endpoint returns 503; no partial state written |
+| AI suggestions and link proposals | `OPENAI_API_KEY` or `ANTHROPIC_API_KEY` | Same graceful error |
 
-**No user data is sent to external AI providers unless the user explicitly invokes an AI-backed feature.** Indexing and search are local by default. AI features activate only when `OPENAI_API_KEY` is set and the user triggers the action.
+**No user data is sent to external AI providers unless the user explicitly invokes an AI-backed feature.** Indexing and search are local by default. AI features activate only when a chat provider's key is set and the user triggers the action.
 
-**Local LLM support** (e.g., Ollama) is a future option behind the `EmbeddingProvider` abstraction. No current code assumes OpenAI as the only option.
+**Provider abstraction.** Chat completions go through `app.ai.providers.ChatProvider` (current impls: `OpenAIChatProvider`, `AnthropicChatProvider`); the active provider is selected by `AI_PROVIDER` env (`openai` | `anthropic`, default `openai`). Embeddings go through the separate `EmbeddingProvider` ABC and currently only support OpenAI — chat and embeddings are intentionally decoupled. **Local LLM support** (e.g., Ollama) is a future option that drops in as another `ChatProvider` impl without touching call sites.
 
 ## Shipped Features (Phase 3–9)
 

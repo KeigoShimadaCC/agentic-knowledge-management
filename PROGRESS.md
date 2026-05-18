@@ -1,6 +1,24 @@
 # KnowledgeOS — Progress Tracker
 
-> Last updated: 2026-05-18 (PHASE-FIX-04 shipped; PHONE-07 mobile hardening in progress; PHONE-06 real-device smoke still pending)
+> Last updated: 2026-05-18 (PHASE-FIX-04 shipped; multi-provider AI added; PHONE-07 mobile hardening in progress; PHONE-06 real-device smoke still pending)
+
+---
+
+## AI Provider Abstraction (Claude support) ✅ Complete
+
+**Goal:** Let the backend run on either OpenAI or Anthropic Claude via a single `AI_PROVIDER` env switch, behind a `ChatProvider` ABC that mirrors the existing `EmbeddingProvider` pattern. Forward-compatible with later per-call provider selection and an eventual Ollama / local-LLM provider.
+
+- [x] New `services/api/app/ai/providers.py` — `ChatProvider` ABC + `OpenAIChatProvider` + `AnthropicChatProvider` + `get_chat_provider()` factory.
+- [x] `call_ai()` in `services/api/app/ai/client.py` now dispatches to the selected provider. All 9 existing call sites unchanged; new optional `provider=` per-call override.
+- [x] Stray `openai.AsyncOpenAI` call in `services/api/app/services/project_service.py` extract-project flow routed through the provider abstraction (preserves custom agent_run failure codes).
+- [x] `ai_enabled` gates (mobile bootstrap + project_service) accept either provider's key. UI banners now read "Set OPENAI_API_KEY or ANTHROPIC_API_KEY".
+- [x] `anthropic_api_key` added to both API and MCP redaction key sets.
+- [x] Anthropic JSON mode emulated via system-prompt injection (Anthropic has no `response_format`).
+- [x] Embeddings stay on OpenAI (Anthropic has no embeddings API); vector search degrades to BM25 when only the Anthropic key is set.
+- [x] `infra/.env.example` documents `AI_PROVIDER`, `ANTHROPIC_API_KEY`, `ANTHROPIC_CHAT_MODEL`.
+- [x] New tests: `tests/unit/test_chat_providers.py` (message conversion + JSON-mode injection), `tests/api/test_ai_provider_switch.py` (stub + disabled paths).
+
+**Not yet built (tracked for later):** per-user / per-call provider picker in the UI, Ollama provider, local-embedding providers, streaming, per-provider cost computation, `agent_runs.provider` column.
 
 ---
 

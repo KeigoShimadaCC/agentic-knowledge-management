@@ -17,9 +17,26 @@ class Settings(BaseSettings):
         ),
     )
     debug: bool = False
+    ai_provider: str = Field(
+        default="openai",
+        description=(
+            "Active chat provider: 'openai' or 'anthropic'. The provider's API key must "
+            "be set for AI features to work; otherwise endpoints return 503 ai_disabled."
+        ),
+    )
     openai_api_key: str = ""
     openai_chat_model: str = "gpt-4o-mini"
     openai_max_tokens: int = 2000
+    anthropic_api_key: str = ""
+    anthropic_chat_model: str = "claude-sonnet-4-6"
+    embedding_provider: str = Field(
+        default="openai",
+        description=(
+            "Active embedding provider. Currently only 'openai' is supported. "
+            "Decoupled from ai_provider so chat can run on Anthropic while embeddings "
+            "stay on OpenAI (Anthropic has no embeddings API)."
+        ),
+    )
     embedding_model: str = "text-embedding-3-small"
     embedding_dimension: int = 1536
     qdrant_collection: str = "knowledgeos_chunks"

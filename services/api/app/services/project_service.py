@@ -11,6 +11,7 @@ from pydantic import ValidationError
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.ai.providers import get_chat_provider
 from app.config import settings
 from app.models.chat import Chat
 from app.models.object import KosObject
@@ -298,10 +299,11 @@ async def extract_project(
     user_id: uuid.UUID,
     payload: ExtractProjectRequest,
 ) -> ExtractProjectResponse:
-    if not settings.openai_api_key:
+    chat_provider = get_chat_provider()
+    if not chat_provider.is_enabled:
         raise HTTPException(
             status_code=503,
-            detail="AI features disabled — set OPENAI_API_KEY",
+            detail="AI features disabled — set OPENAI_API_KEY or ANTHROPIC_API_KEY",
         )
 
     obj = await _load_source_object(db, user_id, payload.source_id)
@@ -321,6 +323,7 @@ Source content (truncated to 12k chars):
 ---
 """
 
+    selected_model = chat_provider.default_model
     run = await create_agent_run(
         db,
         user_id=user_id,
@@ -330,7 +333,7 @@ Source content (truncated to 12k chars):
             "create": payload.create,
             "period_hint": list(hint) if hint is not None else None,
         },
-        model=settings.openai_chat_model,
+        model=selected_model,
     )
     await db.flush()
 
@@ -338,23 +341,19 @@ Source content (truncated to 12k chars):
     input_tokens: int | None = None
     output_tokens: int | None = None
     try:
-        import openai
-
-        client = openai.AsyncOpenAI(api_key=settings.openai_api_key)
-        response = await client.chat.completions.create(
-            model=settings.openai_chat_model,
+        result = await chat_provider.complete(
             messages=[
                 {"role": "system", "content": _EXTRACT_SYSTEM},
                 {"role": "user", "content": user_msg},
             ],
+            model=selected_model,
             temperature=0.2,
             max_tokens=settings.openai_max_tokens,
             response_format={"type": "json_object"},
         )
-        raw_text = response.choices[0].message.content or "{}"
-        usage = getattr(response, "usage", None)
-        input_tokens = getattr(usage, "prompt_tokens", None) if usage else None
-        output_tokens = getattr(usage, "completion_tokens", None) if usage else None
+        raw_text = result.text or "{}"
+        input_tokens = result.input_tokens
+        output_tokens = result.output_tokens
     except Exception as exc:
         await finish_agent_run(db, run, status="error", error=str(exc))
         await db.flush()
