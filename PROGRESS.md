@@ -1,6 +1,30 @@
 # KnowledgeOS — Progress Tracker
 
-> Last updated: 2026-05-18 (PHASE-FIX-04 shipped; multi-provider AI added; PHONE-07 mobile hardening in progress; PHONE-06 real-device smoke still pending)
+> Last updated: 2026-05-19 (PHASE-16 settings implemented in worktree; DB/API tests and full frontend/iOS gates are environment-blocked; PHONE-06 real-device smoke still pending)
+
+---
+
+## PHASE-16 — Settings, AI Configuration, and Prompt Management 🚧 In Progress
+
+**Goal:** Add backend-backed Settings for AI provider keys, per-feature model choices, prompt overrides, MCP diagnostics, and allowlisted `.env` export while preserving env/default behavior when no runtime setting exists. See [`project-phases/PHASE-16-SETTINGS.md`](project-phases/PHASE-16-SETTINGS.md).
+
+- [x] **16A — Kickoff/base reconciliation** — Created the phase doc and isolated worktree `worktrees/phase-16-settings`; confirmed the existing multi-provider AI abstraction is already present on `main` and should be used as the base.
+- [x] **16B — Backend settings foundation** — Added migration `0014`, encrypted runtime secret/config/prompt/preference/test-status models, schemas, settings service, router, provider-test route, and allowlisted `.env` export.
+- [x] **16C — Prompt registry and AI migration** — Added prompt/feature registry and routed summarize, extract, suggest-links, answer, triage, inline AI, extract-project, and career AI through runtime prompt/config resolution.
+- [x] **16D — Web Settings UI** — Added `/app/settings`, moved sidebar nav from MCP to Settings, exposed provider keys, feature models, prompt editor/reset, MCP summary, background/diagnostic sections, and preserved `/app/settings/mcp`.
+- [x] **16E — iOS Settings parity** — Added Settings DTOs/API/view-model and extended `SettingsTab` with provider status, key entry warning, editable feature rows, prompt editor/reset, MCP summary/list/test/toggle, background AI controls, and diagnostics.
+- [x] **16F — Docs/verification/handoff** — Updated API/security/architecture docs and infra env/docker wiring.
+
+**Verification notes:**
+- `../../.venv/bin/ruff format services/api/app services/worker/kos_worker tests/api/test_settings.py tests/api/conftest.py` ✅
+- `../../.venv/bin/ruff check services/api/app services/worker/kos_worker tests/api/test_settings.py tests/api/conftest.py` ✅
+- `PYTHONPYCACHEPREFIX=/private/tmp/pycache-phase16 python3 -m py_compile ...` ✅
+- `PYTHONPATH=services/api:services/worker ../../.venv/bin/python -c "import app.main; import app.api.v1.settings; import kos_worker.ai_jobs; import kos_worker.tasks; print('imports-ok')"` ✅
+- `PYTHONPATH=services/api ../../.venv/bin/pytest tests/unit/test_chat_providers.py -q` ✅ 15 passed
+- `PYTHONPATH=services/api ../../.venv/bin/pytest tests/api/test_settings.py tests/api/test_ai_provider_switch.py -q` blocked: sandbox denied loopback connection to Postgres on `127.0.0.1:5433`, and escalation was rejected by the approval reviewer.
+- `pnpm typecheck` blocked: fresh worktree has no `node_modules`; no package install was possible in the restricted environment.
+- `xcodegen generate --spec apps/ios/project.yml` ✅
+- `xcodebuild -project apps/ios/KnowledgeOS.xcodeproj -scheme KnowledgeOS -destination 'generic/platform=iOS Simulator' -derivedDataPath .derivedData/phase16 build` blocked at asset catalog compilation because CoreSimulator runtimes/services are unavailable in the sandbox.
 
 ---
 

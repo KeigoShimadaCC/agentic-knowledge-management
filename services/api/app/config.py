@@ -29,6 +29,7 @@ class Settings(BaseSettings):
     openai_max_tokens: int = 2000
     anthropic_api_key: str = ""
     anthropic_chat_model: str = "claude-sonnet-4-6"
+    anthropic_max_tokens: int = 2000
     embedding_provider: str = Field(
         default="openai",
         description=(
@@ -109,6 +110,14 @@ class Settings(BaseSettings):
     )
     mcp_web_search_threshold: float = 0.45
     mcp_web_search_connection_name: str = ""
+    settings_encryption_key: str = Field(
+        default="",
+        description="Fernet key for encrypting runtime Settings secrets at rest.",
+    )
+    settings_env_file_path: str = Field(
+        default="",
+        description="Optional host-mounted .env file path used by Settings export.",
+    )
 
     kos_profile: str = Field(
         default="desktop",

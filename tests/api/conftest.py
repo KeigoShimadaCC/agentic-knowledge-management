@@ -19,6 +19,7 @@ os.environ.setdefault("LIBRARY_ROOT", "/tmp/kos-test-library")
 os.environ.setdefault("OPENAI_API_KEY", "sk-test-placeholder")
 # Provide a Fernet key so MCP connection env var encryption works in tests.
 os.environ.setdefault("MCP_ENV_ENCRYPTION_KEY", Fernet.generate_key().decode())
+os.environ.setdefault("SETTINGS_ENCRYPTION_KEY", Fernet.generate_key().decode())
 
 from app.db.base import Base  # noqa: E402
 from app.db.session import engine  # noqa: E402

@@ -1,3 +1,4 @@
+import asyncio
 import logging
 import os
 from datetime import UTC, datetime
@@ -8,6 +9,7 @@ from app.config import settings
 from app.models.ingestion_job import IngestionJob
 from app.models.object import KosObject
 from app.models.source import Source
+from app.services.settings_service import background_ai_settings
 from redis import Redis
 from rq import Queue
 from sqlalchemy import select
@@ -56,21 +58,30 @@ def ingest_source(job_id: str) -> None:
         job.finished_at = _now()
         db.commit()
 
-        if settings.ai_auto_process:
-            try:
-                _kos_obj = db.get(KosObject, source.id)
-                if _kos_obj:
-                    Queue(
-                        "kos-ingest",
-                        connection=Redis.from_url(settings.redis_url),
-                    ).enqueue(
-                        "kos_worker.ai_jobs.process_object_ai",
-                        str(source.id),
-                        str(_kos_obj.user_id),
-                        job_timeout=300,
-                    )
-            except Exception:
-                logger.exception("Failed to enqueue AI job for source %s", source.id)
+        try:
+            _kos_obj = db.get(KosObject, source.id)
+            enabled = False
+            if _kos_obj:
+
+                async def _settings_enabled():
+                    from app.db.session import AsyncSessionLocal
+
+                    async with AsyncSessionLocal() as adb:
+                        return (await background_ai_settings(adb, _kos_obj.user_id)).enabled
+
+                enabled = asyncio.run(_settings_enabled())
+            if _kos_obj and enabled:
+                Queue(
+                    "kos-ingest",
+                    connection=Redis.from_url(settings.redis_url),
+                ).enqueue(
+                    "kos_worker.ai_jobs.process_object_ai",
+                    str(source.id),
+                    str(_kos_obj.user_id),
+                    job_timeout=300,
+                )
+        except Exception:
+            logger.exception("Failed to enqueue AI job for source %s", source.id)
 
         enqueue_reindex_object(str(source.id))
     except Exception as exc:

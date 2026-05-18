@@ -3,21 +3,26 @@ import logging
 import uuid as _uuid
 from datetime import UTC, datetime
 
-from app.config import settings
 from app.db.session import AsyncSessionLocal
 from app.models.object import KosObject
 from app.services.ai_service import extract_claims, suggest_links, summarize_object
+from app.services.settings_service import background_ai_settings
 
 logger = logging.getLogger(__name__)
 
 
 def process_object_ai(object_id: str, user_id: str) -> None:
     """RQ entry point. Runs all enabled AI tasks for one object."""
-    if not settings.ai_auto_process:
-        return
-
     obj_uuid = _uuid.UUID(object_id)
     user_uuid = _uuid.UUID(user_id)
+
+    async def _settings():
+        async with AsyncSessionLocal() as db:
+            return await background_ai_settings(db, user_uuid)
+
+    ai_settings = asyncio.run(_settings())
+    if not ai_settings.enabled:
+        return
 
     async def _load():
         async with AsyncSessionLocal() as db:
@@ -33,7 +38,7 @@ def process_object_ai(object_id: str, user_id: str) -> None:
         return
 
     tasks_run: list[str] = []
-    for task_name in settings.ai_auto_process_tasks:
+    for task_name in ai_settings.tasks:
         try:
             if task_name == "summarize":
                 _run_summarize(obj_uuid, user_uuid)

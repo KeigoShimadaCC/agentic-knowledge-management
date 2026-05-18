@@ -26,11 +26,8 @@ from app.schemas.career_ai import (
     StarStory,
 )
 from app.services.agent_run_service import finish_agent_run
-from app.services.career_ai_prompts import (
-    INTERVIEW_STORY_SYSTEM_PROMPT,
-    PROMPT_VERSION,
-    RESUME_BULLETS_SYSTEM_PROMPT,
-)
+from app.services.career_ai_prompts import PROMPT_VERSION
+from app.services.settings_service import prompt_template
 
 SNIPPET_LIMIT = 1500
 
@@ -226,7 +223,7 @@ async def generate_resume_bullets(
         max_evidence_objects=payload.max_evidence_objects,
     )
     project_data = _project_payload(obj, project)
-    system = RESUME_BULLETS_SYSTEM_PROMPT.format(
+    system = (await prompt_template(db, user_id, "career.resume_bullets")).format(
         prompt_version=PROMPT_VERSION,
         count=payload.count,
         max_evidence_objects=payload.max_evidence_objects,
@@ -282,7 +279,7 @@ async def generate_interview_story(
         max_evidence_objects=payload.max_evidence_objects,
     )
     project_data = _project_payload(obj, project)
-    system = INTERVIEW_STORY_SYSTEM_PROMPT.format(
+    system = (await prompt_template(db, user_id, "career.interview_story")).format(
         prompt_version=PROMPT_VERSION,
         max_evidence_objects=payload.max_evidence_objects,
         max_words=payload.max_words,

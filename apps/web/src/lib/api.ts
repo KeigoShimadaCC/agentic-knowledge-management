@@ -38,6 +38,14 @@ import type {
   ResumeBulletSetOut,
   SaveInterviewStoryRequest,
   SaveResumeBulletSetRequest,
+  AiFeatureSettingPatch,
+  AiFeatureSettingOut,
+  PromptOut,
+  ProviderTestOut,
+  SecretPatch,
+  SettingsResponse,
+  BackgroundAiSettings,
+  McpSettingsSummary,
   SourceCreate,
   SourceOut,
   SearchResponse,
@@ -624,6 +632,77 @@ export async function ingestFromMcp(
 ): Promise<McpIngestResponse> {
   return request<McpIngestResponse>(`/api/v1/mcp-connections/${id}/ingest`, {
     method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
+// ── Settings ─────────────────────────────────────────────────────────────────
+
+export async function getSettings(): Promise<SettingsResponse> {
+  return request<SettingsResponse>("/api/v1/settings");
+}
+
+export async function patchSettingsSecrets(data: SecretPatch): Promise<SettingsResponse> {
+  return request<SettingsResponse>("/api/v1/settings/secrets", {
+    method: "PATCH",
+    body: JSON.stringify(data),
+  });
+}
+
+export async function testSettingsProvider(
+  provider: "openai" | "anthropic"
+): Promise<ProviderTestOut> {
+  return request<ProviderTestOut>(`/api/v1/settings/providers/${provider}/test`, {
+    method: "POST",
+  });
+}
+
+export async function updateAiFeatureSetting(
+  featureKey: string,
+  data: AiFeatureSettingPatch
+): Promise<AiFeatureSettingOut> {
+  return request<AiFeatureSettingOut>(`/api/v1/settings/ai-features/${featureKey}`, {
+    method: "PATCH",
+    body: JSON.stringify(data),
+  });
+}
+
+export async function updatePromptOverride(
+  promptKey: string,
+  template: string
+): Promise<PromptOut> {
+  return request<PromptOut>(`/api/v1/settings/prompts/${promptKey}`, {
+    method: "PATCH",
+    body: JSON.stringify({ template }),
+  });
+}
+
+export async function resetPromptOverride(promptKey: string): Promise<PromptOut> {
+  return request<PromptOut>(`/api/v1/settings/prompts/${promptKey}/reset`, {
+    method: "POST",
+  });
+}
+
+export async function exportSettingsEnv(): Promise<SettingsResponse> {
+  return request<SettingsResponse>("/api/v1/settings/env/export", { method: "POST" });
+}
+
+export async function updateBackgroundAiSettings(data: {
+  enabled: boolean;
+  tasks: string[];
+}): Promise<BackgroundAiSettings> {
+  return request<BackgroundAiSettings>("/api/v1/settings/background-ai", {
+    method: "PATCH",
+    body: JSON.stringify(data),
+  });
+}
+
+export async function updateMcpSettings(data: {
+  web_search_threshold: number;
+  web_search_connection_name?: string | null;
+}): Promise<McpSettingsSummary> {
+  return request<McpSettingsSummary>("/api/v1/settings/mcp", {
+    method: "PATCH",
     body: JSON.stringify(data),
   });
 }

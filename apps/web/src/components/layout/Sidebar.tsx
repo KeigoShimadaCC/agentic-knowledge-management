@@ -12,7 +12,7 @@ import {
   Layout,
   MessageSquareText,
   PlayCircle,
-  Plug,
+  Settings,
   Trash2,
   Trash,
 } from "lucide-react";
@@ -36,7 +36,7 @@ const navItems = [
   { href: "/app/chats", label: "Chats", icon: MessageSquareText },
   { href: "/app/projects", label: "Projects", icon: Briefcase },
   { href: "/app/inbox", label: "Inbox", icon: Inbox },
-  { href: "/app/settings/mcp", label: "MCP", icon: Plug },
+  { href: "/app/settings", label: "Settings", icon: Settings },
   { href: "/app/trash", label: "Trash", icon: Trash2 },
 ];
 
@@ -110,7 +110,7 @@ export function Sidebar() {
             className={clsx(
               "flex items-center rounded-lg px-3 py-2 text-sm transition-colors",
               collapsed ? "justify-center gap-0" : "gap-2.5",
-              pathname === href
+              (href === "/app/settings" ? pathname.startsWith("/app/settings") : pathname === href)
                 ? "bg-gray-700 text-white"
                 : "text-gray-400 hover:bg-gray-800 hover:text-white"
             )}

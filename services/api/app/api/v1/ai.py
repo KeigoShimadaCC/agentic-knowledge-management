@@ -41,6 +41,7 @@ from app.schemas.inline_ai import (
 from app.schemas.object import ObjectOut
 from app.schemas.project import ExtractProjectRequest, ExtractProjectResponse
 from app.services import ai_service, career_ai_service, project_service
+from app.services.settings_service import prompt_template
 
 router = APIRouter(prefix="/ai", tags=["ai"])
 
@@ -188,6 +189,11 @@ _COMPLETE_SYSTEM: dict[str, str] = {
     ),
 }
 
+_COMPLETE_PROMPT_KEYS: dict[str, str] = {
+    "continue": "inline.complete.continue",
+    "expand": "inline.complete.expand",
+}
+
 _TRANSFORM_SYSTEM: dict[str, str] = {
     "improve": (
         "You are an editor. Improve the clarity and flow of the text."
@@ -206,6 +212,13 @@ _TRANSFORM_SYSTEM: dict[str, str] = {
     ),
 }
 
+_TRANSFORM_PROMPT_KEYS: dict[str, str] = {
+    "improve": "inline.transform.improve",
+    "concise": "inline.transform.concise",
+    "grammar": "inline.transform.grammar",
+    "summarize": "inline.transform.summarize",
+}
+
 
 @router.post("/complete", response_model=AiCompleteResponse)
 async def ai_complete(
@@ -213,7 +226,7 @@ async def ai_complete(
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> AiCompleteResponse:
-    system = _COMPLETE_SYSTEM[body.instruction]
+    system = await prompt_template(db, user.id, _COMPLETE_PROMPT_KEYS[body.instruction])
     user_msg = body.context_before
     if body.context_after:
         user_msg += f"\n[TEXT AFTER CURSOR: {body.context_after}]"
@@ -237,7 +250,7 @@ async def ai_transform(
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> AiTransformResponse:
-    system = _TRANSFORM_SYSTEM[body.instruction]
+    system = await prompt_template(db, user.id, _TRANSFORM_PROMPT_KEYS[body.instruction])
     text, run = await call_ai(
         db,
         user_id=user.id,

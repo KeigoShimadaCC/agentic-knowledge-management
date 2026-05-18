@@ -1070,7 +1070,23 @@ Status codes: `200`, `401`, `422`.
 
 ## AI Endpoints
 
-All AI endpoints require authentication and degrade gracefully — they return `503 Service Unavailable` when `OPENAI_API_KEY` is not configured. Every AI call that writes data also creates an `agent_runs` row and an `object_revisions` row (for existing object mutations).
+All AI endpoints require authentication and degrade gracefully — they return `503 Service Unavailable` when the resolved provider key is not configured. Resolution is `feature override -> runtime/user setting -> env defaults -> code defaults`. Every AI call that writes data also creates an `agent_runs` row and an `object_revisions` row (for existing object mutations).
+
+## Settings Endpoints
+
+`GET /api/v1/settings` returns redacted provider-secret status, AI feature model configuration, prompt defaults/overrides, MCP summary, and `.env` export status. Secret values are never returned.
+
+`PATCH /api/v1/settings/secrets` accepts `openai_api_key`, `anthropic_api_key`, `clear_openai_api_key`, `clear_anthropic_api_key`, and `export_env`. Values are encrypted in `settings_secrets`; if `.env` export fails or is unavailable, the runtime save still succeeds and `env_export.last_warning` describes the export issue.
+
+`PATCH /api/v1/settings/ai-features/{feature_key}` updates one feature's `enabled`, `provider`, `model`, `temperature`, `max_tokens`, and optional `effort`. Unsupported `effort` values are stored but ignored by providers that do not declare support.
+
+`PATCH /api/v1/settings/background-ai` updates per-user background AI runtime preferences: `enabled` plus task list (`summarize`, `extract_claims`, `suggest_links`). Page/source enqueue paths and the worker read these settings, falling back to env defaults when no runtime preference exists.
+
+`PATCH /api/v1/settings/mcp` updates per-user MCP web-search answer settings: `web_search_threshold` and optional preferred `web_search_connection_name`.
+
+`PATCH /api/v1/settings/prompts/{prompt_key}` saves a prompt override after validating that required template variables are still present. `POST /api/v1/settings/prompts/{prompt_key}/reset` removes the override and restores the code default.
+
+`POST /api/v1/settings/providers/{provider}/test` performs an explicit low-token provider test using the resolved runtime/env key. `POST /api/v1/settings/env/export` retries allowlisted `.env` export.
 
 ### POST /api/v1/ai/summarize
 

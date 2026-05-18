@@ -71,11 +71,13 @@ services:
       QDRANT_URL: http://qdrant:6333
       LIBRARY_ROOT: /library
       DEBUG: "true"
+      SETTINGS_ENV_FILE_PATH: /host/infra/.env
       # Seed [Demo] pages/source/chat on startup (login: DEMO_SEED_EMAIL / DEMO_SEED_PASSWORD).
       SEED_DEMO_EXAMPLES: "true"
     volumes:
       - ../services/api:/app
       - library-data:/library
+      - ./.env:/host/infra/.env
     command:
       - sh
       - -c

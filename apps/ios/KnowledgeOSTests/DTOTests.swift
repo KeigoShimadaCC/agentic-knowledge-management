@@ -41,4 +41,12 @@ final class DTOTests: XCTestCase {
         let answer = try FixtureLoader.decode(AnswerResponseDTO.self, named: "answer")
         XCTAssertEqual(answer.citations.count, 1)
     }
+
+    func testSettingsResponse() throws {
+        let settings = try FixtureLoader.decode(SettingsResponseDTO.self, named: "settings")
+        XCTAssertEqual(settings.secrets.first?.source, "runtime")
+        XCTAssertEqual(settings.features.first?.featureKey, "summarize")
+        XCTAssertEqual(settings.prompts.first?.variables, ["content"])
+        XCTAssertEqual(settings.mcp.enabledCount, 1)
+    }
 }

@@ -54,6 +54,7 @@ class ChatProvider(abc.ABC):
         temperature: float,
         max_tokens: int,
         response_format: dict[str, Any] | None,
+        api_key: str | None = None,
     ) -> ChatResult: ...
 
 
@@ -76,13 +77,15 @@ class OpenAIChatProvider(ChatProvider):
         temperature: float,
         max_tokens: int,
         response_format: dict[str, Any] | None,
+        api_key: str | None = None,
     ) -> ChatResult:
-        if settings.openai_api_key == OPENAI_TEST_STUB_KEY:
+        selected_key = api_key if api_key is not None else settings.openai_api_key
+        if selected_key == OPENAI_TEST_STUB_KEY:
             return ChatResult(text=TEST_STUB_SUMMARY, input_tokens=10, output_tokens=8)
 
         import openai
 
-        client = openai.AsyncOpenAI(api_key=settings.openai_api_key)
+        client = openai.AsyncOpenAI(api_key=selected_key)
         request_kwargs: dict[str, Any] = {
             "model": model,
             "messages": messages,
@@ -151,16 +154,18 @@ class AnthropicChatProvider(ChatProvider):
         temperature: float,
         max_tokens: int,
         response_format: dict[str, Any] | None,
+        api_key: str | None = None,
     ) -> ChatResult:
         json_mode = bool(response_format and response_format.get("type") == "json_object")
         system, anth_messages = split_system_messages(messages, json_mode=json_mode)
 
-        if settings.anthropic_api_key == ANTHROPIC_TEST_STUB_KEY:
+        selected_key = api_key if api_key is not None else settings.anthropic_api_key
+        if selected_key == ANTHROPIC_TEST_STUB_KEY:
             return ChatResult(text=TEST_STUB_SUMMARY, input_tokens=10, output_tokens=8)
 
         import anthropic
 
-        client = anthropic.AsyncAnthropic(api_key=settings.anthropic_api_key)
+        client = anthropic.AsyncAnthropic(api_key=selected_key)
         request_kwargs: dict[str, Any] = {
             "model": model,
             "messages": anth_messages,

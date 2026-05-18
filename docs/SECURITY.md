@@ -60,7 +60,14 @@ Full contract and endpoint tables: [`MOBILE_API_CONTRACT.md`](MOBILE_API_CONTRAC
 
 ## API Key Storage
 
-- `OPENAI_API_KEY` and `ANTHROPIC_API_KEY` stored in `infra/.env` (gitignored). OpenAI is used for vector embeddings (`text-embedding-3-small`) regardless of chat provider. Chat / LLM calls go through `app.ai.providers` and use the provider selected by `AI_PROVIDER` (`openai` | `anthropic`). Both keys are redacted everywhere they appear in audit rows, API responses, and MCP tool outputs.
+- `OPENAI_API_KEY` and `ANTHROPIC_API_KEY` may be stored in `infra/.env` (gitignored) or as encrypted per-user runtime Settings secrets in Postgres. Runtime Settings secrets use `SETTINGS_ENCRYPTION_KEY` (Fernet) and are returned only as redacted status. OpenAI is used for vector embeddings (`text-embedding-3-small`) regardless of chat provider. Chat / LLM calls go through `app.ai.providers` and use the provider selected by feature/runtime/env defaults. Both keys are redacted everywhere they appear in audit rows, API responses, and MCP tool outputs.
+
+### Runtime Settings Secrets
+
+- `settings_secrets.encrypted_value` stores provider keys encrypted at rest.
+- Provider test status is stored separately from secrets so env-configured keys can still report last test success/failure without copying the key into Postgres.
+- `GET /api/v1/settings` returns only configured/source/redacted/test-status metadata.
+- `.env` export is allowlisted to provider/model/background/MCP web-search keys and preserves unrelated comments and entries. Export failure does not roll back the runtime DB save.
 - Never committed to the repository
 - Never exposed through MCP tools or API responses (redacted before any return value)
 

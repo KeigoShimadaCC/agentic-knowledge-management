@@ -89,4 +89,28 @@ struct APIEndpoint {
     static let aiAnswer = APIEndpoint(path: "/api/v1/ai/answer", method: .post)
     static let aiSummarize = APIEndpoint(path: "/api/v1/ai/summarize", method: .post)
     static let aiSuggestLinks = APIEndpoint(path: "/api/v1/ai/suggest-links", method: .post)
+    static let settings = APIEndpoint(path: "/api/v1/settings", method: .get)
+    static let settingsSecrets = APIEndpoint(path: "/api/v1/settings/secrets", method: .patch)
+    static let mcpConnections = APIEndpoint(path: "/api/v1/mcp-connections/", method: .get)
+    static let settingsBackgroundAI = APIEndpoint(path: "/api/v1/settings/background-ai", method: .patch)
+
+    static func settingsFeature(_ key: String) -> APIEndpoint {
+        APIEndpoint(path: "/api/v1/settings/ai-features/\(key)", method: .patch)
+    }
+
+    static func settingsPrompt(_ key: String) -> APIEndpoint {
+        APIEndpoint(path: "/api/v1/settings/prompts/\(key)", method: .patch)
+    }
+
+    static func settingsPromptReset(_ key: String) -> APIEndpoint {
+        APIEndpoint(path: "/api/v1/settings/prompts/\(key)/reset", method: .post)
+    }
+
+    static func mcpConnection(_ id: UUID) -> APIEndpoint {
+        APIEndpoint(path: "/api/v1/mcp-connections/\(id.uuidString)", method: .patch)
+    }
+
+    static func mcpConnectionTest(_ id: UUID) -> APIEndpoint {
+        APIEndpoint(path: "/api/v1/mcp-connections/\(id.uuidString)/test", method: .post)
+    }
 }

@@ -703,3 +703,97 @@ export interface McpIngestResponse {
   job_id: string;
   status: string;
 }
+
+// ── Settings ─────────────────────────────────────────────────────────────────
+
+export interface SecretStatus {
+  key: "openai_api_key" | "anthropic_api_key";
+  configured: boolean;
+  source: "runtime" | "env" | "none";
+  redacted: string | null;
+  last_test_status: string | null;
+  last_test_error: string | null;
+  last_tested_at: string | null;
+}
+
+export interface AiFeatureSettingOut {
+  feature_key: string;
+  display_name: string;
+  enabled: boolean;
+  provider: string | null;
+  model: string | null;
+  temperature: number | null;
+  max_tokens: number | null;
+  effort: string | null;
+  resolved_provider: string | null;
+  resolved_model: string | null;
+  resolved_temperature: number | null;
+  resolved_max_tokens: number | null;
+  supports_effort: boolean;
+  note: string | null;
+}
+
+export interface AiFeatureSettingPatch {
+  enabled?: boolean;
+  provider?: "openai" | "anthropic" | null;
+  model?: string | null;
+  temperature?: number | null;
+  max_tokens?: number | null;
+  effort?: string | null;
+}
+
+export interface PromptOut {
+  key: string;
+  display_name: string;
+  default_template: string;
+  effective_template: string;
+  override_template: string | null;
+  has_override: boolean;
+  variables: string[];
+  response_contract: string;
+  updated_at: string | null;
+}
+
+export interface EnvExportStatus {
+  available: boolean;
+  path: string | null;
+  last_warning: string | null;
+  allowlisted_keys: string[];
+}
+
+export interface BackgroundAiSettings {
+  enabled: boolean;
+  tasks: string[];
+}
+
+export interface McpSettingsSummary {
+  connection_count: number;
+  enabled_count: number;
+  web_search_threshold: number;
+  web_search_connection_name: string | null;
+}
+
+export interface SettingsResponse {
+  secrets: SecretStatus[];
+  features: AiFeatureSettingOut[];
+  prompts: PromptOut[];
+  background_ai: BackgroundAiSettings;
+  mcp: McpSettingsSummary;
+  env_export: EnvExportStatus;
+}
+
+export interface SecretPatch {
+  openai_api_key?: string | null;
+  anthropic_api_key?: string | null;
+  clear_openai_api_key?: boolean;
+  clear_anthropic_api_key?: boolean;
+  export_env?: boolean;
+}
+
+export interface ProviderTestOut {
+  provider: "openai" | "anthropic";
+  ok: boolean;
+  status: string;
+  error: string | null;
+  tested_at: string;
+}

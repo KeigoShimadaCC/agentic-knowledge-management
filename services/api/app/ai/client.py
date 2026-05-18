@@ -14,9 +14,9 @@ from app.ai.providers import (
     ChatProviderDisabledError,
     get_chat_provider,
 )
-from app.config import settings
 from app.models.agent_run import AgentRun
 from app.services.agent_run_service import create_agent_run, finish_agent_run
+from app.services.settings_service import resolve_ai_config
 
 # Preserved exports for callers / tests that imported the legacy names.
 OPENAI_TEST_STUB_SUMMARY = TEST_STUB_SUMMARY
@@ -47,16 +47,32 @@ async def call_ai(
     ``provider`` and ``model`` are optional per-call overrides; when omitted,
     we use ``settings.ai_provider`` and the provider's default chat model.
     """
+    resolved = await resolve_ai_config(
+        db,
+        user_id=user_id,
+        agent_type=agent_type,
+        provider=provider,
+        model=model,
+        temperature=temperature,
+    )
+
     try:
-        chat_provider = get_chat_provider(provider)
+        chat_provider = get_chat_provider(resolved.provider)
     except ChatProviderDisabledError as exc:
         raise HTTPException(status_code=503, detail="ai_disabled") from exc
 
-    if not chat_provider.is_enabled:
+    if not resolved.api_key:
         raise HTTPException(status_code=503, detail="ai_disabled")
 
-    selected_model = model or chat_provider.default_model
-    run_context = {"context": input_context or {}, "temperature": temperature}
+    selected_model = resolved.model
+    run_context = {
+        "context": input_context or {},
+        "temperature": resolved.temperature,
+        "provider": resolved.provider,
+        "feature_key": resolved.feature_key,
+    }
+    if resolved.effort:
+        run_context["effort"] = resolved.effort
     if response_format is not None:
         run_context["response_format"] = response_format
 
@@ -72,9 +88,10 @@ async def call_ai(
         result = await chat_provider.complete(
             messages=messages,
             model=selected_model,
-            temperature=temperature,
-            max_tokens=settings.openai_max_tokens,
+            temperature=resolved.temperature,
+            max_tokens=resolved.max_tokens,
             response_format=response_format,
+            api_key=resolved.api_key,
         )
         await finish_agent_run(
             db,

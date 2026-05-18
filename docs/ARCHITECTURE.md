@@ -156,7 +156,7 @@ Source types: PDFs, images, videos, YouTube URLs, web articles, and CSV files. C
 
 **No user data is sent to external AI providers unless the user explicitly invokes an AI-backed feature.** Indexing and search are local by default. AI features activate only when a chat provider's key is set and the user triggers the action.
 
-**Provider abstraction.** Chat completions go through `app.ai.providers.ChatProvider` (current impls: `OpenAIChatProvider`, `AnthropicChatProvider`); the active provider is selected by `AI_PROVIDER` env (`openai` | `anthropic`, default `openai`). Embeddings go through the separate `EmbeddingProvider` ABC and currently only support OpenAI — chat and embeddings are intentionally decoupled. **Local LLM support** (e.g., Ollama) is a future option that drops in as another `ChatProvider` impl without touching call sites.
+**Provider abstraction.** Chat completions go through `app.ai.providers.ChatProvider` (current impls: `OpenAIChatProvider`, `AnthropicChatProvider`). Phase 16 adds runtime resolution before each call: per-feature override, encrypted per-user runtime settings, env defaults, then code defaults. Embeddings go through the separate `EmbeddingProvider` ABC and currently only support OpenAI — chat and embeddings are intentionally decoupled. **Local LLM support** (e.g., Ollama) is a future option that drops in as another `ChatProvider` impl without touching call sites.
 
 ## Shipped Features (Phase 3–9)
 

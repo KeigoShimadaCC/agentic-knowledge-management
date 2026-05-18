@@ -11,8 +11,7 @@ from pydantic import ValidationError
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.ai.providers import get_chat_provider
-from app.config import settings
+from app.ai.client import call_ai
 from app.models.chat import Chat
 from app.models.object import KosObject
 from app.models.page import Page
@@ -28,38 +27,8 @@ from app.schemas.project import (
     normalize_skills_for_draft,
     parse_extract_project_json,
 )
-from app.services.agent_run_service import create_agent_run, finish_agent_run
-
-_EXTRACT_SYSTEM = """You extract a single, well-structured PROJECT record from professional content.
-
-A "project" is a bounded effort the person worked on with measurable scope:
-problem solved, actions taken, results achieved, metrics where available,
-skills exercised, and a time period.
-
-Return JSON matching this schema (no prose, no markdown, no code fences):
-{
-  "title": string,
-  "description": string | null,
-  "period_start": string | null,
-  "period_end": string | null,
-  "role": string | null,
-  "organization": string | null,
-  "problem": string | null,
-  "actions": string | null,
-  "results": string | null,
-  "metrics": object,
-  "skills": string[],
-  "confidence": number
-}
-
-Rules:
-- If the source mentions multiple distinct projects, pick the one most prominent
-  by space/specificity. Do not merge two projects.
-- If the source is not about a project (e.g. a generic discussion), return
-  confidence <= 0.2 and minimal fields.
-- Do not invent dates, employers, or metrics. Use null/empty when unknown.
-- Lowercase skills. Strip leading/trailing whitespace.
-"""
+from app.services.agent_run_service import finish_agent_run
+from app.services.settings_service import prompt_template
 
 
 def _parse_iso_date(s: Any) -> date | None:
@@ -299,13 +268,6 @@ async def extract_project(
     user_id: uuid.UUID,
     payload: ExtractProjectRequest,
 ) -> ExtractProjectResponse:
-    chat_provider = get_chat_provider()
-    if not chat_provider.is_enabled:
-        raise HTTPException(
-            status_code=503,
-            detail="AI features disabled — set OPENAI_API_KEY or ANTHROPIC_API_KEY",
-        )
-
     obj = await _load_source_object(db, user_id, payload.source_id)
     source_text = (await _source_text_for_extraction(db, obj))[:12000]
 
@@ -323,73 +285,58 @@ Source content (truncated to 12k chars):
 ---
 """
 
-    selected_model = chat_provider.default_model
-    run = await create_agent_run(
+    raw_text, run = await call_ai(
         db,
         user_id=user_id,
         agent_type="extract-project",
-        input_payload={
+        messages=[
+            {
+                "role": "system",
+                "content": await prompt_template(db, user_id, "extract.project"),
+            },
+            {"role": "user", "content": user_msg},
+        ],
+        temperature=0.2,
+        input_context={
             "source_id": str(payload.source_id),
             "create": payload.create,
             "period_hint": list(hint) if hint is not None else None,
         },
-        model=selected_model,
+        response_format={"type": "json_object"},
     )
-    await db.flush()
-
-    raw_text: str = "{}"
-    input_tokens: int | None = None
-    output_tokens: int | None = None
-    try:
-        result = await chat_provider.complete(
-            messages=[
-                {"role": "system", "content": _EXTRACT_SYSTEM},
-                {"role": "user", "content": user_msg},
-            ],
-            model=selected_model,
-            temperature=0.2,
-            max_tokens=settings.openai_max_tokens,
-            response_format={"type": "json_object"},
-        )
-        raw_text = result.text or "{}"
-        input_tokens = result.input_tokens
-        output_tokens = result.output_tokens
-    except Exception as exc:
-        await finish_agent_run(db, run, status="error", error=str(exc))
-        await db.flush()
-        await db.commit()
-        raise
 
     try:
         data = parse_extract_project_json(raw_text)
     except json.JSONDecodeError:
-        await finish_agent_run(
-            db,
-            run,
-            status="failed",
-            output={"text": raw_text},
-            error="malformed_json",
-            input_tokens=input_tokens,
-            output_tokens=output_tokens,
-            cost_usd=Decimal("0"),
-        )
-        await db.flush()
-        await db.commit()
+        if run is not None:
+            await finish_agent_run(
+                db,
+                run,
+                status="failed",
+                output={"text": raw_text},
+                error="malformed_json",
+                input_tokens=run.input_tokens,
+                output_tokens=run.output_tokens,
+                cost_usd=Decimal("0"),
+            )
+            await db.flush()
+            await db.commit()
         raise HTTPException(status_code=502, detail="AI returned malformed JSON") from None
 
     if not isinstance(data, dict):
-        await finish_agent_run(
-            db,
-            run,
-            status="failed",
-            output={"text": raw_text},
-            error="not_object",
-            input_tokens=input_tokens,
-            output_tokens=output_tokens,
-            cost_usd=Decimal("0"),
-        )
-        await db.flush()
-        await db.commit()
+        if run is not None:
+            await finish_agent_run(
+                db,
+                run,
+                status="failed",
+                output={"text": raw_text},
+                error="not_object",
+                input_tokens=run.input_tokens,
+                output_tokens=run.output_tokens,
+                cost_usd=Decimal("0"),
+            )
+            await db.flush()
+            await db.commit()
         raise HTTPException(status_code=502, detail="AI returned malformed JSON")
 
     try:
@@ -420,24 +367,13 @@ Source content (truncated to 12k chars):
             status="failed",
             output={"text": raw_text},
             error=str(exc),
-            input_tokens=input_tokens,
-            output_tokens=output_tokens,
+            input_tokens=run.input_tokens,
+            output_tokens=run.output_tokens,
             cost_usd=Decimal("0"),
         )
         await db.flush()
         await db.commit()
         raise HTTPException(status_code=502, detail="AI returned malformed JSON") from exc
-
-    await finish_agent_run(
-        db,
-        run,
-        status="success",
-        output={"text": raw_text},
-        input_tokens=input_tokens,
-        output_tokens=output_tokens,
-        cost_usd=Decimal("0"),
-    )
-    await db.flush()
 
     project_id: uuid.UUID | None = None
     if payload.create:

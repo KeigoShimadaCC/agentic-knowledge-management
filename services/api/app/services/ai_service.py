@@ -12,9 +12,7 @@ from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm.attributes import flag_modified
 
-from app.ai import prompts
 from app.ai.client import call_ai
-from app.config import settings
 from app.mcp_client.adapters import BraveSearchAdapter, Context7Adapter
 from app.mcp_client.client import McpClientSession, McpConnectionError
 from app.models.agent_run import AgentRun
@@ -46,6 +44,7 @@ from app.services import (
     mcp_connection_service as _mcp_svc,
 )
 from app.services.search_service import hybrid_search, keyword_search
+from app.services.settings_service import mcp_runtime_settings, render_prompt
 
 
 async def _load_object(db: AsyncSession, user_id: uuid.UUID, object_id: uuid.UUID) -> KosObject:
@@ -109,8 +108,13 @@ async def summarize_object(
     if not content.strip():
         raise HTTPException(status_code=422, detail="no_content_to_summarize")
 
-    template = prompts.SUMMARIZE_PAGE if obj.kind == "page" else prompts.SUMMARIZE_SOURCE
-    messages = [{"role": "user", "content": template.format(content=content[:8000])}]
+    prompt_key = "summarize.page" if obj.kind == "page" else "summarize.source"
+    messages = [
+        {
+            "role": "user",
+            "content": await render_prompt(db, user_id, prompt_key, content=content[:8000]),
+        }
+    ]
     summary_text, run = await call_ai(
         db,
         user_id=user_id,
@@ -145,13 +149,13 @@ async def summarize_object(
 async def extract_claims(
     db: AsyncSession, user_id: uuid.UUID, object_id: uuid.UUID
 ) -> ExtractResponse:
-    return await _extract(db, user_id, object_id, "claim", "extract_claims", prompts.EXTRACT_CLAIMS)
+    return await _extract(db, user_id, object_id, "claim", "extract_claims", "extract.claims")
 
 
 async def extract_tasks(
     db: AsyncSession, user_id: uuid.UUID, object_id: uuid.UUID
 ) -> ExtractResponse:
-    return await _extract(db, user_id, object_id, "task", "extract_tasks", prompts.EXTRACT_TASKS)
+    return await _extract(db, user_id, object_id, "task", "extract_tasks", "extract.tasks")
 
 
 async def _extract(
@@ -160,14 +164,19 @@ async def _extract(
     object_id: uuid.UUID,
     kind: str,
     agent_type: str,
-    prompt_template: str,
+    prompt_key: str,
 ) -> ExtractResponse:
     obj = await _load_object(db, user_id, object_id)
     content = await _get_content(db, obj)
     if not content.strip():
         raise HTTPException(status_code=422, detail="no_content_to_extract")
 
-    messages = [{"role": "user", "content": prompt_template.format(content=content[:8000])}]
+    messages = [
+        {
+            "role": "user",
+            "content": await render_prompt(db, user_id, prompt_key, content=content[:8000]),
+        }
+    ]
     raw, run = await call_ai(
         db,
         user_id=user_id,
@@ -264,7 +273,10 @@ async def suggest_links(
     messages = [
         {
             "role": "user",
-            "content": prompts.SUGGEST_LINKS.format(
+            "content": await render_prompt(
+                db,
+                user_id,
+                "suggest.links",
                 title=obj.title,
                 content=content[:500],
                 candidates=candidate_text,
@@ -331,12 +343,13 @@ async def answer_question(
     warning: str | None = None
 
     if use_web_search:
+        mcp_settings = await mcp_runtime_settings(db, user_id)
         max_score = max((r.score for r in results), default=0.0)
-        if max_score < settings.mcp_web_search_threshold:
+        if max_score < mcp_settings.web_search_threshold:
             brave_patterns = getattr(
                 BraveSearchAdapter, "mcp_name_patterns", BraveSearchAdapter.patterns
             )
-            preferred = settings.mcp_web_search_connection_name
+            preferred = mcp_settings.web_search_connection_name
             web_conn = await _mcp_svc.find_connection_for_patterns(
                 db, user_id, brave_patterns, preferred_name=preferred
             )
@@ -368,13 +381,18 @@ async def answer_question(
         web_ctx = "\n\n".join(
             f"{c['title']}\n{c.get('snippet') or ''}\nURL: {c['url']}" for c in web_citations
         )
-        prompt = prompts.ANSWER_QUESTION_WITH_WEB.format(
+        prompt = await render_prompt(
+            db,
+            user_id,
+            "answer.kb_web",
             question=q,
             kb_context="\n\n".join(context_parts),
             web_context=web_ctx,
         )
     else:
-        prompt = prompts.ANSWER_QUESTION.format(question=q, context="\n\n".join(context_parts))
+        prompt = await render_prompt(
+            db, user_id, "answer.kb", question=q, context="\n\n".join(context_parts)
+        )
 
     messages = [
         {
@@ -430,7 +448,13 @@ async def triage_object(
     messages = [
         {
             "role": "user",
-            "content": prompts.TRIAGE_OBJECT.format(title=obj.title, content=content[:4000]),
+            "content": await render_prompt(
+                db,
+                user_id,
+                "triage.object",
+                title=obj.title,
+                content=content[:4000],
+            ),
         }
     ]
     raw, run = await call_ai(

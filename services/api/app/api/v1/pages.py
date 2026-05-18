@@ -15,6 +15,7 @@ from app.models.user import User
 from app.schemas.object import ObjectOut
 from app.schemas.page import PageCreate, PageOut, PageUpdate
 from app.services import page_service, reindex_service
+from app.services.settings_service import background_ai_settings
 
 router = APIRouter(prefix="/pages", tags=["pages"])
 logger = logging.getLogger(__name__)
@@ -64,7 +65,7 @@ async def replace_page(
     page = await page_service.update_page(db, page_id, user.id, body)
     await db.commit()
     reindex_service.enqueue_reindex_object(page.id)
-    if settings.ai_auto_process:
+    if (await background_ai_settings(db, user.id)).enabled:
         try:
             await asyncio.to_thread(
                 Queue("kos-ingest", connection=Redis.from_url(settings.redis_url)).enqueue,
@@ -89,7 +90,7 @@ async def patch_page(
     page = await page_service.update_page(db, page_id, user.id, body)
     await db.commit()
     reindex_service.enqueue_reindex_object(page.id)
-    if settings.ai_auto_process:
+    if (await background_ai_settings(db, user.id)).enabled:
         try:
             await asyncio.to_thread(
                 Queue("kos-ingest", connection=Redis.from_url(settings.redis_url)).enqueue,

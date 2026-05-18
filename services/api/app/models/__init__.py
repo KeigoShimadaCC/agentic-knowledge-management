@@ -12,6 +12,13 @@ from app.models.project import Project
 from app.models.resume_bullet_set import ResumeBulletSet
 from app.models.revision import ObjectRevision
 from app.models.session import Session
+from app.models.settings import (
+    AiFeatureSetting,
+    PromptOverride,
+    SettingsPreference,
+    SettingsProviderTest,
+    SettingsSecret,
+)
 from app.models.source import Source
 from app.models.user import User
 from app.models.workspace import Workspace
@@ -31,6 +38,11 @@ __all__ = [
     "Project",
     "ResumeBulletSet",
     "Session",
+    "SettingsSecret",
+    "SettingsProviderTest",
+    "AiFeatureSetting",
+    "SettingsPreference",
+    "PromptOverride",
     "Source",
     "User",
     "Workspace",

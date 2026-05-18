@@ -6,6 +6,7 @@ dist/
 .turbo/
 tsconfig.tsbuildinfo
 apps/web/coverage/
+.derivedData/
 
 # Python
 __pycache__/
