@@ -174,9 +174,7 @@ class OpenAIChatProvider(ChatProvider):
         agent_type: str | None = None,
     ) -> ChatResult:
         if settings.openai_api_key == OPENAI_TEST_STUB_KEY:
-            return ChatResult(
-                text=stub_response_text(agent_type), input_tokens=10, output_tokens=8
-            )
+            return ChatResult(text=stub_response_text(agent_type), input_tokens=10, output_tokens=8)
 
         import openai
 
@@ -255,9 +253,7 @@ class AnthropicChatProvider(ChatProvider):
         system, anth_messages = split_system_messages(messages, json_mode=json_mode)
 
         if settings.anthropic_api_key == ANTHROPIC_TEST_STUB_KEY:
-            return ChatResult(
-                text=stub_response_text(agent_type), input_tokens=10, output_tokens=8
-            )
+            return ChatResult(text=stub_response_text(agent_type), input_tokens=10, output_tokens=8)
 
         import anthropic
 
