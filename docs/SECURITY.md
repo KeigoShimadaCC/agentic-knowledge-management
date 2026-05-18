@@ -14,6 +14,18 @@
 
 - Env `ALLOW_OPEN_REGISTRATION` (default `true`): when `false`, `POST /auth/register` returns **403** for a closed appliance.
 - Duplicate registration attempts return a generic **400** (`Unable to complete registration`) to avoid email enumeration via status codes.
+- The mobile profile (`infra/docker-compose.mobile.yml`) overrides this to `false` by default, so a guest on the same Wi-Fi cannot create an account.
+
+## Mobile (LAN) profile (PHASE-FIX-04 / S5)
+
+When the API is brought up via `infra/docker-compose.mobile.yml` to allow on-LAN iPhone access, two extra layers of hardening apply:
+
+1. **Open registration is disabled by default.** The compose file sets `ALLOW_OPEN_REGISTRATION=false`; create accounts on the desktop before switching to mobile mode.
+2. **LAN-allowlist middleware (`KOS_PROFILE=mobile`).** Every request whose source IP is not RFC1918 private, loopback, or link-local is rejected with **403** before any route handler runs (`app/middleware/lan_guard.py`).
+
+`X-Forwarded-For` is **ignored** unless `TRUSTED_PROXY_COUNT > 0`; otherwise the source IP is read from the actual TCP peer (`request.client.host`). Set `TRUSTED_PROXY_COUNT` to the number of reverse proxies you have placed in front of the API, and only after you trust those proxies to strip client-supplied headers.
+
+The iOS ATS exceptions in `apps/ios/.../Info.plist` (cleartext to `127.0.0.1`, `localhost`, `local.`, `ts.net.`) are needed for the on-LAN flow and remain unchanged.
 
 ## Web ingestion and SSRF
 

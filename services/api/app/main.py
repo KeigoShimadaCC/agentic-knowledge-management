@@ -52,6 +52,11 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="KnowledgeOS API", version="0.1.0", lifespan=lifespan)
 
+if settings.kos_profile == "mobile":
+    from app.middleware.lan_guard import install_lan_guard
+
+    install_lan_guard(app, trusted_proxy_count=settings.trusted_proxy_count)
+
 app.add_middleware(
     CORSMiddleware,
     # localhost vs 127.0.0.1 are different origins; compose publishes web on 127.0.0.1:3000.

@@ -28,3 +28,11 @@ services:
     # (http://127.0.0.1:8001) continues to work when this override is active.
     ports: !override
       - "0.0.0.0:8001:8000"
+    # Mobile profile defaults (PHASE-FIX-04 / S5):
+    # - KOS_PROFILE=mobile activates the LAN-allowlist middleware which rejects
+    #   any request whose source IP is not RFC1918 private / loopback / link-local.
+    # - ALLOW_OPEN_REGISTRATION=false disables POST /api/v1/auth/register so a
+    #   guest on the same Wi-Fi cannot create an account.
+    environment:
+      KOS_PROFILE: mobile
+      ALLOW_OPEN_REGISTRATION: "false"

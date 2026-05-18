@@ -89,6 +89,22 @@ class Settings(BaseSettings):
     mcp_web_search_threshold: float = 0.45
     mcp_web_search_connection_name: str = ""
 
+    kos_profile: str = Field(
+        default="desktop",
+        description=(
+            "Deployment profile. 'desktop' (default) = loopback only; 'mobile' = bind "
+            "0.0.0.0 for on-LAN iPhone access, also enables the LAN-allowlist middleware."
+        ),
+    )
+    trusted_proxy_count: int = Field(
+        default=0,
+        description=(
+            "Number of trusted reverse proxies in front of the API. When >0, the "
+            "LAN-allowlist middleware uses X-Forwarded-For (counting back from the "
+            "rightmost entry); when 0, X-Forwarded-For is ignored (safe default)."
+        ),
+    )
+
     model_config = {"env_file": ".env", "env_file_encoding": "utf-8"}
 
 
