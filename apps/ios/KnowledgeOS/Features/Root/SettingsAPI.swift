@@ -104,9 +104,15 @@ final class SettingsViewModel {
         errorMessage = nil
         do {
             settings = try await api.load()
-            mcpConnections = try await api.listMCPConnections()
         } catch {
             errorMessage = error.localizedDescription
+        }
+        do {
+            mcpConnections = try await api.listMCPConnections()
+        } catch {
+            if errorMessage == nil {
+                errorMessage = error.localizedDescription
+            }
         }
         isLoading = false
     }

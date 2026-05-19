@@ -16,6 +16,8 @@ struct RootView: View {
                     LoginView()
                         .navigationTitle("Sign In")
                 }
+            } else if UITestConfig.usesSingleTabRoot, let tab = UITestConfig.initialTab {
+                UITestSingleTabRoot(tab: tab)
             } else {
                 MainTabView()
             }

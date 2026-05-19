@@ -3,7 +3,9 @@ import SwiftUI
 struct SettingsTab: View {
     @Environment(AuthStore.self) private var authStore
     @EnvironmentObject private var appState: AppState
+    @Environment(\.appDependencies) private var dependencies
     @State private var viewModel = SettingsViewModel()
+    @State private var didConfigureSharedAPI = false
     @State private var openAIKey = ""
     @State private var anthropicKey = ""
     @State private var showingLANWarning = false
@@ -209,11 +211,22 @@ struct SettingsTab: View {
             }
             .navigationTitle("Settings")
             .accessibilityIdentifier("kos.settings.screen")
-            .task {
+            .accessibilityElement(children: .contain)
+            .task(id: authStore.isAuthenticated) {
+                guard authStore.isAuthenticated else { return }
+                if let deps = dependencies, !didConfigureSharedAPI {
+                    didConfigureSharedAPI = true
+                    viewModel = SettingsViewModel(
+                        api: SettingsAPI(apiClient: deps.apiClient, keychain: SystemKeychainStore())
+                    )
+                }
                 await viewModel.load()
             }
             .refreshable {
                 await viewModel.load()
+            }
+            .onAppear {
+                Task { await viewModel.load() }
             }
             .alert("LAN Secret Warning", isPresented: $showingLANWarning) {
                 Button("Cancel", role: .cancel) {}

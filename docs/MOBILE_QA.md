@@ -129,6 +129,26 @@ Swift constants live in `apps/ios/KnowledgeOS/Core/UI/AccessibilityID.swift` (`e
 
 ---
 
+## XCTest tab selection (iOS 26)
+
+On iOS 26 simulators, `XCUIApplication.tabBars.buttons[...]` often reports hit point `{-1,-1}`, and off-screen `TabView` children remain in the accessibility tree. UI tests should **not rely on tapping the tab bar** or on visibility of identifiers from inactive tabs.
+
+| Launch argument / env | Purpose |
+|---|---|
+| `-ui-testing-reset` | Clear Keychain + cache; use on first login in a test class |
+| `-ui-testing-skip-reset` | Preserve session; pair with a prior login in the same XCTest run |
+| `KOS_UI_TAB` / `-KOS_UI_TAB=<tab>` | `home`, `search`, `capture`, `ai`, or `settings` — selects tab on launch (env + launch argument) |
+| `-ui-testing-single-tab` | UITest relaunch only: render one tab without `TabView` (avoids iOS 26 off-screen accessibility noise) |
+
+Pattern for multi-tab flows:
+
+1. `ensureSignedIn(reset: true)` once (sets `UITestSession.sharedSessionBootstrapped`).
+2. `app.terminate()` then relaunch with `KOS_UI_TAB=search` (or `settings`, `home`) and `-ui-testing-skip-reset`.
+
+Helpers: `apps/ios/KnowledgeOSUITests/UITestHelpers.swift`.
+
+---
+
 ## mobile-mcp (alternative)
 
 [mobile-mcp](https://www.npmjs.com/package/@mobilenext/mobile-mcp) supports **iOS Simulator, Android emulator, and physical devices** in one server.

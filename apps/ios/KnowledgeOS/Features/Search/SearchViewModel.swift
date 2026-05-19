@@ -9,7 +9,7 @@ final class SearchViewModel {
     private(set) var isLoading = false
     private(set) var errorMessage: String?
 
-    private let api: CachedReadAPI
+    private var api: CachedReadAPI
     private var task: Task<Void, Never>?
 
     init(api: CachedReadAPI? = nil) {
@@ -18,6 +18,10 @@ final class SearchViewModel {
         } else {
             self.api = CachedReadAPI(cache: (try? SystemCacheStore()) ?? InMemoryCacheStore())
         }
+    }
+
+    func useSharedAPI(_ shared: CachedReadAPI) {
+        api = shared
     }
 
     func scheduleSearch(for value: String) {

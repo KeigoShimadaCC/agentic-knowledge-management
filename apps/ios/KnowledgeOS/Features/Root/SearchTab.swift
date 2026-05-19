@@ -1,6 +1,8 @@
 import SwiftUI
 
 struct SearchTab: View {
+    @Environment(AuthStore.self) private var authStore
+    @Environment(\.appDependencies) private var dependencies
     @State private var viewModel = SearchViewModel()
 
     var body: some View {
@@ -46,6 +48,10 @@ struct SearchTab: View {
             }
         }
         .accessibilityIdentifier("kos.search.screen")
+        .task(id: authStore.isAuthenticated) {
+            guard authStore.isAuthenticated, let deps = dependencies else { return }
+            viewModel.useSharedAPI(deps.cachedReadAPI)
+        }
     }
 }
 

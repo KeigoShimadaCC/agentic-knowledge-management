@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from unittest.mock import AsyncMock, MagicMock, patch
+
 import pytest
 from app.ai.providers import ANTHROPIC_TEST_STUB_KEY, OPENAI_TEST_STUB_KEY, TEST_STUB_SUMMARY
 from app.config import settings
@@ -233,6 +235,57 @@ async def test_prompt_override_is_used_for_summarize(auth_client: AsyncClient):
         rendered = await render_prompt(db, user.id, "summarize.page", content="hello world")
 
     assert rendered == "Custom summary prompt: hello world"
+
+
+@pytest.fixture
+def mock_openai():
+    mock_completion = MagicMock()
+    mock_completion.choices = [MagicMock(message=MagicMock(content=TEST_STUB_SUMMARY))]
+    mock_completion.usage = MagicMock(prompt_tokens=10, completion_tokens=20)
+
+    client_mock = MagicMock()
+    client_mock.chat = MagicMock()
+    client_mock.chat.completions = MagicMock()
+    client_mock.chat.completions.create = AsyncMock(return_value=mock_completion)
+    with patch("openai.AsyncOpenAI", return_value=client_mock):
+        yield client_mock
+
+
+@pytest.mark.asyncio
+async def test_summarize_endpoint_sends_rendered_prompt_override_to_model(
+    auth_client: AsyncClient, mock_openai: MagicMock
+):
+    custom = "Custom summary prompt for E2E: {content}"
+    saved = await auth_client.patch(
+        "/api/v1/settings/prompts/summarize.page",
+        json={"template": custom},
+    )
+    assert saved.status_code == 200, saved.text
+
+    page = await auth_client.post("/api/v1/pages", json={"title": "Prompt override E2E"})
+    page_id = page.json()["page"]["id"]
+    object_id = page.json()["object"]["id"]
+    page_text = "Python was created by Guido van Rossum in 1991."
+    await auth_client.patch(
+        f"/api/v1/pages/{page_id}",
+        json={"content_text": page_text},
+    )
+
+    ai_resp = await auth_client.post(
+        "/api/v1/ai/summarize",
+        json={"object_id": object_id, "force": True},
+    )
+    assert ai_resp.status_code == 200, ai_resp.text
+
+    mock_openai.chat.completions.create.assert_awaited()
+    call = mock_openai.chat.completions.create.await_args
+    assert call is not None
+    messages = call.kwargs["messages"]
+    assert "Custom summary prompt for E2E:" in messages[0]["content"]
+    assert page_text in messages[0]["content"]
+
+    reset = await auth_client.post("/api/v1/settings/prompts/summarize.page/reset")
+    assert reset.status_code == 200, reset.text
 
 
 @pytest.mark.asyncio

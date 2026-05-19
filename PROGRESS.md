@@ -22,7 +22,8 @@
 - `make test-unit` ✅ 62 passed (includes `SettingsPage` Vitest with MSW)
 - `pnpm --dir tests/e2e test specs/34-settings-hub.spec.ts` ✅ 4 passed (settings hub tabs, prompt save/reset, feature model save, MCP link)
 - Route crawl includes `/app/settings` and `/app/settings/mcp` ✅
-- iOS (`xcodegen` + `xcodebuild -scheme KnowledgeOS -destination 'platform=iOS Simulator,name=iPhone 16' build test`, 2026-05-19): **BUILD SUCCEEDED**; `DTOTests.testSettingsResponse` ✅; 87/88 unit tests passed. `LiveBackendSmokeTests` failed on `GET /api/v1/mobile/bootstrap` 500 when Docker API bind-mounted a macOS `.venv` (`ModuleNotFoundError: openai`) — fixed via `kos-api-venv` volume + `embeddings_available()` guard. UITest login flows depend on the same bootstrap path.
+- iOS (`xcodegen` + `xcodebuild … build test`, iPhone 16 sim): **BUILD SUCCEEDED**; `KnowledgeOSTests` **88/88** ✅; `KnowledgeOSUITests` **4/4** ✅ (`BootSmokeTests`, `LoginEndToEndSmokeTests`, `EditMetadataSmokeTests`, `SettingsSmokeTests`) via `-KOS_UI_TAB` / `KOS_UI_TAB`, `-ui-testing-single-tab` relaunch (no `TabView` in UITest), and `-ui-testing-skip-reset` session persistence (avoids iOS 26 tab-bar hit-test `{-1,-1}` flake)
+- API: `test_summarize_endpoint_sends_rendered_prompt_override_to_model` proves `/api/v1/ai/summarize` sends rendered prompt override to the model (mocked OpenAI)
 
 ---
 
@@ -923,7 +924,7 @@ xcodebuild -project KnowledgeOS.xcodeproj -scheme KnowledgeOS \
   -only-testing:KnowledgeOSUITests/BootSmokeTests test          # ⇒ passed
 ```
 
-**Known limitation — live-backend `LoginEndToEndSmokeTests`:** on iOS 26 simulators, `XCUIApplication.tabBars.buttons[...]` and `.element(boundBy:)` report tab-bar buttons with hit point `{-1, -1}`, so XCUI cannot programmatically tap the Search/Settings tabs even though the buttons are present and the tab bar's `frame` reports a midY that does not match the rendered position. Replicates with multiple SF Symbols (`magnifyingglass`, `text.magnifyingglass`, `doc.text.magnifyingglass`) and via both label lookup and index lookup. Captured during validation against the live backend (demo seed). The functional code is correct: the tab bar, search field (`kos.search.input`), and result row (`kos.search.resultRow`) are all wired up — the issue is an iOS 26 simulator + SwiftUI `TabView` interaction that surfaces only inside XCUITest. Test left in `KnowledgeOSUITests/LoginEndToEndSmokeTests.swift` with robust coordinate-based fallbacks for when iOS 26 fixes the tab-bar geometry. Manual run against a physical device — or running the same flow via `ios-simulator` MCP outside XCUITest — works.
+**iOS 26 UITest tab strategy (2026-05-19):** `TabView` tab-bar taps are unreliable in XCUITest (`{-1,-1}` hit points; off-screen tabs stay in the accessibility tree). Relaunch with `-KOS_UI_TAB` / `-ui-testing-single-tab` + `-ui-testing-skip-reset` instead of tapping the tab bar. See `docs/MOBILE_QA.md` and `KnowledgeOSUITests/UITestHelpers.swift`.
 
 **Blocks unblocked:** PHASE-PHONE-03C (depends on `Features/AI/AIActionsBar.swift` stub shipped here), PHASE-PHONE-04 (page detail stable), PHASE-PHONE-05 (offline can extend read paths).
 
@@ -1002,7 +1003,7 @@ xcodebuild -project KnowledgeOS.xcodeproj -scheme KnowledgeOS \
 - [x] `Features/PageDetail/PageDetailView.swift` — Edit-body toolbar item; body editor and conflict sheets presented. Shared `DetailHeader` now renders an `ObjectDetail.tagsRow` chip strip so tag edits are visible after Save.
 - [x] Tests: `KnowledgeOSTests/TiptapPlainTextTests.swift` (7 tests: empty, whitespace-only, single line, multi-paragraph with blanks, round-trip, missing content key, nested text-node flattening).
 - [x] `KnowledgeOSTests/EditLiteLiveSmokeTests.swift` — **live integration gate**, follows the 03C `LiveBackendSmokeTests` pattern (skips when backend unreachable). Drives the full PHONE-04 contract through `APIClient` + `EditAPI`: creates a fresh page, PATCHes title+tags, re-fetches and asserts persistence, PUTs the body with `expected_version`, asserts the version bumps and the Tiptap round-trips, then re-submits with a stale version and asserts the response surfaces as `APIError.conflict`. Exercises the live 200, 200, and 409 paths end-to-end.
-- [x] `KnowledgeOSUITests/EditMetadataSmokeTests.swift` — XCUITest version of the spec's Task 6 flow. Documented limitation: iOS 26 simulator + SwiftUI List + NavigationLink reports cells as not-hittable for `.tap()`, and synthetic coordinate taps don't reliably trigger NavigationLink value-based navigation — the test currently times out waiting for the detail screen after the cell tap. Same iOS-26 hit-test issue noted in 03C for `LoginEndToEndSmokeTests`. **`EditLiteLiveSmokeTests` is the working integration gate**; the XCUITest is kept as documentation of the intended UI flow for future iOS releases that fix the simulator hit-testing.
+- [x] `KnowledgeOSUITests/EditMetadataSmokeTests.swift` — live-backend UITest for edit-metadata flow (uses single-tab relaunch + hittable/coordinate row taps). **`EditLiteLiveSmokeTests`** remains the API-level integration gate.
 - [x] `scripts/mobile_qa_edit_title.sh` — simulator-MCP companion script that captures the 6-step edit flow under `.tmp/mobile-qa/edit-title/<timestamp>/` for manual visual QA.
 
 **Validation performed:**

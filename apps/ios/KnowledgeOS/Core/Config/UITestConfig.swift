@@ -25,12 +25,35 @@ enum MainTab: Hashable {
     }
 }
 
+extension Notification.Name {
+    static let uitestApplyTab = Notification.Name("kos.uitest.applyTab")
+}
+
 enum UITestConfig {
     static var initialTab: MainTab? {
-        guard let name = ProcessInfo.processInfo.environment["KOS_UI_TAB"] else {
-            return nil
+        if let arg = ProcessInfo.processInfo.arguments.first(where: { $0.hasPrefix("-KOS_UI_TAB=") }) {
+            let name = String(arg.dropFirst("-KOS_UI_TAB=".count))
+            if let tab = MainTab(uiTestName: name) {
+                return tab
+            }
         }
-        return MainTab(uiTestName: name)
+        if let name = ProcessInfo.processInfo.environment["KOS_UI_TAB"] {
+            return MainTab(uiTestName: name)
+        }
+        return nil
+    }
+
+    static var shouldResetOnLaunch: Bool {
+        ProcessInfo.processInfo.arguments.contains("-ui-testing-reset")
+    }
+
+    static var shouldSkipResetOnLaunch: Bool {
+        ProcessInfo.processInfo.arguments.contains("-ui-testing-skip-reset")
+    }
+
+    static func postInitialTabIfNeeded() {
+        guard let tab = initialTab else { return }
+        NotificationCenter.default.post(name: .uitestApplyTab, object: tab)
     }
 }
 

@@ -31,10 +31,13 @@ final class AppDependencies {
             queueStore = (try? SystemQueueStore()) ?? Self.makeFallbackQueue()
         }
 
-        cachedReadAPI = CachedReadAPI(cache: cacheStore)
+        cachedReadAPI = CachedReadAPI(
+            read: ReadAPI(apiClient: apiClient, keychain: SystemKeychainStore()),
+            cache: cacheStore
+        )
         queueDrainer = QueueDrainer(queue: queueStore, apiClient: apiClient)
 
-        if ProcessInfo.processInfo.arguments.contains("-ui-testing-reset") {
+        if UITestConfig.shouldResetOnLaunch, !UITestConfig.shouldSkipResetOnLaunch {
             ServerConfig.shared.reset()
             try? SystemKeychainStore().deleteToken()
             try? cacheStore.clearAll()
@@ -141,6 +144,7 @@ struct KnowledgeOSApp: App {
                 }
                 .task {
                     await dependencies.authStore.restoreSessionIfNeeded()
+                    UITestConfig.postInitialTabIfNeeded()
                 }
                 .task {
                     for await isReachable in dependencies.networkMonitor.$isReachable.values {
