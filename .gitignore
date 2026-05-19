@@ -41,6 +41,9 @@ qdrant-data/
 redis-data/
 kuzu-data/
 
+# Git worktrees (parallel agent branches)
+worktrees/
+
 # OS
 .DS_Store
 Thumbs.db
