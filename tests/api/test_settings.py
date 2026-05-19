@@ -337,7 +337,9 @@ async def test_suggest_links_endpoint_sends_rendered_prompt_override_to_model(
     source_object_id = source.json()["object"]["id"]
     await auth_client.patch(
         f"/api/v1/pages/{source_page_id}",
-        json={"content_text": "Quantum entanglement is a physical phenomenon in quantum mechanics."},
+        json={
+            "content_text": "Quantum entanglement is a physical phenomenon in quantum mechanics."
+        },
     )
 
     related = await auth_client.post(
