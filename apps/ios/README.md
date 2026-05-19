@@ -15,6 +15,8 @@ xcodegen generate
 xcodebuild -project KnowledgeOS.xcodeproj -scheme KnowledgeOS -destination 'platform=iOS Simulator,name=iPhone 16' build test
 ```
 
+CI runs `KnowledgeOSTests` only on macOS runners (`ios-unit` job in `.github/workflows/ci.yml`). `KnowledgeOSUITests` remain a local gate (Docker API + simulator).
+
 Do not hand-edit `KnowledgeOS.xcodeproj`. It is generated from `project.yml` and is intentionally ignored by Git.
 
 Regenerate the project after any `project.yml` change:

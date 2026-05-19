@@ -1,4 +1,4 @@
-.PHONY: test-unit test-api test-worker test-mcp test-e2e test-all
+.PHONY: test-unit test-api test-worker test-mcp test-e2e test-ios-unit test-all
 
 test-unit:
 	pnpm -F @kos/web test:run
@@ -14,6 +14,15 @@ test-mcp:
 
 test-e2e:
 	pnpm test:e2e
+
+test-ios-unit:
+	cd apps/ios && xcodegen generate
+	cd apps/ios && xcodebuild \
+		-project KnowledgeOS.xcodeproj \
+		-scheme KnowledgeOS \
+		-destination 'platform=iOS Simulator,name=iPhone 16' \
+		-only-testing:KnowledgeOSTests \
+		test
 
 test-all: test-unit test-api test-worker test-mcp test-e2e
 
