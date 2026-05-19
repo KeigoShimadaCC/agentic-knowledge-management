@@ -73,6 +73,13 @@ struct SettingsTab: View {
                 }
 
                 if let settings = viewModel.settings {
+                    if !viewModel.isLoading {
+                        Text("loaded")
+                            .accessibilityIdentifier("kos.settings.loaded")
+                            .accessibilityHidden(true)
+                            .frame(width: 0, height: 0)
+                    }
+
                     Section("AI Providers") {
                         ForEach(settings.secrets, id: \.key) { secret in
                             VStack(alignment: .leading, spacing: 4) {
@@ -285,6 +292,7 @@ private struct FeatureSettingsEditor: View {
             TextField("Model", text: $model)
                 .textInputAutocapitalization(.never)
                 .autocorrectionDisabled()
+                .accessibilityIdentifier("kos.settings.featureModel")
             TextField("Temperature", text: $temperature)
                 .keyboardType(.decimalPad)
             TextField("Max tokens", text: $maxTokens)
@@ -303,6 +311,7 @@ private struct FeatureSettingsEditor: View {
             }
             .accessibilityIdentifier("kos.settings.featureSave")
         }
+        .accessibilityIdentifier("kos.settings.featureEditor")
         .navigationTitle(feature.displayName)
         .navigationBarTitleDisplayMode(.inline)
     }

@@ -213,6 +213,14 @@ enum UITestHelpers {
         waitForSettingsReady(in: app, timeout: 15)
     }
 
+    static func waitForSettingsLoaded(in app: XCUIApplication, timeout: TimeInterval = 60) -> Bool {
+        app.descendants(matching: .any)["kos.settings.loaded"].waitForExistence(timeout: timeout)
+    }
+
+    static func waitForFeatureEditor(in app: XCUIApplication, timeout: TimeInterval = 10) -> Bool {
+        app.descendants(matching: .any)["kos.settings.featureEditor"].waitForExistence(timeout: timeout)
+    }
+
     static func waitForSettingsAPIContent(in app: XCUIApplication, timeout: TimeInterval) -> Bool {
         let deadline = Date().addingTimeInterval(timeout)
         while Date() < deadline {
