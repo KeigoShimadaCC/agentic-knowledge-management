@@ -19,15 +19,23 @@ def _bearer_token(request: Request) -> str | None:
 
 
 async def _local_single_user_fallback(db: AsyncSession) -> User | None:
-    """Return the first non-deleted user when running as a desktop single-user appliance.
+    """Return the deterministic first non-deleted user for the desktop single-user appliance.
 
     The desktop profile binds to 127.0.0.1 only, so only same-machine processes can
     reach the API. The mobile profile (KOS_PROFILE=mobile) is LAN-exposed and must
     keep requiring bearer/cookie auth — see app/middleware/lan_guard.py.
+
+    ``ORDER BY created_at`` makes this stable across requests when the DB happens
+    to accumulate multiple users (e.g. dev databases left over from earlier login
+    flows). Without it, Postgres returns rows in arbitrary order and consecutive
+    requests in the same test run can resolve to different users, causing
+    ownership filters to 404 across requests.
     """
     if settings.kos_profile == "mobile":
         return None
-    result = await db.execute(select(User).where(User.deleted_at.is_(None)).limit(1))
+    result = await db.execute(
+        select(User).where(User.deleted_at.is_(None)).order_by(User.created_at).limit(1)
+    )
     return result.scalar_one_or_none()
 
 

@@ -140,7 +140,10 @@ services:
     working_dir: /app/apps/web
     environment:
       # Host browsers call the published API port (8001 maps to api:8000).
-      NEXT_PUBLIC_API_URL: http://localhost:8001
+      # Use 127.0.0.1 (not "localhost") so cookies issued for the web origin
+      # (also 127.0.0.1) are sent on API fetches. localhost and 127.0.0.1 are
+      # treated as separate sites for SameSite=Lax cookies.
+      NEXT_PUBLIC_API_URL: http://127.0.0.1:8001
       API_URL: http://api:8000
     volumes:
       - ../apps/web:/app/apps/web

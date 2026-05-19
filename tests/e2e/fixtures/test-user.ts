@@ -44,7 +44,13 @@ export async function addUserCookie(context: BrowserContext, cookie: string) {
   if (!cookie) return;
   const webHost = new URL(webURL).hostname;
   const apiHost = new URL(apiURL).hostname;
-  const hosts = Array.from(new Set([webHost, apiHost]));
+  // The browser may fetch the API via NEXT_PUBLIC_API_URL which uses a different
+  // hostname (e.g. `localhost` vs `127.0.0.1`). Cookies are matched by request
+  // host, not by the page's origin, so we set the same session for every common
+  // local hostname to avoid silent no-cookie fallbacks.
+  const hosts = Array.from(
+    new Set([webHost, apiHost, "127.0.0.1", "localhost"])
+  );
   await context.addCookies(
     hosts.map((host) => ({
       name: "kos_session",
