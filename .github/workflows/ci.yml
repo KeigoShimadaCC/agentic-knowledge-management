@@ -70,6 +70,35 @@ jobs:
       - run: make test-worker
       - run: make test-mcp
 
+  ios-unit:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install xcodegen
+        run: brew install xcodegen
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
+      - name: Ensure iPhone 16 simulator
+        run: |
+          if ! xcrun simctl list devices available | grep -q "iPhone 16 ("; then
+            echo "iPhone 16 runtime not found; falling back to first available iPhone simulator"
+            DEVICE_NAME="$(xcrun simctl list devices available | grep -E 'iPhone [0-9]+ \(' | head -1 | sed -E 's/^[[:space:]]*([^(]+).*/\1/' | xargs)"
+          else
+            DEVICE_NAME="iPhone 16"
+          fi
+          echo "SIMULATOR_NAME=${DEVICE_NAME}" >> "$GITHUB_ENV"
+      - name: Generate Xcode project
+        run: cd apps/ios && xcodegen generate
+      - name: Run KnowledgeOSTests
+        run: |
+          cd apps/ios
+          xcodebuild \
+            -project KnowledgeOS.xcodeproj \
+            -scheme KnowledgeOS \
+            -destination "platform=iOS Simulator,name=${SIMULATOR_NAME}" \
+            -only-testing:KnowledgeOSTests \
+            test
+
   frontend:
     runs-on: ubuntu-latest
     steps:
