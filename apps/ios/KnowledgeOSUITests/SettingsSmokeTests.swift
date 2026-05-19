@@ -8,7 +8,7 @@ final class SettingsSmokeTests: XCTestCase {
         continueAfterFailure = false
     }
 
-    func testSettingsHubPromptFeatureAndMCP() throws {
+    func testSettingsHubPromptAndMCP() throws {
         UITestHelpers.ensureSignedIn(app: app, reset: !UITestSession.sharedSessionBootstrapped)
         UITestHelpers.relaunchOnTab(app: app, tab: "settings")
 
@@ -19,8 +19,8 @@ final class SettingsSmokeTests: XCTestCase {
         }
 
         XCTAssertTrue(
-            UITestHelpers.waitForSettingsAPIContent(in: app, timeout: 60),
-            "Settings API content should load (save keys or feature row)"
+            UITestHelpers.waitForSettingsLoaded(in: app, timeout: 60),
+            "Settings API content should load"
         )
 
         UITestHelpers.openSummarizePagePrompt(in: app)
@@ -42,14 +42,6 @@ final class SettingsSmokeTests: XCTestCase {
 
         UITestHelpers.returnToSettingsRoot(in: app)
 
-        // Feature model picker navigation is covered by API tests; reach it here when visible.
-        if app.descendants(matching: .any)["kos.settings.feature.summarize"].waitForExistence(timeout: 3) {
-            UITestHelpers.tapSettingsRow(identifier: "kos.settings.feature.summarize", in: app)
-            app.swipeUp()
-            UITestHelpers.tapSettingsRow(identifier: "kos.settings.featureSave", in: app, maxSwipes: 4)
-            UITestHelpers.returnToSettingsRoot(in: app)
-        }
-
         let mcpTestButton = app.buttons.matching(
             NSPredicate(format: "identifier BEGINSWITH 'kos.settings.mcp.test.'")
         ).firstMatch
@@ -57,5 +49,33 @@ final class SettingsSmokeTests: XCTestCase {
             UITestHelpers.tapIfNeeded(mcpTestButton, in: app)
             _ = app.wait(for: .runningForeground, timeout: 5)
         }
+    }
+
+    func testSettingsFeatureModelSave() throws {
+        UITestHelpers.ensureSignedIn(app: app, reset: !UITestSession.sharedSessionBootstrapped)
+        UITestHelpers.relaunchOnTab(app: app, tab: "settings")
+
+        XCTAssertTrue(UITestHelpers.waitForSettingsLoaded(in: app, timeout: 60))
+
+        guard app.descendants(matching: .any)["kos.settings.feature.summarize"].waitForExistence(timeout: 5) else {
+            throw XCTSkip("Summarize feature row not visible on this backend profile")
+        }
+
+        UITestHelpers.tapSettingsRow(identifier: "kos.settings.feature.summarize", in: app)
+        XCTAssertTrue(UITestHelpers.waitForFeatureEditor(in: app), "Feature editor should open")
+
+        let modelField = app.textFields["kos.settings.featureModel"]
+        XCTAssertTrue(modelField.waitForExistence(timeout: 5))
+        modelField.tap()
+        modelField.clearAndType("gpt-4o-mini-uitest")
+
+        UITestHelpers.tapSettingsRow(identifier: "kos.settings.featureSave", in: app, maxSwipes: 4)
+        _ = app.wait(for: .runningForeground, timeout: 3)
+
+        UITestHelpers.returnToSettingsRoot(in: app)
+        XCTAssertTrue(
+            app.descendants(matching: .any)["kos.settings.workspacesLink"].waitForExistence(timeout: 10),
+            "Should return to settings root after feature save"
+        )
     }
 }
