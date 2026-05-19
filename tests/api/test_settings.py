@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import uuid
+from datetime import UTC, datetime
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -8,6 +10,7 @@ from app.config import settings
 from app.db.session import AsyncSessionLocal
 from app.models.settings import SettingsSecret
 from app.models.user import User
+from app.schemas.search import SearchResult
 from app.services.settings_service import ENV_EXPORT_ALLOWLIST, render_prompt
 from httpx import AsyncClient
 from sqlalchemy import select
@@ -286,6 +289,147 @@ async def test_summarize_endpoint_sends_rendered_prompt_override_to_model(
 
     reset = await auth_client.post("/api/v1/settings/prompts/summarize.page/reset")
     assert reset.status_code == 200, reset.text
+
+
+@pytest.mark.asyncio
+async def test_answer_endpoint_sends_rendered_prompt_override_to_model(
+    auth_client: AsyncClient, mock_openai: MagicMock
+):
+    custom = "E2E answer: {question}\n{context}"
+    saved = await auth_client.patch(
+        "/api/v1/settings/prompts/answer.kb",
+        json={"template": custom},
+    )
+    assert saved.status_code == 200, saved.text
+
+    question = "What is quantum entanglement?"
+    ai_resp = await auth_client.post("/api/v1/ai/answer", json={"q": question})
+    assert ai_resp.status_code == 200, ai_resp.text
+
+    mock_openai.chat.completions.create.assert_awaited()
+    call = mock_openai.chat.completions.create.await_args
+    assert call is not None
+    messages = call.kwargs["messages"]
+    assert "E2E answer:" in messages[0]["content"]
+    assert question in messages[0]["content"]
+
+    reset = await auth_client.post("/api/v1/settings/prompts/answer.kb/reset")
+    assert reset.status_code == 200, reset.text
+
+
+@pytest.mark.asyncio
+async def test_suggest_links_endpoint_sends_rendered_prompt_override_to_model(
+    auth_client: AsyncClient, mock_openai: MagicMock
+):
+    custom = "E2E suggest links: {title} | {content} | {candidates} | limit={limit}"
+    saved = await auth_client.patch(
+        "/api/v1/settings/prompts/suggest.links",
+        json={"template": custom},
+    )
+    assert saved.status_code == 200, saved.text
+
+    source = await auth_client.post(
+        "/api/v1/pages",
+        json={"title": "Quantum Entanglement Notes"},
+    )
+    assert source.status_code == 201, source.text
+    source_page_id = source.json()["page"]["id"]
+    source_object_id = source.json()["object"]["id"]
+    await auth_client.patch(
+        f"/api/v1/pages/{source_page_id}",
+        json={"content_text": "Quantum entanglement is a physical phenomenon in quantum mechanics."},
+    )
+
+    related = await auth_client.post(
+        "/api/v1/pages",
+        json={"title": "Quantum Computing Overview"},
+    )
+    assert related.status_code == 201, related.text
+    related_object_id = related.json()["object"]["id"]
+
+    mock_openai.chat.completions.create.return_value.choices[0].message.content = "[]"
+
+    fake_candidate = SearchResult(
+        id=uuid.UUID(related_object_id),
+        kind="page",
+        title="Quantum Computing Overview",
+        snippet=None,
+        score=0.9,
+        updated_at=datetime.now(UTC),
+    )
+
+    with patch(
+        "app.services.ai_service.keyword_search",
+        new_callable=AsyncMock,
+        return_value=[fake_candidate],
+    ):
+        ai_resp = await auth_client.post(
+            "/api/v1/ai/suggest-links",
+            json={"object_id": source_object_id},
+        )
+    assert ai_resp.status_code == 200, ai_resp.text
+
+    mock_openai.chat.completions.create.assert_awaited()
+    call = mock_openai.chat.completions.create.await_args
+    assert call is not None
+    messages = call.kwargs["messages"]
+    assert "E2E suggest links:" in messages[0]["content"]
+    assert "Quantum Entanglement Notes" in messages[0]["content"]
+    assert "limit=" in messages[0]["content"]
+
+    reset = await auth_client.post("/api/v1/settings/prompts/suggest.links/reset")
+    assert reset.status_code == 200, reset.text
+
+
+@pytest.fixture
+def mock_anthropic():
+    mock_message = MagicMock()
+    mock_message.content = [MagicMock(type="text", text=TEST_STUB_SUMMARY)]
+
+    client_mock = MagicMock()
+    client_mock.messages = MagicMock()
+    client_mock.messages.create = AsyncMock(return_value=mock_message)
+    with patch("anthropic.AsyncAnthropic", return_value=client_mock):
+        yield client_mock
+
+
+@pytest.mark.asyncio
+async def test_summarize_uses_per_feature_model_in_provider_call(
+    auth_client: AsyncClient, mock_anthropic: MagicMock, monkeypatch: pytest.MonkeyPatch
+):
+    integration_key = "sk-ant-integration-test-key"
+    monkeypatch.setattr(settings, "ai_provider", "openai")
+    monkeypatch.setattr(settings, "openai_api_key", "")
+    monkeypatch.setattr(settings, "anthropic_api_key", "")
+
+    await auth_client.patch(
+        "/api/v1/settings/secrets",
+        json={"anthropic_api_key": integration_key, "export_env": False},
+    )
+    feature_resp = await auth_client.patch(
+        "/api/v1/settings/ai-features/summarize",
+        json={"provider": "anthropic", "model": "claude-test-model", "temperature": 0.4},
+    )
+    assert feature_resp.status_code == 200, feature_resp.text
+
+    page = await auth_client.post("/api/v1/pages", json={"title": "Feature model E2E"})
+    page_id = page.json()["page"]["id"]
+    object_id = page.json()["object"]["id"]
+    await auth_client.patch(
+        f"/api/v1/pages/{page_id}",
+        json={"content_text": "Per-feature model should reach Anthropic client."},
+    )
+
+    ai_resp = await auth_client.post(
+        "/api/v1/ai/summarize",
+        json={"object_id": object_id, "force": True},
+    )
+    assert ai_resp.status_code == 200, ai_resp.text
+
+    mock_anthropic.messages.create.assert_awaited()
+    call = mock_anthropic.messages.create.await_args
+    assert call is not None
+    assert call.kwargs["model"] == "claude-test-model"
 
 
 @pytest.mark.asyncio
