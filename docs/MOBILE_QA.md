@@ -41,6 +41,9 @@ bash scripts/mobile_simulator_screenshot.sh
 
 # PHONE-08 parity flows → .tmp/mobile-qa/phone-08/<timestamp>/*.png
 bash scripts/mobile_qa_phone08.sh
+
+# PHASE-16 Settings hub → .tmp/mobile-qa/settings-16/<timestamp>/*.png
+bash scripts/mobile_qa_settings.sh
 ```
 
 ### Environment variables
@@ -146,6 +149,11 @@ Pattern for multi-tab flows:
 2. `app.terminate()` then relaunch with `KOS_UI_TAB=search` (or `settings`, `home`) and `-ui-testing-skip-reset`.
 
 Helpers: `apps/ios/KnowledgeOSUITests/UITestHelpers.swift`.
+
+### Settings QA (PHASE-16)
+
+- Automated: `KnowledgeOSTests/SettingsViewModelTests.swift`, `KnowledgeOSUITests/SettingsSmokeTests.swift` (use `kos.settings.loaded`, `kos.settings.featureEditor`).
+- Manual screenshots: `bash scripts/mobile_qa_settings.sh` → `.tmp/mobile-qa/settings-16/<timestamp>/`.
 
 ---
 

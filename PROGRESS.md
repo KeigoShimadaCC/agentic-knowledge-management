@@ -15,8 +15,10 @@
 - [x] **16E — iOS Settings parity** — Added Settings DTOs/API/view-model and extended `SettingsTab` with provider status, key entry warning, editable feature rows, prompt editor/reset, MCP summary/list/test/toggle, background AI controls, and diagnostics.
 - [x] **16F — Docs/verification/handoff** — Updated API/security/architecture docs and infra env/docker wiring.
 
+**PHASE-16 gap closure (2026-05-19):** Added AI override E2E tests (answer, suggest-links, per-feature Anthropic model), `SettingsViewModelTests`, hardened `SettingsSmokeTests` (`kos.settings.loaded` / feature editor), `scripts/mobile_qa_settings.sh`, phase completion checklist, and macOS CI `ios-unit` job for `KnowledgeOSTests`.
+
 **Verification notes (2026-05-19 gap closure):**
-- `cd tests && PYTHONPATH=../services/api uv run pytest api/test_settings.py -v` ✅ 12 passed (includes env export, encryption at rest, clear secrets, `ai_feature_disabled`, prompt override resolution)
+- `cd tests && PYTHONPATH=../services/api uv run pytest api/test_settings.py -v` ✅ (settings CRUD + answer/suggest-links/summarize prompt override E2E + feature model provider call)
 - `make test-api` ✅ (full API + unit suite with Docker Postgres on `127.0.0.1:5433`)
 - `pnpm typecheck` ✅
 - `make test-unit` ✅ 62 passed (includes `SettingsPage` Vitest with MSW)

@@ -19,6 +19,7 @@
 | Live mobile flow | `apps/ios/KnowledgeOSTests/LiveBackendSmokeTests.swift` (self-seeded search) |
 | Edit-lite round-trip | `apps/ios/KnowledgeOSTests/EditLiteLiveSmokeTests.swift` |
 | Simulator QA screenshots | `scripts/mobile_qa_phone08.sh` → `.tmp/mobile-qa/phone-08/` |
+| Settings hub (PHASE-16) | `tests/api/test_settings.py`, `34-settings-hub.spec.ts`, `SettingsViewModelTests`, `SettingsSmokeTests`, `scripts/mobile_qa_settings.sh` |
 
 ## Matrix
 
@@ -48,7 +49,8 @@
 | Graph edges/backlinks | `GET/POST/DELETE /edges`, backlinks | `GraphPanel`, `LinkToModal` | `GraphLinksSection`, `GraphAPI`, `kos.graph.*` | `bidirectional-required` | **Fixed in PHONE-08.** E2E backlinks. |
 | Persisted workspaces | `POST/GET/PATCH /workspaces` | `WorkspaceNameModal` | `WorkspaceListView`, `WorkspaceAPI`, `kos.workspace.*` | `bidirectional-required` | **Fixed in PHONE-08.** E2E test 2. |
 | Offline cache / capture queue | client-side | N/A | `CacheStore`, `QueueDrainer` | `iphone-only` | Unit tests; Mac sees synced writes. |
-| MCP admin, tutorial, signing | various | Mac settings | Not on iPhone | `mac-only-by-design` | Unchanged. |
+| Settings (secrets, prompts, features, background AI, MCP test) | `/api/v1/settings/*` | `/app/settings`, `34-settings-hub.spec.ts` | `SettingsTab`, `SettingsViewModelTests`, `SettingsSmokeTests` | `bidirectional-required` | PHASE-16 complete; API override E2E + iOS unit/UITest gates. |
+| MCP admin, tutorial, signing | various | Mac settings MCP page | MCP list/test in `SettingsTab` only | `mac-only-by-design` | iPhone: connection toggle/test; Mac: full admin. |
 
 ## PHONE-08 Critical Gap Queue (final)
 

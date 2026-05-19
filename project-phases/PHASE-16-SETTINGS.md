@@ -46,3 +46,37 @@ Registry covers summarize page/source, extract claims/tasks, suggest links, KB a
 - Web checks: typecheck, lint, and focused Settings UI coverage where practical.
 - E2E smoke: Settings loads, prompt override save/reset works, feature config saves, and existing MCP page still works.
 - iOS checks: DTO/view-model tests plus the `iPhone 16` build/test gate when the simulator environment is available.
+
+## Completion checklist
+
+| Track | Status | Verification |
+|-------|--------|--------------|
+| 16A Phase doc / progress | Done | This file + `PROGRESS.md` |
+| 16B Backend settings API | Done | `cd tests && uv run pytest api/test_settings.py -v` |
+| 16C Prompt registry + AI call sites | Done | Override E2E tests in `test_settings.py` (summarize, answer, suggest-links, feature model) |
+| 16D Web Settings UI | Done | `pnpm typecheck`, `pnpm lint`, `pnpm --dir tests/e2e test specs/34-settings-hub.spec.ts` |
+| 16E iOS Settings parity | Done | `cd apps/ios && xcodegen generate && xcodebuild ... -only-testing:KnowledgeOSTests test` |
+| 16F Docs + handoff | Done | `docs/MOBILE_QA.md`, `docs/CROSS_PLATFORM_PARITY.md`, `scripts/mobile_qa_settings.sh` |
+
+**Automated gates**
+
+```bash
+cd tests && uv run pytest api/test_settings.py -v
+pnpm --dir tests/e2e test specs/34-settings-hub.spec.ts
+cd apps/ios && xcodegen generate
+xcodebuild -project KnowledgeOS.xcodeproj -scheme KnowledgeOS \
+  -destination 'platform=iOS Simulator,name=iPhone 16' \
+  -only-testing:KnowledgeOSTests test
+xcodebuild -project KnowledgeOS.xcodeproj -scheme KnowledgeOS \
+  -destination 'platform=iOS Simulator,name=iPhone 16' \
+  -only-testing:KnowledgeOSUITests/SettingsSmokeTests test
+```
+
+**Manual simulator QA**
+
+```bash
+bash scripts/mobile_simulator_boot.sh
+bash scripts/mobile_qa_settings.sh
+```
+
+**CI:** `ios-unit` job runs `KnowledgeOSTests` on macOS (no UITest / Docker in CI).
