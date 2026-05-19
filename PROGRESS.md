@@ -24,8 +24,10 @@
 - `make test-unit` ✅ 62 passed (includes `SettingsPage` Vitest with MSW)
 - `pnpm --dir tests/e2e test specs/34-settings-hub.spec.ts` ✅ 4 passed (settings hub tabs, prompt save/reset, feature model save, MCP link)
 - Route crawl includes `/app/settings` and `/app/settings/mcp` ✅
-- iOS (`xcodegen` + `xcodebuild … build test`, iPhone 16 sim): **BUILD SUCCEEDED**; `KnowledgeOSTests` **88/88** ✅; `KnowledgeOSUITests` **4/4** ✅ (`BootSmokeTests`, `LoginEndToEndSmokeTests`, `EditMetadataSmokeTests`, `SettingsSmokeTests`) via `-KOS_UI_TAB` / `KOS_UI_TAB`, `-ui-testing-single-tab` relaunch (no `TabView` in UITest), and `-ui-testing-skip-reset` session persistence (avoids iOS 26 tab-bar hit-test `{-1,-1}` flake)
-- API: `test_summarize_endpoint_sends_rendered_prompt_override_to_model` proves `/api/v1/ai/summarize` sends rendered prompt override to the model (mocked OpenAI)
+- iOS (`xcodegen` + `xcodebuild … -only-testing:KnowledgeOSTests test`, iPhone 16 sim): **BUILD SUCCEEDED**; `KnowledgeOSTests` **94/94** ✅ (includes `SettingsViewModelTests`); `KnowledgeOSUITests` **5/5** ✅ (`BootSmokeTests`, `LoginEndToEndSmokeTests`, `EditMetadataSmokeTests`, `SettingsSmokeTests` ×2) via `-KOS_UI_TAB` / `KOS_UI_TAB`, `-ui-testing-single-tab` relaunch, and `-ui-testing-skip-reset`
+- `make test-ios-unit` / CI `ios-unit` job: macOS runner runs `KnowledgeOSTests` only (no UITest/Docker in CI)
+- `bash scripts/mobile_qa_settings.sh` — manual Settings screenshot walkthrough
+- API E2E: `test_settings.py` **16/16** — summarize/answer/suggest-links prompt overrides + per-feature Anthropic model on summarize
 
 ---
 
