@@ -78,23 +78,24 @@ def extract(source, db) -> dict:
     except Exception as e:
         logger.warning("oEmbed fetch failed: %s", e)
 
-    try:
-        video_id = _extract_video_id(source.url)
-        if video_id:
-            from youtube_transcript_api import (
-                NoTranscriptFound,
-                TranscriptsDisabled,
-                YouTubeTranscriptApi,
-            )
+    video_id = _extract_video_id(source.url)
+    if video_id:
+        from youtube_transcript_api import (
+            CouldNotRetrieveTranscript,
+            NoTranscriptFound,
+            TranscriptsDisabled,
+            YouTubeTranscriptApi,
+        )
 
-            try:
-                segments = YouTubeTranscriptApi.get_transcript(video_id, languages=["en", "ja"])
-                result["extracted_text"] = " ".join(seg["text"] for seg in segments)
-                result["preview_data"]["transcript_available"] = True
-            except (TranscriptsDisabled, NoTranscriptFound) as e:
-                logger.info("No transcript available for %s: %s", video_id, e)
-                result["preview_data"]["transcript_available"] = False
-    except Exception as e:
-        logger.warning("Transcript fetch failed: %s", e)
+        try:
+            fetched = YouTubeTranscriptApi().fetch(video_id, languages=["en", "ja"])
+            result["extracted_text"] = " ".join(snippet.text for snippet in fetched)
+            result["preview_data"]["transcript_available"] = True
+        except (TranscriptsDisabled, NoTranscriptFound) as e:
+            logger.info("No transcript available for %s: %s", video_id, e)
+            result["preview_data"]["transcript_available"] = False
+        except CouldNotRetrieveTranscript as e:
+            logger.warning("Transcript fetch failed for %s: %s", video_id, e)
+            result["preview_data"]["transcript_available"] = False
 
     return result

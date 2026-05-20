@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from types import SimpleNamespace
 from unittest.mock import MagicMock
 
 from helpers import make_source
@@ -29,12 +30,13 @@ def _run(source, monkeypatch, transcript_segments=None, transcript_error=None, o
         lambda *a, **kw: oembed_resp or _fake_oembed_response(),
     )
     if transcript_segments is not None or transcript_error is not None:
-        mock_api = MagicMock()
+        mock_instance = MagicMock()
         if transcript_error is not None:
-            mock_api.get_transcript.side_effect = transcript_error
+            mock_instance.fetch.side_effect = transcript_error
         else:
-            mock_api.get_transcript.return_value = transcript_segments
-        monkeypatch.setattr("youtube_transcript_api.YouTubeTranscriptApi", mock_api)
+            mock_instance.fetch.return_value = transcript_segments
+        mock_class = MagicMock(return_value=mock_instance)
+        monkeypatch.setattr("youtube_transcript_api.YouTubeTranscriptApi", mock_class)
     db = MagicMock()
     from kos_worker.extractors import youtube as extractor
 
@@ -52,8 +54,8 @@ def test_youtube_extracts_oembed_metadata(monkeypatch):
 
 def test_youtube_includes_transcript(monkeypatch):
     segments = [
-        {"text": "Hello world", "start": 0.0, "duration": 1.5},
-        {"text": "from YouTube", "start": 1.5, "duration": 1.0},
+        SimpleNamespace(text="Hello world", start=0.0, duration=1.5),
+        SimpleNamespace(text="from YouTube", start=1.5, duration=1.0),
     ]
     source = make_source("src-yt-2", url="https://www.youtube.com/watch?v=dQw4w9WgXcQ")
     result = _run(source, monkeypatch, transcript_segments=segments)
@@ -84,3 +86,37 @@ def test_youtube_returns_error_when_no_url(monkeypatch):
 
     result = extractor.extract(source, db)
     assert result["ingestion_status"] == "error"
+
+
+def test_youtube_uses_v1_fetch_api(monkeypatch):
+    """Regression: extractor must call the v1.x .fetch() method, not the removed get_transcript().
+
+    Patches only safe_http_get so the real YouTubeTranscriptApi class is imported; spies on its
+    .fetch attribute via the class so a method rename in the library would surface as
+    AttributeError rather than be silently swallowed.
+    """
+    monkeypatch.setattr("app.core.url_safety.validate_safe_http_url", lambda url: None)
+    monkeypatch.setattr(
+        "app.core.url_safety.safe_http_get",
+        lambda *a, **kw: _fake_oembed_response(),
+    )
+
+    from youtube_transcript_api import YouTubeTranscriptApi
+
+    fetch_calls: list[tuple] = []
+
+    def fake_fetch(self, video_id, languages=None, **kw):
+        fetch_calls.append((video_id, tuple(languages or ())))
+        raise NoTranscriptFound(video_id, languages or [], MagicMock())
+
+    monkeypatch.setattr(YouTubeTranscriptApi, "fetch", fake_fetch)
+
+    source = make_source("src-yt-regress", url="https://www.youtube.com/watch?v=dQw4w9WgXcQ")
+    db = MagicMock()
+    from kos_worker.extractors import youtube as extractor
+
+    result = extractor.extract(source, db)
+
+    assert fetch_calls == [("dQw4w9WgXcQ", ("en", "ja"))]
+    assert result["ingestion_status"] == "ready"
+    assert result["preview_data"]["transcript_available"] is False
