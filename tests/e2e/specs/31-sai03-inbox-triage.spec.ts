@@ -1,6 +1,6 @@
 import { expect, type APIRequestContext, type Page } from "@playwright/test";
 import { test } from "../fixtures/api";
-import { createTestUser } from "../fixtures/test-user";
+import { addUserCookie, createTestUser } from "../fixtures/test-user";
 
 const TAG = `sai03-${Date.now().toString(36)}`;
 const CONTENT =
@@ -9,6 +9,7 @@ const CONTENT =
 let inboxItemTitle = "";
 let inboxObjectId = "";
 let seedApi: APIRequestContext;
+let savedCookie = "";
 
 function collectConsoleErrors(page: Page): string[] {
   const errors: string[] = [];
@@ -36,6 +37,7 @@ test.describe("SAI03 inbox triage", () => {
   test.beforeAll(async () => {
     const user = await createTestUser();
     seedApi = user.api;
+    savedCookie = user.cookie;
     inboxItemTitle = `Q3 Planning ${TAG}`;
     const res = await seedApi.post("/api/v1/pages", { data: { title: inboxItemTitle } });
     expect(res.ok()).toBeTruthy();
@@ -53,6 +55,10 @@ test.describe("SAI03 inbox triage", () => {
     });
     expect(patchPage.ok()).toBeTruthy();
     // Do NOT add tags — inbox only shows objects with tags == []
+  });
+
+  test.beforeEach(async ({ context }) => {
+    await addUserCookie(context, savedCookie);
   });
 
   test.afterAll(async () => {

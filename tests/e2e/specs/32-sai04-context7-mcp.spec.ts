@@ -1,13 +1,14 @@
 import { expect, type APIRequestContext, type Page } from "@playwright/test";
 import { test } from "../fixtures/api";
 import { cleanupByTag } from "../fixtures/scenario-fixtures";
-import { createTestUser } from "../fixtures/test-user";
+import { addUserCookie, createTestUser } from "../fixtures/test-user";
 
 const TAG = `sai04-${Date.now().toString(36)}`;
 
 let context7Id = "";
 let pageId = "";
 let seedApi: APIRequestContext;
+let savedCookie = "";
 
 function collectConsoleErrors(page: Page): string[] {
   const errors: string[] = [];
@@ -29,6 +30,7 @@ test.describe("SAI04 Context7 MCP", () => {
   test.beforeAll(async () => {
     const user = await createTestUser();
     seedApi = user.api;
+    savedCookie = user.cookie;
     const connRes = await seedApi.post("/api/v1/mcp-connections/", {
       data: {
         name: "Context7",
@@ -64,6 +66,10 @@ test.describe("SAI04 Context7 MCP", () => {
       data: { tags: [TAG] },
     });
     expect(patchObject.ok()).toBeTruthy();
+  });
+
+  test.beforeEach(async ({ context }) => {
+    await addUserCookie(context, savedCookie);
   });
 
   test.afterAll(async () => {

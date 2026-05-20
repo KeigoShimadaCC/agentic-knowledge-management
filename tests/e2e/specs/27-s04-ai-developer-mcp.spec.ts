@@ -1,6 +1,6 @@
 import { expect, type APIRequestContext, type Page } from "@playwright/test";
 import { test } from "../fixtures/api";
-import { createTestUser } from "../fixtures/test-user";
+import { addUserCookie, createTestUser } from "../fixtures/test-user";
 import { createPage } from "../fixtures/pages";
 import {
   seedSource,
@@ -9,6 +9,7 @@ import {
 
 const TAG = `s04-${Date.now().toString(36)}`;
 let seedApi: APIRequestContext;
+let savedCookie = "";
 
 function collectConsoleErrors(page: Page): string[] {
   const errors: string[] = [];
@@ -28,6 +29,7 @@ test.describe("S04 AI developer MCP scenario", () => {
   test.beforeAll(async () => {
     const user = await createTestUser();
     seedApi = user.api;
+    savedCookie = user.cookie;
     await seedSource(seedApi, {
       title: "Model Context Protocol",
       url: "https://en.wikipedia.org/wiki/Model_Context_Protocol",
@@ -42,6 +44,10 @@ test.describe("S04 AI developer MCP scenario", () => {
     });
     const pageId = await createPage(seedApi, `ADR: Auth Design ${TAG}`, `ADR: Auth Design ${TAG}`);
     await tagObject(seedApi, pageId);
+  });
+
+  test.beforeEach(async ({ context }) => {
+    await addUserCookie(context, savedCookie);
   });
 
   test.afterAll(async () => {

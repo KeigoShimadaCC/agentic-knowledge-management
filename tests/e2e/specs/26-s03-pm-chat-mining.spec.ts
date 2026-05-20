@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 import { expect, type APIRequestContext, type Page } from "@playwright/test";
 import { test } from "../fixtures/api";
-import { createTestUser } from "../fixtures/test-user";
+import { addUserCookie, createTestUser } from "../fixtures/test-user";
 import {
   importChats,
   cleanupByTag,
@@ -12,6 +12,7 @@ const TAG = `s03-${Date.now().toString(36)}`;
 
 let firstChatId = "";
 let seedApi: APIRequestContext;
+let savedCookie = "";
 
 function collectConsoleErrors(page: Page): string[] {
   const errors: string[] = [];
@@ -46,6 +47,7 @@ test.describe("S03 PM chat mining scenario", () => {
   test.beforeAll(async () => {
     const user = await createTestUser();
     seedApi = user.api;
+    savedCookie = user.cookie;
     const chatData = JSON.parse(
       readFileSync(path.join(__dirname, "../fixtures/seed-data/chats/synthetic-chatgpt.json"), "utf-8")
     ) as { conversations: unknown[] };
@@ -54,6 +56,15 @@ test.describe("S03 PM chat mining scenario", () => {
     for (const chatId of chatIds) {
       await tagObject(seedApi, chatId);
     }
+  });
+
+  test.beforeEach(async ({ context }) => {
+    // Scenario specs run their own login in beforeAll (separate from the `api`
+    // fixture). The browser context needs the same session cookie so its
+    // requests resolve to the demo user that owns the seeded chats; otherwise
+    // they fall through to the desktop-profile single-user fallback and see a
+    // different user's empty list.
+    await addUserCookie(context, savedCookie);
   });
 
   test.afterAll(async () => {

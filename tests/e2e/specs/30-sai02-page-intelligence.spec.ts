@@ -1,7 +1,7 @@
 import { expect, type APIRequestContext, type Page } from "@playwright/test";
 import { test } from "../fixtures/api";
 import { cleanupByTag } from "../fixtures/scenario-fixtures";
-import { createTestUser } from "../fixtures/test-user";
+import { addUserCookie, createTestUser } from "../fixtures/test-user";
 
 const TAG = `sai02-${Date.now().toString(36)}`;
 const CONTENT =
@@ -9,6 +9,7 @@ const CONTENT =
 
 let pageId = "";
 let seedApi: APIRequestContext;
+let savedCookie = "";
 
 function collectConsoleErrors(page: Page): string[] {
   const errors: string[] = [];
@@ -30,6 +31,7 @@ test.describe("SAI02 page intelligence", () => {
   test.beforeAll(async () => {
     const user = await createTestUser();
     seedApi = user.api;
+    savedCookie = user.cookie;
     const res = await seedApi.post("/api/v1/pages", {
       data: { title: `TypeScript Notes ${TAG}` },
     });
@@ -51,6 +53,10 @@ test.describe("SAI02 page intelligence", () => {
       data: { tags: [TAG] },
     });
     expect(patchObject.ok()).toBeTruthy();
+  });
+
+  test.beforeEach(async ({ context }) => {
+    await addUserCookie(context, savedCookie);
   });
 
   test.afterAll(async () => {

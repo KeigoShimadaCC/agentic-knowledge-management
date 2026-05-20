@@ -1,6 +1,6 @@
 import { expect, type APIRequestContext, type Page } from "@playwright/test";
 import { test } from "../fixtures/api";
-import { createTestUser } from "../fixtures/test-user";
+import { addUserCookie, createTestUser } from "../fixtures/test-user";
 import { createPage } from "../fixtures/pages";
 import {
   seedSource,
@@ -27,6 +27,7 @@ const SOURCES = [
 let firstSourceId = "";
 let pageId = "";
 let seedApi: APIRequestContext;
+let savedCookie = "";
 
 function collectConsoleErrors(page: Page): string[] {
   const errors: string[] = [];
@@ -61,6 +62,7 @@ test.describe("S01 researcher scenario", () => {
   test.beforeAll(async () => {
     const user = await createTestUser();
     seedApi = user.api;
+    savedCookie = user.cookie;
     const sourceIds: string[] = [];
     for (const source of SOURCES) {
       sourceIds.push(await seedSource(seedApi, { ...source, sourceType: "web", tags: [TAG] }));
@@ -76,6 +78,14 @@ test.describe("S01 researcher scenario", () => {
     for (const sourceId of sourceIds) {
       await waitForSource(seedApi, sourceId, 60_000);
     }
+  });
+
+  test.beforeEach(async ({ context }) => {
+    // Scenario specs run their own login in beforeAll. The browser context needs
+    // the same session cookie so its requests resolve to the demo user that owns
+    // the seeded data; otherwise they fall through to the desktop single-user
+    // fallback and see a different user.
+    await addUserCookie(context, savedCookie);
   });
 
   test.afterAll(async () => {

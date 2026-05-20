@@ -1,6 +1,6 @@
 import { expect, type APIRequestContext, type Page } from "@playwright/test";
 import { test } from "../fixtures/api";
-import { createTestUser } from "../fixtures/test-user";
+import { addUserCookie, createTestUser } from "../fixtures/test-user";
 import {
   seedSource,
   waitForSource,
@@ -9,6 +9,7 @@ import {
 
 const TAG = `s05-${Date.now().toString(36)}`;
 let seedApi: APIRequestContext;
+let savedCookie = "";
 const SOURCES = [
   { url: "https://en.wikipedia.org/wiki/JavaScript", title: "JavaScript" },
   { url: "https://en.wikipedia.org/wiki/Asynchronous_I/O", title: "Async IO" },
@@ -43,6 +44,7 @@ test.describe("S05 bootcamp grad scenario", () => {
   test.beforeAll(async () => {
     const user = await createTestUser();
     seedApi = user.api;
+    savedCookie = user.cookie;
     const sourceIds: string[] = [];
     for (const source of SOURCES) {
       sourceIds.push(await seedSource(seedApi, { ...source, sourceType: "web", tags: [TAG] }));
@@ -50,6 +52,14 @@ test.describe("S05 bootcamp grad scenario", () => {
     for (const sourceId of sourceIds) {
       await waitForSource(seedApi, sourceId, 60_000);
     }
+  });
+
+  test.beforeEach(async ({ context }) => {
+    // Scenario specs run their own login in beforeAll (separate from the `api`
+    // fixture). The browser context needs the same session cookie so its
+    // requests resolve to the demo user; otherwise they fall through to the
+    // desktop-profile single-user fallback and see a different user.
+    await addUserCookie(context, savedCookie);
   });
 
   test.afterAll(async () => {

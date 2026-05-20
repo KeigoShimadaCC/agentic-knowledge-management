@@ -1,12 +1,13 @@
 import { expect, type APIRequestContext, type Page } from "@playwright/test";
 import { test } from "../fixtures/api";
 import { cleanupByTag } from "../fixtures/scenario-fixtures";
-import { createTestUser } from "../fixtures/test-user";
+import { addUserCookie, createTestUser } from "../fixtures/test-user";
 
 const TAG = `sai01-${Date.now().toString(36)}`;
 
 let projectId = "";
 let seedApi: APIRequestContext;
+let savedCookie = "";
 
 function collectConsoleErrors(page: Page): string[] {
   const errors: string[] = [];
@@ -28,6 +29,7 @@ test.describe("SAI01 career AI", () => {
   test.beforeAll(async () => {
     const user = await createTestUser();
     seedApi = user.api;
+    savedCookie = user.cookie;
     const res = await seedApi.post("/api/v1/projects", {
       data: {
         title: `E-commerce Rebuild ${TAG}`,
@@ -45,6 +47,10 @@ test.describe("SAI01 career AI", () => {
 
     const patch = await seedApi.patch(`/api/v1/objects/${projectId}`, { data: { tags: [TAG] } });
     expect(patch.ok()).toBeTruthy();
+  });
+
+  test.beforeEach(async ({ context }) => {
+    await addUserCookie(context, savedCookie);
   });
 
   test.afterAll(async () => {
