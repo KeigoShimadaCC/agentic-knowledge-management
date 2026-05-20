@@ -21,13 +21,24 @@ def _invoke(object_id: str | None = None, user_id: str | None = None) -> None:
 
 
 def _mock_session(obj=None):
-    """Return a context-manager mock that yields a session returning obj from .get()."""
+    """Return a context-manager mock that yields a session returning obj from .get().
+
+    `session.execute()` returns a Result-shaped mock whose `.scalars().all()`
+    yields []. This lets settings_service._preference_rows (called by
+    background_ai_settings on the worker startup path) traverse without
+    hitting `'coroutine' object has no attribute 'all'`, while still letting
+    the test's env-level monkeypatch on ai_auto_process / ai_auto_process_tasks
+    drive the BackgroundAiSettings fallback.
+    """
     session = AsyncMock()
     session.get = AsyncMock(return_value=obj)
     session.add = MagicMock()
     session.commit = AsyncMock()
     session.__aenter__ = AsyncMock(return_value=session)
     session.__aexit__ = AsyncMock(return_value=None)
+    empty_result = MagicMock()
+    empty_result.scalars.return_value.all.return_value = []
+    session.execute = AsyncMock(return_value=empty_result)
     return session
 
 
@@ -46,13 +57,27 @@ def _make_obj(metadata=None, deleted_at=None, title="Test Object"):
 
 
 def test_returns_immediately_when_ai_auto_process_false(monkeypatch: pytest.MonkeyPatch):
-    """ai_auto_process=False → returns without touching DB or services."""
+    """ai_auto_process=False → no AI services are invoked.
+
+    Post-Phase-16 the worker first loads runtime settings from the DB (because
+    a runtime preference can override the env default), so AsyncSessionLocal IS
+    touched. The behavioural guarantee this test cares about is that disabled
+    means no actual AI work runs.
+    """
     monkeypatch.setattr("app.config.settings.ai_auto_process", False)
 
-    with patch("kos_worker.ai_jobs.AsyncSessionLocal") as mock_sl:
+    session = _mock_session()
+    with (
+        patch("kos_worker.ai_jobs.AsyncSessionLocal", return_value=session),
+        patch("kos_worker.ai_jobs.summarize_object", new_callable=AsyncMock) as mock_sum,
+        patch("kos_worker.ai_jobs.extract_claims", new_callable=AsyncMock) as mock_claims,
+        patch("kos_worker.ai_jobs.suggest_links", new_callable=AsyncMock) as mock_links,
+    ):
         _invoke()
 
-    mock_sl.assert_not_called()
+    mock_sum.assert_not_called()
+    mock_claims.assert_not_called()
+    mock_links.assert_not_called()
 
 
 # ── Test 2: object not found ──────────────────────────────────────────────────

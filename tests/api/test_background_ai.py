@@ -29,12 +29,16 @@ def _invoke(object_id: str | None = None, user_id: str | None = None) -> None:
 
 
 def _mock_session(obj=None):
+    """Same shape as tests/unit/test_ai_jobs.py::_mock_session — see that docstring."""
     session = AsyncMock()
     session.get = AsyncMock(return_value=obj)
     session.add = MagicMock()
     session.commit = AsyncMock()
     session.__aenter__ = AsyncMock(return_value=session)
     session.__aexit__ = AsyncMock(return_value=None)
+    empty_result = MagicMock()
+    empty_result.scalars.return_value.all.return_value = []
+    session.execute = AsyncMock(return_value=empty_result)
     return session
 
 
