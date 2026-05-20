@@ -1,6 +1,15 @@
 # KnowledgeOS — Progress Tracker
 
-> Last updated: 2026-05-19 (PHASE-16 settings complete; PHONE-08 cross-platform parity complete; PHONE-06 real-device smoke still pending)
+> Last updated: 2026-05-20 (docs: MCP_CONNECTIONS.md added — agent playbook for wiring external MCPs into the app; scripts/install-mcp-in-api.sh added)
+> Prior: 2026-05-19 (PHASE-16 settings complete; PHONE-08 cross-platform parity complete; PHONE-06 real-device smoke still pending)
+
+---
+
+## Docs / tooling additions (2026-05-20)
+
+- `docs/MCP_CONNECTIONS.md` — agent-focused playbook for adding external MCP servers to the app (Phase 12 client side). Covers the stdio-only constraint imposed by the DB check, the `MCP_ENV_ENCRYPTION_KEY` prerequisite, container-recreation gotchas, and a worked example for `anthropic-news-mcp`.
+- `scripts/install-mcp-in-api.sh` — idempotent helper that (re)installs an MCP package into the `kos-api` container's venv from either PyPI or a local source tree. Re-run after any `docker compose up -d api` that recreated the container.
+- `CLAUDE.md` — "Where to Find Details" now links `docs/MCP_CONNECTIONS.md`.
 
 ---
 

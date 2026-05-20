@@ -161,7 +161,8 @@ Example: `feat(api): soft-delete endpoint for objects with audit log entry`
 | Full architecture & sequence diagrams | `docs/ARCHITECTURE.md` |
 | Postgres schema & model decisions | `docs/DATA_MODEL.md` |
 | REST API reference | `docs/API.md` |
-| MCP tool spec | `docs/MCP_TOOLS.md` |
+| MCP tool spec (outbound server) | `docs/MCP_TOOLS.md` |
+| Adding external MCPs to the app (inbound client) | `docs/MCP_CONNECTIONS.md` |
 | Ingestion pipeline design | `docs/INGESTION.md` |
 | Auth, sessions, audit log | `docs/SECURITY.md` |
 | Agent prompts & RAG guide | `docs/AGENT_GUIDE.md` |
