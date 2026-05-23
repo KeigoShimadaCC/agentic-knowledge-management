@@ -7,7 +7,11 @@ export default defineConfig({
   fullyParallel: false,
   forbidOnly: Boolean(process.env.CI),
   retries: 0,
-  workers: process.env.CI ? 2 : 1,
+  // workers: 1 everywhere — two workers share a single Postgres + worker + qdrant
+  // stack, so cross-worker writes race the per-test reads (worker B reads /app/inbox
+  // before worker A's seed lands). 109/123 passing with workers:2 had three CI-only
+  // flakes that vanished under serial execution.
+  workers: 1,
   reporter: [["html", { open: "never" }], ["list"]],
   use: {
     baseURL,
