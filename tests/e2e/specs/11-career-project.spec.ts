@@ -22,13 +22,16 @@ async function createProject(api: APIRequestContext, title: string) {
 
 test.describe("Career project golden path", () => {
   test("create project and view in list", async ({ page }) => {
+    // Unique-per-run title — the DB persists projects across runs and a hard-coded
+    // string accumulates duplicates that trip strict-mode locator matching.
+    const title = `KnowledgeOS v1 ${crypto.randomUUID().slice(0, 8)}`;
     await page.goto("/app/projects");
     await page.getByRole("button", { name: "New project" }).click();
-    await page.getByLabel("Title").fill("KnowledgeOS v1");
+    await page.getByLabel("Title").fill(title);
     await page.getByRole("button", { name: "Save" }).click();
 
     await page.goto("/app/projects");
-    await expect(page.getByText("KnowledgeOS v1")).toBeVisible();
+    await expect(page.getByText(title)).toBeVisible();
   });
 
   test("link evidence to project", async ({ page, api }) => {
