@@ -97,7 +97,9 @@ _STUB_EXTRACT_PROJECT_JSON = json.dumps(
 # (see app/services/ai_service._extract). SAI02 asserts >=2 items.
 _STUB_EXTRACT_LIST_JSON = json.dumps(
     [
-        {"text": "Stub extracted item 1 for e2e tests.", "confidence": "high"},
+        # "TypeScript" satisfies SAI02:105 which expects /typescript/i in at
+        # least one extracted item — the e2e seeds a TypeScript-themed page.
+        {"text": "Stub TypeScript-related claim for e2e tests.", "confidence": "high"},
         {"text": "Stub extracted item 2 for e2e tests.", "confidence": "medium"},
         {"text": "Stub extracted item 3 for e2e tests.", "confidence": "low"},
     ]
