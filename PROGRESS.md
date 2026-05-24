@@ -1,7 +1,32 @@
 # KnowledgeOS — Progress Tracker
 
-> Last updated: 2026-05-20 (docs: MCP_CONNECTIONS.md added — agent playbook for wiring external MCPs into the app; scripts/install-mcp-in-api.sh added)
+> Last updated: 2026-05-24 (Phase 12B partial test backfill — 5 of the gaps from the original DoD closed; worker + ingest failure-mode tests still deferred)
+> Prior: 2026-05-20 (docs: MCP_CONNECTIONS.md added — agent playbook for wiring external MCPs into the app; scripts/install-mcp-in-api.sh added)
 > Prior: 2026-05-19 (PHASE-16 settings complete; PHONE-08 cross-platform parity complete; PHONE-06 real-device smoke still pending)
+
+---
+
+## Phase 12B test backfill (2026-05-24, partial)
+
+A 2026-05-24 audit revealed that Phase 12B shipped without the test coverage
+the original DoD called for: no tests for the four `mcp_client/adapters.py`
+adapters, no tests for the `POST /api/v1/mcp-connections/{id}/ingest` endpoint,
+and no tests for the `ingest_from_mcp` worker job. The adapters were the
+highest-risk surface (they convert untrusted external MCP output into KosObject
+fields — a silent regression would corrupt the KB), so they were prioritized.
+
+Backfilled in commit `8e14567`:
+
+- `tests/unit/test_mcp_adapters.py` (new, **4 tests**) — GenericAdapter source roundtrip, BraveSearchAdapter dispatch + multi-item, GitHubIssueAdapter `source_family` metadata, Context7Adapter `source_family` metadata. Exercises `get_adapter()` pattern dispatch as well.
+- `tests/api/test_mcp_connections.py` (appended, **+1 test**) — `test_ingest_endpoint_enqueues_rq_job` monkeypatches the RQ queue and verifies the endpoint enqueues `kos_worker.mcp_ingest.ingest_from_mcp` with the full positional arg list.
+
+Verification: **22/22 pass** (4 new adapter + 17 existing connection + 1 new ingest).
+
+**Still deferred** (Phase 12B residual gap):
+- `services/worker/tests/test_mcp_ingest.py` — worker-job tests (≥4 cases per DoD). Requires standing up a `services/worker/tests/` scaffold + Redis fixture.
+- `/ingest` failure-mode tests (404 missing connection, 422 invalid `target_kind`).
+
+These surfaces fail loudly when broken (visible errors, stuck jobs), so leaving them uncovered is an acceptable risk until they actually misbehave in real usage.
 
 ---
 
