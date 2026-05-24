@@ -1,7 +1,7 @@
 # Phase 7A — MCP Read/Search + Safety Foundation
 
-> **Status:** In Progress  
-> **Branch:** `phase-7a-mcp`  
+> **Status:** ✅ Complete (superseded by PHASE-7C stabilization sweep; see `PROGRESS.md` Phase 7A section for verification details)  
+> **Branch:** `phase-7a-mcp` (merged)  
 > **Depends on:** Phases 1–4 (all complete). Phase 5 AI endpoint NOT required (answer_from_kb deferred).
 
 ---
@@ -35,29 +35,29 @@ Implement a read-only local MCP server backed by the existing FastAPI API. Agent
 
 ## Definition of Done
 
-- [ ] `project-phases/PHASE-7A-MCP.md` created
-- [ ] `PROGRESS.md` updated with Phase 7A section
-- [ ] `services/mcp/` has working MCP server with stdio transport
-- [ ] FastAPI accepts `X-KOS-Internal-Token` header as alternative auth for MCP
-- [ ] MCP disabled by default (`MCP_ENABLED=false`)
-- [ ] Tool allowlist enforced at startup
-- [ ] No write tools registered
-- [ ] No shell/file tools
-- [ ] `search_objects` works (calls keyword search API)
-- [ ] `hybrid_search` works (calls hybrid search API, falls back gracefully)
-- [ ] `get_object` works (returns compact metadata, no secrets)
-- [ ] `get_page` works (returns title + content_text, omits editor JSON by default)
-- [ ] `get_source` works (returns metadata + truncated extracted_text)
-- [ ] `get_related_objects` works (depth capped at 2)
-- [ ] `answer_from_kb` registered as disabled stub
-- [ ] Secrets never in tool responses
-- [ ] MCP config tests pass
-- [ ] Tool unit tests pass (mocked API client)
-- [ ] Existing 85+ backend tests still pass
-- [ ] `docs/MCP_TOOLS.md` updated
-- [ ] `docs/SECURITY.md` updated
-- [ ] `docs/AGENT_GUIDE.md` updated
-- [ ] `infra/.env.example` updated with MCP_* vars
+- [x] `project-phases/PHASE-7A-MCP.md` created
+- [x] `PROGRESS.md` updated with Phase 7A section
+- [x] `services/mcp/` has working MCP server with stdio transport
+- [x] FastAPI accepts `X-KOS-Internal-Token` header as alternative auth for MCP
+- [x] MCP disabled by default (`MCP_ENABLED=false`)
+- [x] Tool allowlist enforced at startup
+- [x] No write tools registered (7A scope; write tools added in 7B behind `MCP_ALLOW_WRITE_TOOLS`)
+- [x] No shell/file tools
+- [x] `search_objects` works (calls keyword search API)
+- [x] `hybrid_search` works (calls hybrid search API, falls back gracefully)
+- [x] `get_object` works (returns compact metadata, no secrets)
+- [x] `get_page` works (returns title + content_text, omits editor JSON by default)
+- [x] `get_source` works (returns metadata + truncated extracted_text)
+- [x] `get_related_objects` works (depth capped at 2)
+- [x] `answer_from_kb` wired to live AI endpoint (the disabled-stub was replaced once Phase 5 shipped; see `PROGRESS.md`)
+- [x] Secrets never in tool responses
+- [x] MCP config tests pass
+- [x] Tool unit tests pass (mocked API client)
+- [x] Existing 85+ backend tests still pass
+- [x] `docs/MCP_TOOLS.md` updated
+- [x] `docs/SECURITY.md` updated
+- [x] `docs/AGENT_GUIDE.md` updated
+- [x] `infra/.env.example` updated with MCP_* vars
 
 ---
 
@@ -113,15 +113,15 @@ FastAPI's `get_current_user` is extended to accept a `X-KOS-Internal-Token` head
 ## Subtask Checklist
 
 - [x] **Subtask 0** — Audit + plan files: create this doc, update PROGRESS.md
-- [ ] **Subtask 1** — MCP config + safety foundation: `McpSettings`, `redact_dict`, `pyproject.toml`, `.env.example`
-- [ ] **Subtask 2** — FastAPI internal token auth: `config.py` + `deps.py` + `test_mcp_auth.py`
-- [ ] **Subtask 3** — MCP API client: `client.py` (httpx, all 6 methods)
-- [ ] **Subtask 4** — MCP server scaffold: `server.py` + `tools.py` skeleton + tool registry
-- [ ] **Subtask 5** — Search tools: `search_objects`, `hybrid_search` (with 503 fallback)
-- [ ] **Subtask 6** — Object/page/source tools: `get_object`, `get_page`, `get_source` (with truncation + redaction)
-- [ ] **Subtask 7** — Graph tool + `answer_from_kb` stub: `get_related_objects`, disabled stub
-- [ ] **Subtask 8** — Tests: `test_config.py`, `test_tools.py` (mocked client)
-- [ ] **Subtask 9** — Docs: `MCP_TOOLS.md`, `SECURITY.md`, `AGENT_GUIDE.md`, `README.md`, PROGRESS.md complete
+- [x] **Subtask 1** — MCP config + safety foundation: `McpSettings`, `redact_dict`, `pyproject.toml`, `.env.example`
+- [x] **Subtask 2** — FastAPI internal token auth: `config.py` + `deps.py` + `test_mcp_auth.py`
+- [x] **Subtask 3** — MCP API client: `client.py` (httpx, all 6 methods)
+- [x] **Subtask 4** — MCP server scaffold: `server.py` + `tools.py` skeleton + tool registry
+- [x] **Subtask 5** — Search tools: `search_objects`, `hybrid_search` (with 503 fallback)
+- [x] **Subtask 6** — Object/page/source tools: `get_object`, `get_page`, `get_source` (with truncation + redaction)
+- [x] **Subtask 7** — Graph tool + `answer_from_kb` (post-Phase-5 the stub was replaced with the live AI wiring): `get_related_objects` + real `answer_from_kb`
+- [x] **Subtask 8** — Tests: `test_config.py`, `test_tools.py` (mocked client); current counts: 7 + 28 + 3 redaction + 21 project = 59 in `services/mcp/tests/`
+- [x] **Subtask 9** — Docs: `MCP_TOOLS.md`, `SECURITY.md`, `AGENT_GUIDE.md`, `README.md`, PROGRESS.md complete
 
 ---
 

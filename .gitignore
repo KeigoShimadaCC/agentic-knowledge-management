@@ -29,6 +29,9 @@ logs/
 test_output.txt
 test_output*.txt
 .playwright-mcp/
+# Claude Code project-local MCP config — contains MCP_INTERNAL_TOKEN
+.mcp.json
+.mcp.local.json
 tests/e2e/playwright-report/
 tests/e2e/test-results/
 tests/e2e/.tmp/

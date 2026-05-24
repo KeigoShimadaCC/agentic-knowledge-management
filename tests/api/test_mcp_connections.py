@@ -309,3 +309,55 @@ async def test_create_with_no_encryption_key_returns_400(
     )
 
     assert resp.status_code == 400
+
+
+class _FakeJob:
+    def __init__(self, job_id: str = "fake-job-id-xyz"):
+        self.id = job_id
+
+
+class _RecordingQueue:
+    instances: list["_RecordingQueue"] = []
+
+    def __init__(self, name: str, *args, **kwargs):
+        self.name = name
+        self.calls: list[tuple[tuple, dict]] = []
+        self.__class__.instances.append(self)
+
+    def enqueue(self, *args, **kwargs):
+        self.calls.append((args, kwargs))
+        return _FakeJob()
+
+
+async def test_ingest_endpoint_enqueues_rq_job(
+    auth_client: AsyncClient, monkeypatch: pytest.MonkeyPatch
+):
+    _RecordingQueue.instances = []
+    monkeypatch.setattr("app.api.v1.mcp_connections.Queue", _RecordingQueue)
+
+    conn = await create_connection(auth_client)
+
+    payload = {
+        "tool_name": "brave_web_search",
+        "args": {"query": "knowledgeos"},
+        "target_kind": "source",
+        "tags": ["news"],
+    }
+    resp = await auth_client.post(f"{BASE_URL}/{conn['id']}/ingest", json=payload)
+
+    assert resp.status_code == 200, resp.text
+    body = resp.json()
+    assert body == {"job_id": "fake-job-id-xyz", "status": "pending"}
+
+    assert len(_RecordingQueue.instances) == 1
+    assert _RecordingQueue.instances[0].name == "kos-ingest"
+    enqueue_calls = _RecordingQueue.instances[0].calls
+    assert len(enqueue_calls) == 1
+    args, kwargs = enqueue_calls[0]
+    assert args[0] == "kos_worker.mcp_ingest.ingest_from_mcp"
+    assert args[1] == conn["id"]
+    assert args[2] == "brave_web_search"
+    assert args[3] == {"query": "knowledgeos"}
+    assert args[4] == "source"
+    assert args[5] == ["news"]
+    assert kwargs.get("job_timeout") == 300
