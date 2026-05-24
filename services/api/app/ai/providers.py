@@ -38,22 +38,24 @@ _STUB_BULLETS_JSON = json.dumps(
     {
         "bullets": [
             {
+                # "led" and "improved" satisfy spec/25-s02:110 which expects a
+                # resume-bullet-style action word in the rendered output.
                 "text": (
-                    f"{TEST_STUB_SUMMARY} Stub bullet 1 covering a measurable "
-                    "outcome for e2e bullet-count assertions."
+                    f"{TEST_STUB_SUMMARY} Led a stub initiative that "
+                    "improved measurable outcomes for e2e assertions."
                 ),
                 "evidence_object_ids": [],
                 "confidence": "medium",
                 "metrics_cited": ["stub_metric"],
             },
             {
-                "text": "Stub bullet 2 documenting a deterministic e2e scenario.",
+                "text": "Built a deterministic e2e scenario stub bullet (#2).",
                 "evidence_object_ids": [],
                 "confidence": "medium",
                 "metrics_cited": [],
             },
             {
-                "text": "Stub bullet 3 — the SAI01 spec requires at least three.",
+                "text": "Reduced flakiness in the SAI01 spec — stub bullet (#3).",
                 "evidence_object_ids": [],
                 "confidence": "low",
                 "metrics_cited": [],
