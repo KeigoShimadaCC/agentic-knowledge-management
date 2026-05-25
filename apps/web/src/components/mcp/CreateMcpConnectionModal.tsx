@@ -127,7 +127,7 @@ export function CreateMcpConnectionModal({ isOpen, onClose, onCreated }: Props) 
           <fieldset>
             <legend className="mb-2 block text-sm font-medium text-gray-300">Transport</legend>
             <div className="grid grid-cols-2 gap-2">
-              {(["stdio", "sse"] as const).map((value) => (
+              {(["stdio", "sse", "http"] as const).map((value) => (
                 <label
                   key={value}
                   className="flex cursor-pointer items-center gap-2 rounded-md border border-gray-800 bg-gray-950 px-3 py-2 text-sm text-gray-300"

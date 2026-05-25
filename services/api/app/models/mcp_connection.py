@@ -34,6 +34,8 @@ class McpConnection(Base):
     deleted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     __table_args__ = (
-        CheckConstraint("transport IN ('stdio', 'sse')", name="ck_mcp_connections_transport"),
+        CheckConstraint(
+            "transport IN ('stdio', 'sse', 'http')", name="ck_mcp_connections_transport"
+        ),
         Index("ix_mcp_connections_user_id", "user_id", postgresql_where=text("deleted_at IS NULL")),
     )

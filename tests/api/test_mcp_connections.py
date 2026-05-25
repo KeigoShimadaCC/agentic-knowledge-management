@@ -361,3 +361,24 @@ async def test_ingest_endpoint_enqueues_rq_job(
     assert args[4] == "source"
     assert args[5] == ["news"]
     assert kwargs.get("job_timeout") == 300
+
+
+async def test_ingest_endpoint_returns_404_for_unknown_connection(auth_client: AsyncClient):
+    import uuid as _uuid
+
+    bogus_id = _uuid.uuid4()
+    resp = await auth_client.post(
+        f"{BASE_URL}/{bogus_id}/ingest",
+        json={"tool_name": "x", "args": {}, "target_kind": "source"},
+    )
+    assert resp.status_code == 404
+
+
+async def test_ingest_endpoint_returns_422_for_invalid_target_kind(auth_client: AsyncClient):
+    conn = await create_connection(auth_client)
+    resp = await auth_client.post(
+        f"{BASE_URL}/{conn['id']}/ingest",
+        json={"tool_name": "x", "args": {}, "target_kind": "bogus_kind"},
+    )
+    assert resp.status_code == 422
+    assert "target_kind" in resp.text

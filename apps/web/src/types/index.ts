@@ -633,7 +633,7 @@ export interface ExtractProjectResponse {
 
 // ── MCP Connections ───────────────────────────────────────────────────────────
 
-export type McpTransport = "stdio" | "sse";
+export type McpTransport = "stdio" | "sse" | "http";
 
 export interface McpToolDefinition {
   name: string;
